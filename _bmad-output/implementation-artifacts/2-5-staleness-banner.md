@@ -2,7 +2,7 @@
 
 **Epic:** 2 — Lesson Navigation & Self-Reference Link Integrity
 **Story Key:** 2-5-staleness-banner
-**Status:** review
+**Status:** done
 
 ## Story
 
@@ -36,8 +36,34 @@ So that I know when knowledge has aged past its expected freshness window.
 ## Tasks/Subtasks
 
 - [x] **Task 1 — `src/components/staleness-banner.tsx`** — pure `classifyStaleness(reviewedAt, now?)` helper + Server Component `<StalenessBanner>` with three branches (fresh / stale / unknown). 120-day threshold via `STALENESS_THRESHOLD_DAYS` constant. `import "server-only"` guard. Stale + unknown branches carry an inline warning SVG (`aria-hidden`), a visible `Stale` label, an amber border-left accent, AND amber text/bg — three non-color differentiators in addition to color.
-- [x] **Task 2 — `src/components/staleness-banner.test.tsx`** — 11 Vitest cases via `react-dom/server`'s `renderToStaticMarkup`. Helper coverage (fresh, exact-120, >120, undefined, unparseable) + render coverage (≥120 → "flagged as stale", fresh → no warning string, undefined → "No review date", unparseable → same, role="status" present).
+- [x] **Task 2 — `src/components/staleness-banner.test.tsx`** — Vitest cases via `react-dom/server`'s `renderToStaticMarkup`. Helper coverage (fresh, exact-120, 119, >120, undefined, unparseable, loose forms, `"0"`, future date) + render coverage (≥120 → "flagged as stale", fresh → no warning string, undefined → "No review date", unparseable → same, future-date → unknown, role="status" + role="alert" present on the right branches). Final count after the review patches: 17 cases.
 - [x] **Task 3 — Quad gate clean** — `test:unit` 54/54 (was 44, +10), `test:e2e` 16/16, `lint` clean, `lint:links` clean.
+
+### Review Findings
+
+**Patches (resolved):**
+
+- [x] [Review][Patch] **Strict `^\d{4}-\d{2}-\d{2}$` regex in `classifyStaleness`** — `"0"`, `"2026-1-5"`, `"2026/01/05"`, and rollovers like `"2026-13-40"` now classify as `unknown` instead of producing wrong-but-valid verdicts. Three new test cases pin the behavior.
+- [x] [Review][Patch] **Future-date guard** — negative `daysAgo` returns `kind: "unknown"` so a `2099-01-01` typo isn't silently fresh. New test + a new render case covering the unknown-branch warning string for the future-dated input.
+- [x] [Review][Patch] **UTC-day math** — replaced `MS_PER_DAY` with `Date.UTC(y, m, d)` part-extraction so the comparison is in pure UTC days and DST-immune. Boundary tests at exact-120 and 119 still pass.
+- [x] [Review][Patch] **Warning branches → `role="alert"`** — fresh stays `role="status"`; new tests assert both attributes on the right branches.
+- [x] [Review][Patch] **Warning branches → `<div role="alert">`** — `<aside>` retained only for the fresh / informational branch where its semantics fit.
+- [x] [Review][Patch] **Tailwind class reorder** — `border` shorthand now precedes `border-l-4` so the cascade lands the 4px amber accent reliably.
+- [x] [Review][Patch] **"Stale" assertion tightened** — switched to `toMatch(/<span[^>]*>Stale<\/span>/)` so the test pins the visible label, not the substring inside `flagged as stale`.
+- [x] [Review][Patch] **Story Tasks count corrected** — 10 cases (now 17 after the new ones), no longer the stale "11" figure.
+- [x] [Review][Patch] **New tests for strict-regex + future-date branches** — three classifyStaleness cases (loose forms, `"0"`, future date) + one render case (future date → unknown warning).
+
+**Deferred:**
+
+- [x] [Review][Defer] **Server Component `new Date()` is captured at build time for SSG'd routes** — pages cached at build never transition to stale until the cache invalidates. Real concern; the right home is the consumer's route definition (`export const revalidate = …` or `dynamic = "force-dynamic"`). Document in JSDoc here; the wire-up lands when Epic 6 introduces the first consumer. Source: edge.
+- [x] [Review][Defer] **AC4 capitalization "No" vs "no"** — sentence-case normalization is a defensible UI prose choice, already noted as a deviation. Either flip to lowercase to match the AC literal OR amend the AC; defer until the user calls the choice. Source: auditor (LOW).
+- [x] [Review][Defer] **`toContain('role="status"')` is brittle to JSX refactors** — implementation-detail coupling. Reasonable to keep until a refactor actually breaks it. Source: blind.
+- [x] [Review][Defer] **i18n / locale formatting of `reviewedAt`** — hardcoded English strings + ISO date format. Out of scope at v1. Source: blind.
+- [x] [Review][Defer] **Architecture vs epics threshold drift (`> 120` vs `≥ 120`)** — this story sides with epics; reconcile in the architecture doc separately. Source: auditor.
+
+**Dismissed:**
+
+- "Exact-120 test fixture is timezone-fragile" — `NOW = 2026-05-08T00:00:00Z` is a deliberate UTC fixture; behavior is pinned, not fragile.
 
 ## Dev Notes
 
@@ -101,3 +127,4 @@ Per the architecture, `training/tools-reference.md` (FR-5.5) is the named consum
 ## Change Log
 - 2026-05-08 — Story file authored from epics.md §Epic 2 / Story 2.5
 - 2026-05-08 — Implementation completed; quad gate clean; status `review`
+- 2026-05-08 — Code review run: 0 decision-needed; 9 patches applied (strict ISO regex, future-date guard, UTC-day math, role="alert" + `<div>` for warnings, Tailwind class reorder, tight "Stale" assertion, doc-count fix, new strict-regex/future-date tests); 5 deferred; 1 dismissed. `test:unit` now 60/60 (was 54); `test:e2e` 16/16; lint clean; `lint:links` clean. Status `done`.

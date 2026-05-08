@@ -1,7 +1,7 @@
 import "server-only";
 
 const STALENESS_THRESHOLD_DAYS = 120;
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export type StalenessVerdict =
   | { kind: "fresh"; reviewedAt: string; daysAgo: number }
@@ -12,15 +12,39 @@ export type StalenessVerdict =
  * Classify a `reviewedAt` ISO date string against the 120-day staleness
  * window. Pure function so the threshold logic can be Vitest-ed without
  * rendering React.
+ *
+ * Strictness:
+ *   - input must match `YYYY-MM-DD` exactly (no timezone offset, no
+ *     month/day rollovers, no partial forms). Anything else → `unknown`.
+ *   - future-dated `reviewedAt` (negative `daysAgo`) → `unknown`. Catches
+ *     author typos that would otherwise silently classify as fresh.
+ *   - day count is computed in UTC-day terms via `Date.UTC` parts so the
+ *     boundary is DST-immune and timezone-stable.
+ *
+ * Server Component / SSG note for callers:
+ *   Pages rendered at build time freeze `new Date()` at build time. To
+ *   keep the staleness window honest, consuming routes should set
+ *   `export const revalidate = 86400` (or `dynamic = "force-dynamic"`)
+ *   so this banner re-evaluates as the wall clock advances.
  */
 export function classifyStaleness(
   reviewedAt: string | undefined,
   now: Date = new Date(),
 ): StalenessVerdict {
-  if (!reviewedAt) return { kind: "unknown" };
+  if (!reviewedAt || !ISO_DATE.test(reviewedAt)) return { kind: "unknown" };
+
   const parsed = new Date(reviewedAt);
   if (Number.isNaN(parsed.getTime())) return { kind: "unknown" };
-  const daysAgo = Math.floor((now.getTime() - parsed.getTime()) / MS_PER_DAY);
+
+  const reviewedUtcDay = Date.UTC(
+    parsed.getUTCFullYear(),
+    parsed.getUTCMonth(),
+    parsed.getUTCDate(),
+  );
+  const nowUtcDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const daysAgo = Math.floor((nowUtcDay - reviewedUtcDay) / 86_400_000);
+
+  if (daysAgo < 0) return { kind: "unknown" }; // future-dated typo
   if (daysAgo >= STALENESS_THRESHOLD_DAYS) {
     return { kind: "stale", reviewedAt, daysAgo };
   }
@@ -66,13 +90,13 @@ export function StalenessBanner({ reviewedAt, now }: StalenessBannerProps) {
       : "No review date — treat as stale";
 
   return (
-    <aside
-      role="status"
-      className="flex items-center gap-2 rounded-md border-l-4 border border-amber-300 border-l-amber-500 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/40 dark:border-l-amber-500 dark:bg-amber-950/40 dark:text-amber-100"
+    <div
+      role="alert"
+      className="flex items-center gap-2 rounded-md border border-amber-300 border-l-4 border-l-amber-500 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/40 dark:border-l-amber-500 dark:bg-amber-950/40 dark:text-amber-100"
     >
       <WarningIcon />
       <span className="font-semibold uppercase tracking-wide">Stale</span>
       <span>{message}</span>
-    </aside>
+    </div>
   );
 }

@@ -78,3 +78,11 @@
 - **No Vitest assertion of stdout-summary string or stream-split for the CLI** — live-tree smoke covers it; format string isn't AC-mandated verbatim.
 - **Failure-path summary doesn't print `linksScanned`** — cosmetic; defer the format polish.
 - **Embedded raw HTML `<a href>` / `<img src>` in markdown not extracted** — remark parses these as `html` nodes; visit on `link/image/definition` skips them. Curriculum is plain-markdown by convention; document explicitly if curriculum ever leans on inline HTML.
+
+## Deferred from: code review of 2-5-staleness-banner (2026-05-08)
+
+- **Server Component `new Date()` is captured at build time for SSG'd routes** — pages cached at build never transition to stale until cache invalidates. Address at the consumer's route definition (`export const revalidate = 86400` or `dynamic = "force-dynamic"`); JSDoc on `classifyStaleness` documents the constraint. Wire-up lands when Epic 6 introduces the first consumer (`training/tools-reference.md`).
+- **AC4 capitalization "No" vs "no"** — sentence-case normalization is a defensible UI prose choice; flip to lowercase OR amend the AC if the user calls the choice.
+- **`toContain('role="status"')` is brittle to JSX refactors** — implementation-detail coupling.
+- **i18n / locale formatting of `reviewedAt`** — hardcoded English strings + ISO date format; out of scope at v1.
+- **Architecture vs epics threshold drift (`> 120` vs `≥ 120`)** — story sides with epics; reconcile in `architecture.md` separately.
