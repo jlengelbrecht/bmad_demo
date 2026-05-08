@@ -9,9 +9,14 @@ vi.mock("@/lib/db/progress-db", () => ({
 }));
 
 import { upsertProgress } from "@/lib/db/progress-db";
+import * as routeModule from "./route";
 import { POST } from "./route";
 
-const upsertSpy = upsertProgress as ReturnType<typeof vi.fn>;
+// Strongly-typed spy so a future change to upsertProgress's signature
+// would fail the type-check rather than silently passing the test.
+const upsertSpy = upsertProgress as unknown as ReturnType<
+  typeof vi.fn<(typeof import("@/lib/db/progress-db"))["upsertProgress"]>
+>;
 
 function postRequest(body: unknown, opts: { raw?: boolean } = {}): Request {
   if (opts.raw) {
@@ -67,6 +72,22 @@ describe("POST /api/progress — validation failures (400)", () => {
     expect(upsertSpy).not.toHaveBeenCalled();
   });
 
+  it("rejects a literal `null` body", async () => {
+    const res = await POST(postRequest(null));
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { ok: boolean; error: string };
+    expect(body.error).toBe("Invalid request");
+    expect(upsertSpy).not.toHaveBeenCalled();
+  });
+
+  it("rejects an array body", async () => {
+    const res = await POST(postRequest([1, 2, 3]));
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { ok: boolean; error: string };
+    expect(body.error).toBe("Invalid request");
+    expect(upsertSpy).not.toHaveBeenCalled();
+  });
+
   it("rejects missing kind with Zod-flattened details", async () => {
     const res = await POST(postRequest({ id: "lesson-1", completed: true }));
     expect(res.status).toBe(400);
@@ -118,33 +139,40 @@ describe("POST /api/progress — DB error (500)", () => {
     errorSpy.mockRestore();
   });
 
-  it("returns 500 with no stack-trace leakage when upsertProgress throws", async () => {
-    const dbError = new Error("simulated SQLite failure");
+  it("returns 500 with a bare error envelope when upsertProgress throws", async () => {
     upsertSpy.mockImplementation(() => {
-      throw dbError;
+      throw new Error("simulated SQLite failure");
     });
 
     const res = await POST(postRequest({ kind: "lesson", id: "lesson-1", completed: true }));
     expect(res.status).toBe(500);
-    const text = await res.text();
-    expect(JSON.parse(text)).toEqual({ ok: false, error: "Internal error" });
-    // Body must not leak the error message or stack.
-    expect(text).not.toContain("simulated SQLite failure");
-    expect(text).not.toContain("at ");
 
-    // The handler must log the error via console.error.
-    expect(errorSpy).toHaveBeenCalledTimes(1);
-    expect(errorSpy).toHaveBeenCalledWith(dbError);
+    // Exact-match assertion is the load-bearing one: the response body must
+    // be the bare envelope with no leakage.
+    expect(await res.json()).toEqual({ ok: false, error: "Internal error" });
+
+    // The handler must log via console.error (architecture's "no logger
+    // library; console-only" rule). We assert the call happened, not the
+    // exact arg shape — a future refactor that adds context to the log
+    // (e.g., `console.error('upsert failed', err)`) is welcome and should
+    // not break this test.
+    expect(errorSpy).toHaveBeenCalled();
   });
 });
 
-describe("POST /api/progress — import discipline (AC5)", () => {
+describe("POST /api/progress — module surface (AC5)", () => {
+  it("exports only POST (no GET/PUT/DELETE/PATCH/OPTIONS handlers)", () => {
+    const exportedHandlers = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"].filter(
+      (method) => Boolean((routeModule as Record<string, unknown>)[method]),
+    );
+    expect(exportedHandlers).toEqual(["POST"]);
+  });
+
   it("imports only from @/lib/db/schemas and @/lib/db/progress-db", () => {
     const ROUTE_PATH = path.resolve(import.meta.dirname, "route.ts");
     const source = readFileSync(ROUTE_PATH, "utf8");
     const importLines = source.split("\n").filter((line) => line.trim().startsWith("import "));
 
-    // Every import must reference one of the allowed module paths.
     const ALLOWED = ["@/lib/db/schemas", "@/lib/db/progress-db"];
     for (const line of importLines) {
       const matched = ALLOWED.some((mod) => line.includes(`"${mod}"`));
@@ -152,10 +180,12 @@ describe("POST /api/progress — import discipline (AC5)", () => {
     }
   });
 
-  it("does not import from next/server (no Server Action / no NextResponse)", () => {
+  it("does not declare a Server Action ('use server' directive)", () => {
     const ROUTE_PATH = path.resolve(import.meta.dirname, "route.ts");
     const source = readFileSync(ROUTE_PATH, "utf8");
-    expect(source).not.toContain("next/server");
-    expect(source).not.toContain("'use server'");
+    // Server Actions are marked by a `'use server'` directive at the top
+    // of the file (single or double quotes). The handler is a Route Handler
+    // per architecture's lock; the directive must be absent.
+    expect(source).not.toMatch(/^\s*['"]use server['"]\s*;?\s*$/m);
   });
 });

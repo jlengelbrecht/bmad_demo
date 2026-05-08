@@ -79,6 +79,14 @@
 - **Failure-path summary doesn't print `linksScanned`** — cosmetic; defer the format polish.
 - **Embedded raw HTML `<a href>` / `<img src>` in markdown not extracted** — remark parses these as `html` nodes; visit on `link/image/definition` skips them. Curriculum is plain-markdown by convention; document explicitly if curriculum ever leans on inline HTML.
 
+## Deferred from: code review of 3-2-progress-route-handler (2026-05-08)
+
+- **`flatten().fieldErrors` echoes field names back to the client** — fine while the schema only has `kind`, `id`, `completed`. Revisit if `ProgressUpsertRequest` ever gains an internal-only field.
+- **`console.error(err)` doesn't normalize non-Error throws** — defensive concern; rare in practice. Address if a real non-Error throw lands in logs.
+- **No NODE_ENV gate on `console.error`** — production deployment is local-only per architecture; revisit if v1.1 introduces a hosted target.
+- **Concurrent writes to same `(kind, id)` not documented** — better-sqlite3 sync writes serialize on the event loop; last-writer-wins via upsert is fine for a single-trainee local portal.
+- **Multiline import statements would slip past the import-discipline test** — current line-oriented filter is naive. Switch to AST parse if the import surface ever grows.
+
 ## Deferred from: code review of 3-1-sqlite-progress-store (2026-05-08)
 
 - **Test-side production-singleton pollution risk** — current tests pass `db` arg explicitly; a future test author could forget. Defensive guard would throw from `getDb()` when `NODE_ENV='test'`; revisit if it actually bites.

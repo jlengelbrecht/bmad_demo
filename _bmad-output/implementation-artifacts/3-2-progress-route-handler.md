@@ -2,7 +2,7 @@
 
 **Epic:** 3 — Trainee Progress State & Reset
 **Story Key:** 3-2-progress-route-handler
-**Status:** review
+**Status:** done
 
 ## Story
 
@@ -47,6 +47,33 @@ So that progress mutations have a single, validated, server-bound entry point.
   - import-discipline smoke: route.ts imports only `@/lib/db/schemas` + `@/lib/db/progress-db`
   - architecture-lock smoke: route.ts contains no `next/server` or `'use server'` strings
 - [x] **Task 3 — Quad gate clean** — `test:unit` 86/86 (was 75), `test:e2e` 16/16, `lint` clean, `lint:links` clean.
+
+### Review Findings
+
+**Patches (resolved):**
+
+- [x] [Review][Patch] **Architecture-lock test now targets the actual Server Action marker** — switched from substring `not.toContain("next/server")` to a regex `not.toMatch(/^\s*['"]use server['"]\s*;?\s*$/m)` that detects the `'use server'` directive specifically. Future refactors that legitimately type `NextRequest`/`NextResponse` won't be blocked.
+- [x] [Review][Patch] **DB-error test loosened** — dropped the brittle `not.toContain("at ")` and `not.toContain("simulated SQLite failure")` substring checks. The exact-match `expect(await res.json()).toEqual({ ok: false, error: "Internal error" })` is the load-bearing assertion. `errorSpy` assertion loosened to `toHaveBeenCalled()` so a future "context-tagged" log call (`console.error('upsert failed', err)`) doesn't break the test.
+- [x] [Review][Patch] **Spy typing tightened** — `upsertProgress as unknown as ReturnType<typeof vi.fn<typeof import("@/lib/db/progress-db").upsertProgress>>`. A future signature drift on `upsertProgress` will now fail the type-check.
+- [x] [Review][Patch] **Module-surface contract guard added** — new test imports the route module via `* as routeModule` and asserts the exported handler list is exactly `["POST"]`. Future accidental `GET`/`PUT`/`DELETE`/etc handler additions will fail.
+- [x] [Review][Patch] **`null` and array body negative tests added** — both go through `req.json()` cleanly, fail Zod, return 400 with `error: "Invalid request"`. Two new cases.
+
+**Deferred:**
+
+- [x] [Review][Defer] **`flatten().fieldErrors` echoes field names back to the client** — currently the schema only has `kind`, `id`, `completed` — no internal-only fields to leak. Revisit if `ProgressUpsertRequest` ever gains a field that shouldn't be enumerable. Source: blind.
+- [x] [Review][Defer] **`console.error(err)` doesn't normalize non-Error throws** — defensive concern; rare in practice. Address if a real non-Error throw ever lands in logs. Source: edge.
+- [x] [Review][Defer] **No NODE_ENV gate on `console.error`** — production deployment is local-only per architecture; Vercel-style log redaction is moot. Revisit if v1.1 introduces a hosted deployment target. Source: edge.
+- [x] [Review][Defer] **Concurrent writes to same `(kind, id)` not documented** — better-sqlite3 is synchronous; second writer blocks the event loop. Last-writer-wins via upsert is semantically fine for a single-trainee local portal. Source: blind+edge.
+- [x] [Review][Defer] **Multiline import statements would slip past the import-discipline test** — current line-oriented filter is naive. Switch to an AST parse if the import surface ever grows. Source: edge.
+
+**Dismissed (architectural threat-model is local-only single-user — these don't apply):**
+
+- "No CSRF / Origin check on state-changing POST" — architecture line 212: "Local-only; the threat model is 'the trainee runs their own clone.' We do not invent auth-shaped concerns." There is no logged-in victim because there is no login. CSRF is a non-issue.
+- "No body-size cap → DoS" — Next.js App Router has a default body-size limit; in addition, the architecture's threat model is local-only. A user DoSing their own machine is their prerogative.
+- "No `Content-Type` validation" — same threat model; no remote attacker, no preflight surface to exploit.
+- "Race on concurrent upserts" — single-trainee local app per architecture; "concurrent" requests don't exist in normal use.
+- "`upsertProgress` not awaited" — false positive from the blind reviewer who lacks project context: `upsertProgress` is synchronous (better-sqlite3 is synchronous; Story 3.1 returns `void`).
+- "AC2 happy-path verifies the timestamp only via spy, not actual write" — auditor flagged at LOW. The behavior IS exercised end-to-end in Story 3.1's `progress-db.test.ts`. Layered seam, intentional.
 
 ## Dev Notes
 
@@ -108,3 +135,4 @@ The mark-complete button lands with Story 3.3. This story ships the server seam.
 ## Change Log
 - 2026-05-08 — Story file authored from epics.md §Epic 3 / Story 3.2
 - 2026-05-08 — Implementation completed; quad gate clean; status `review`
+- 2026-05-08 — Code review run: 0 decision-needed; 5 patches applied (architecture-lock test targets `'use server'` directive, DB-error test loosened, spy typing tightened, module-surface contract guard added, null/array body cases added); 5 deferred; 6 dismissed (CSRF / body-size / Content-Type / concurrent-write race all hit the architecture's "local-only single-user trusts-the-local-user" threat model wall). `test:unit` now 89/89 (was 86); `test:e2e` 16/16; lint clean; `lint:links` clean. Status `done`.
