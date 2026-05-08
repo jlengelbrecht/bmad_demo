@@ -79,6 +79,15 @@
 - **Failure-path summary doesn't print `linksScanned`** — cosmetic; defer the format polish.
 - **Embedded raw HTML `<a href>` / `<img src>` in markdown not extracted** — remark parses these as `html` nodes; visit on `link/image/definition` skips them. Curriculum is plain-markdown by convention; document explicitly if curriculum ever leans on inline HTML.
 
+## Deferred from: code review of 3-1-sqlite-progress-store (2026-05-08)
+
+- **Test-side production-singleton pollution risk** — current tests pass `db` arg explicitly; a future test author could forget. Defensive guard would throw from `getDb()` when `NODE_ENV='test'`; revisit if it actually bites.
+- **`getProgress` row cast trusts DB shape** — `as ProgressRecord | undefined` would silently lie if schema drifts. Schema is one table, one query shape; Zod-on-read would land if the schema grows.
+- **`Date.now()` backward jump (NTP step-back)** — would produce out-of-order ISO strings. Use a monotonic counter when sort-by-recency becomes load-bearing.
+- **No `(kind)`-only index for "list completed lessons" queries** — composite PK covers a prefix scan; revisit when Story 3.3 surfaces a query that's actually slow.
+- **`mkdirSync` doesn't handle ENOTDIR / EROFS gracefully** — production failure should bubble; clearer error message is polish.
+- **`synchronous` pragma not pinned** — default is FULL with WAL; pin explicitly when durability matters.
+
 ## Deferred from: code review of 2-5-staleness-banner (2026-05-08)
 
 - **Server Component `new Date()` is captured at build time for SSG'd routes** — pages cached at build never transition to stale until cache invalidates. Address at the consumer's route definition (`export const revalidate = 86400` or `dynamic = "force-dynamic"`); JSDoc on `classifyStaleness` documents the constraint. Wire-up lands when Epic 6 introduces the first consumer (`training/tools-reference.md`).

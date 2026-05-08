@@ -6,7 +6,7 @@ import { createDb } from "./connection";
 import { ProgressUpsertRequest } from "./schemas";
 import { getProgress, upsertProgress } from "./progress-db";
 
-const SCHEMA_PATH = path.join(process.cwd(), "src", "db", "schema.sql");
+const SCHEMA_PATH = path.resolve(import.meta.dirname, "..", "..", "db", "schema.sql");
 const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
 
 describe("schema apply", () => {
@@ -25,6 +25,18 @@ describe("schema apply", () => {
       .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'`)
       .all() as { name: string }[];
     expect(tables.map((t) => t.name).sort()).toEqual(["progress"]);
+    db.close();
+  });
+
+  it("rejects non-ISO completed_at values via the CHECK constraint", () => {
+    const db = createDb(":memory:");
+    expect(() =>
+      db.prepare(`INSERT INTO progress (kind, id, completed_at) VALUES (?, ?, ?)`).run(
+        "lesson",
+        "lesson-1",
+        "banana",
+      ),
+    ).toThrow(/CHECK/);
     db.close();
   });
 });
@@ -47,27 +59,18 @@ describe("upsertProgress", () => {
     expect(row!.completedAt).toMatch(ISO_UTC);
   });
 
-  it("updates the same (kind, id) row on a second upsert", () => {
+  it("updates the same (kind, id) row on a second upsert (no duplicate row)", () => {
     upsertProgress({ kind: "lesson", id: "lesson-2", completed: true }, db);
-    const first = getProgress("lesson", "lesson-2", db)!.completedAt!;
-
-    // Wait at least one millisecond so the second timestamp differs.
-    const target = Date.now() + 5;
-    while (Date.now() < target) {
-      // busy wait
-    }
-
     upsertProgress({ kind: "lesson", id: "lesson-2", completed: true }, db);
-    const second = getProgress("lesson", "lesson-2", db)!.completedAt!;
 
-    expect(second).toMatch(ISO_UTC);
-    expect(second >= first).toBe(true);
-
-    // And exactly one row exists for that key.
+    // Only one row exists for that key.
     const count = db
       .prepare(`SELECT COUNT(*) AS n FROM progress WHERE kind = ? AND id = ?`)
       .get("lesson", "lesson-2") as { n: number };
     expect(count.n).toBe(1);
+
+    // And its completed_at is still a fresh ISO string.
+    expect(getProgress("lesson", "lesson-2", db)!.completedAt).toMatch(ISO_UTC);
   });
 
   it("clears completed_at to NULL when completed=false (mark-incomplete)", () => {
@@ -111,6 +114,24 @@ describe("ProgressUpsertRequest (Zod)", () => {
     expect(result.success).toBe(false);
   });
 
+  it("rejects a whitespace-only `id` (after trim)", () => {
+    const result = ProgressUpsertRequest.safeParse({
+      kind: "lesson",
+      id: "   ",
+      completed: true,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an `id` over 200 chars", () => {
+    const result = ProgressUpsertRequest.safeParse({
+      kind: "lesson",
+      id: "x".repeat(201),
+      completed: true,
+    });
+    expect(result.success).toBe(false);
+  });
+
   it("rejects a non-boolean `completed`", () => {
     const result = ProgressUpsertRequest.safeParse({
       kind: "lesson",
@@ -122,16 +143,19 @@ describe("ProgressUpsertRequest (Zod)", () => {
 });
 
 describe("no auth surface", () => {
-  it("schema.sql does not contain a `users` table", () => {
+  it("schema.sql does not contain a `users` or `sessions` table (after stripping comments)", () => {
     const schema = readFileSync(SCHEMA_PATH, "utf8");
-    // Comments may legitimately mention `users`; assert that the live
-    // schema (after stripping `--` line comments) carries no `users` token.
-    const stripped = schema
+    // Strip block comments first, then line comments, so legitimate prose
+    // mentions in the header don't false-positive.
+    const noBlocks = schema.replace(/\/\*[\s\S]*?\*\//g, "");
+    const noLines = noBlocks
       .split("\n")
       .filter((line) => !line.trim().startsWith("--"))
       .join("\n");
-    expect(stripped.toLowerCase()).not.toContain("users");
-    expect(stripped.toLowerCase()).not.toContain("sessions");
+    // Word-boundary match so 'paused_users_count' or similar future column
+    // names don't accidentally trip the smoke.
+    expect(noLines.toLowerCase()).not.toMatch(/\busers\b/);
+    expect(noLines.toLowerCase()).not.toMatch(/\bsessions\b/);
   });
 
   it("package.json declares no auth-library dependency", () => {
@@ -142,7 +166,23 @@ describe("no auth surface", () => {
       devDependencies?: Record<string, string>;
     };
     const all = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) };
-    const banned = ["next-auth", "clerk", "@clerk/nextjs", "lucia", "lucia-auth", "iron-session"];
+    const banned = [
+      "next-auth",
+      "@auth/core",
+      "clerk",
+      "@clerk/nextjs",
+      "@clerk/clerk-sdk-node",
+      "lucia",
+      "lucia-auth",
+      "iron-session",
+      "auth0",
+      "@auth0/nextjs-auth0",
+      "passport",
+      "better-auth",
+      "@supabase/auth-helpers-nextjs",
+      "firebase",
+      "firebase-auth",
+    ];
     for (const name of banned) {
       expect(all).not.toHaveProperty(name);
     }

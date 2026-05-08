@@ -2,7 +2,7 @@
 
 **Epic:** 3 — Trainee Progress State & Reset
 **Story Key:** 3-1-sqlite-progress-store
-**Status:** review
+**Status:** done
 
 ## Story
 
@@ -52,6 +52,36 @@ So that progress reads and writes share one storage idiom and one validation con
   - Zod (4): well-formed accepted, unknown `kind` rejected, empty `id` rejected, non-boolean `completed` rejected
   - No-auth surface (2): schema.sql comment-stripped contains no `users`/`sessions`; package.json contains no banned auth-library deps
 - [x] **Task 7 — Quad gate clean** — `test:unit` 72/72 (was 60), `test:e2e` 16/16, `lint` clean, `lint:links` clean.
+
+### Review Findings
+
+**Patches (resolved):**
+
+- [x] [Review][Patch] **Schema path resolved via `import.meta.dirname`** — `connection.ts` and `progress-db.test.ts` both compute the schema path relative to the module, not `process.cwd()`. Invariant under any caller's working dir.
+- [x] [Review][Patch] **HMR-safe singleton via `globalThis.__progressDb`** — Next.js dev edits no longer leak the previous file handle.
+- [x] [Review][Patch] **Prepared statements cached per-connection** via a `WeakMap<Database, PreparedCache>`. Each `upsertProgress` / `getProgress` call now reuses a single `Statement` per connection.
+- [x] [Review][Patch] **Schema CHECK** added: `CHECK (completed_at IS NULL OR completed_at LIKE '____-__-__T%Z')`. New Vitest case proves a literal `'banana'` insert is rejected.
+- [x] [Review][Patch] **No-auth smoke tightened** — strips block comments, then line comments, then word-boundary-matches `\busers\b` and `\bsessions\b`. Banned-imports list expanded to 14 libraries (next-auth, @auth/core, all clerk variants, lucia, lucia-auth, iron-session, auth0, @auth0/nextjs-auth0, passport, better-auth, @supabase/auth-helpers-nextjs, firebase, firebase-auth).
+- [x] [Review][Patch] **Zod `id` tightened** to `.trim().min(1).max(200)`. Two new test cases: whitespace-only id rejected; over-200-char id rejected.
+- [x] [Review][Patch] **Test refactored** — busy-wait removed; the "no duplicate row" test now asserts what we actually care about (count == 1 + fresh ISO format on the surviving row).
+- [x] [Review][Patch] **`createDb` close-on-failure** — schema `db.exec` and `pragma` are now in a try/catch that closes the connection before rethrowing.
+- [x] [Review][Patch] **`.gitignore` extended** to `data/*.sqlite-wal` and `data/*.sqlite-shm` so WAL sidecar files don't leak into commits.
+
+**Deferred:**
+
+- [x] [Review][Defer] **Test-side production-singleton pollution risk** — current tests pass `db` arg explicitly, so `getDb()` is never called in tests. A future test author could forget. Defensive guard (throw from `getDb()` when `NODE_ENV='test'`) is heavy-handed; revisit if it actually bites. Source: edge.
+- [x] [Review][Defer] **`getProgress` row cast trusts DB shape** — `as ProgressRecord | undefined` would silently lie if schema drifts. Schema is one table, one query shape; risk is low; Zod-on-read would land if the schema grows. Source: blind.
+- [x] [Review][Defer] **`Date.now()` backward jump (NTP step-back)** — rare; would produce out-of-order ISO strings. Use a monotonic counter when sort-by-recency becomes load-bearing. Source: edge.
+- [x] [Review][Defer] **No `(kind)` index for "list completed lessons" queries** — composite PK covers a prefix scan; revisit when Story 3.3 surfaces a query that's actually slow. Source: blind.
+- [x] [Review][Defer] **`mkdirSync` doesn't handle ENOTDIR / EROFS gracefully** — production failure should bubble; wrapping for a clearer error message is polish. Source: edge.
+- [x] [Review][Defer] **`synchronous` pragma not pinned** — default is FULL with WAL; if anyone flips to NORMAL the durability story changes. Pin explicitly when the matter actually surfaces. Source: blind.
+
+**Dismissed:**
+
+- "`ProgressKind` widens beyond Zod" — by design (capstone kinds are written through the Epic 4 harness, not `/api/progress`); architecture-aligned.
+- "AC2 schema strengthens with `NOT NULL` on `kind`/`id`" — strictly stronger than AC; defensible improvement.
+- "AC4 milliseconds in ISO timestamp" — story file's `(.sss)` clarification matches the implementation; ISO 8601 permits fractional seconds.
+- "Singleton concurrency on first call" — Node is single-threaded for JS; createDb is synchronous; safe today.
 
 ## Dev Notes
 
@@ -127,3 +157,4 @@ Already aliased by `vitest.config.ts` from Story 2.1 review patches. No new test
 ## Change Log
 - 2026-05-08 — Story file authored from epics.md §Epic 3 / Story 3.1
 - 2026-05-08 — Implementation completed; quad gate clean; status `review`
+- 2026-05-08 — Code review run: 0 decision-needed; 9 patches applied (schema-path module-relative, HMR-safe singleton, prepared-statement caching, schema CHECK, no-auth smoke tightening, Zod id constraints, test cleanup, close-on-failure, .gitignore WAL sidecars); 6 deferred; 4 dismissed. `test:unit` now 75/75 (was 72); `test:e2e` 16/16; lint clean; `lint:links` clean. Status `done`.

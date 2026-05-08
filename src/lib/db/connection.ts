@@ -9,9 +9,18 @@ import type { Database as DatabaseType } from "better-sqlite3";
 const REPO_ROOT = path.resolve(process.cwd());
 const DATA_DIR = path.join(REPO_ROOT, "data");
 const DEFAULT_DB_PATH = path.join(DATA_DIR, "progress.sqlite");
-const SCHEMA_PATH = path.join(REPO_ROOT, "src", "db", "schema.sql");
 
-let cached: DatabaseType | null = null;
+// Resolve schema relative to THIS module (not process.cwd()) so the path is
+// invariant under chdir, sub-directory invocations, and downstream tooling
+// that runs the codebase from a non-repo-root cwd. `import.meta.dirname` is
+// the module's own directory (Node 20.11+).
+const SCHEMA_PATH = path.resolve(import.meta.dirname, "..", "..", "db", "schema.sql");
+
+// Cache on globalThis so the singleton survives Next.js dev HMR reloads —
+// otherwise every edit reopens a second file handle and orphans the previous
+// one (on Windows, the WAL lock can also block the new handle).
+type GlobalDbCache = { __progressDb?: DatabaseType | null };
+const globalCache = globalThis as unknown as GlobalDbCache;
 
 /**
  * Open a fresh better-sqlite3 connection at `filename` and apply the
@@ -27,14 +36,20 @@ export function createDb(filename: string): DatabaseType {
   }
 
   const db = new Database(filename);
-  if (filename !== ":memory:") {
-    // WAL gives concurrent-read sanity for Server Components; in-memory
-    // doesn't support journal_mode = WAL.
-    db.pragma("journal_mode = WAL");
-  }
+  try {
+    if (filename !== ":memory:") {
+      // WAL gives concurrent-read sanity for Server Components; in-memory
+      // doesn't support journal_mode = WAL.
+      db.pragma("journal_mode = WAL");
+    }
 
-  const schema = readFileSync(SCHEMA_PATH, "utf8");
-  db.exec(schema);
+    const schema = readFileSync(SCHEMA_PATH, "utf8");
+    db.exec(schema);
+  } catch (err) {
+    // Don't leak the file handle if schema apply fails.
+    db.close();
+    throw err;
+  }
 
   return db;
 }
@@ -45,15 +60,15 @@ export function createDb(filename: string): DatabaseType {
  * their own connection.
  */
 export function getDb(): DatabaseType {
-  if (cached) return cached;
-  cached = createDb(DEFAULT_DB_PATH);
-  return cached;
+  if (globalCache.__progressDb) return globalCache.__progressDb;
+  globalCache.__progressDb = createDb(DEFAULT_DB_PATH);
+  return globalCache.__progressDb;
 }
 
 /** Test-only — close the cached connection so the next `getDb()` reopens. */
 export function __resetDbCacheForTests(): void {
-  if (cached) {
-    cached.close();
-    cached = null;
+  if (globalCache.__progressDb) {
+    globalCache.__progressDb.close();
+    globalCache.__progressDb = null;
   }
 }

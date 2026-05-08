@@ -20,6 +20,8 @@ next-env.d.ts
 *.sqlite3
 data/*.sqlite
 data/*.sqlite-journal
+data/*.sqlite-wal
+data/*.sqlite-shm
 
 # Capstone outputs (per-trainee runs)
 _bmad-output/capstone/[0-9]*/

@@ -20,5 +20,9 @@ CREATE TABLE IF NOT EXISTS progress (
   kind TEXT NOT NULL,
   id TEXT NOT NULL,
   completed_at TEXT NULL,
-  PRIMARY KEY (kind, id)
+  PRIMARY KEY (kind, id),
+  CHECK (
+    completed_at IS NULL
+    OR completed_at LIKE '____-__-__T%Z'
+  )
 );
