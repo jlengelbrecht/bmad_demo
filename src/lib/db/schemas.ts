@@ -85,3 +85,20 @@ export const ProgressUpsertRequest = z.discriminatedUnion("kind", [
 ]);
 
 export type ProgressUpsertRequest = z.infer<typeof ProgressUpsertRequest>;
+
+/**
+ * Request shape for `POST /api/capstone/save` (Story 4.2).
+ *
+ * Architecture line 397: `{ session: string, step: 'brief' | 'epic' |
+ * 'story-1' | 'story-2' | 'adr', content: string }`. `session` reuses
+ * the compact-UTC regex; `step` reuses the canonical step list — both
+ * are sourced from the constants above so the contract stays in sync
+ * with Story 4.1.
+ */
+export const CapstoneSaveRequest = z.object({
+  session: z.string().regex(CAPSTONE_SESSION_ID),
+  step: z.enum(CAPSTONE_STEP_NAMES),
+  content: z.string(),
+});
+
+export type CapstoneSaveRequest = z.infer<typeof CapstoneSaveRequest>;

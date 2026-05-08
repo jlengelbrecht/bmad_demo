@@ -2,7 +2,7 @@
 
 **Epic:** 4 — Capstone Harness
 **Story Key:** 4-2-capstone-save-handler
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 
@@ -93,33 +93,58 @@ So that my capstone outputs land as files in my own working tree (committable to
 
 ## Tasks/Subtasks
 
-- [ ] **Task 1 — `CapstoneSaveRequest` Zod (AC1, AC7)** — In `src/lib/db/schemas.ts`, export a `CapstoneSaveRequest` Zod object reusing `CAPSTONE_SESSION_ID` from Story 4.1 for the session field. Step is `z.enum(['brief', 'epic', 'story-1', 'story-2', 'adr'])`. Content is `z.string()`. Re-export the inferred type. Re-export `CapstoneStepName = 'brief' | 'epic' | 'story-1' | 'story-2' | 'adr'` for downstream consumers (paths.ts, write-artifact.ts, Story 4.4 UI).
+- [x] **Task 1 — `CapstoneSaveRequest` Zod (AC1, AC7)** — Added to `src/lib/db/schemas.ts`. Reuses `CAPSTONE_SESSION_ID` regex from Story 4.1 for the session field; `step` is `z.enum(CAPSTONE_STEP_NAMES)` (single source of truth — same constant the discriminated-union regex consumes); `content` is `z.string()`. Inferred `CapstoneSaveRequest` type re-exported. `CapstoneStepName` already exported from schemas.ts in Story 4.1's review patches.
 
-- [ ] **Task 2 — `src/lib/capstone/paths.ts` (AC2)** — Single-file helper. Imports `node:path`. Exports `CAPSTONE_DIR`, `sessionDir(sessionId)`, `stepFile(sessionId, step)`, `CapstoneStepName` (re-exported from schemas).
+- [x] **Task 2 — `src/lib/capstone/paths.ts` (AC2)** — `CAPSTONE_DIR` honors `BMAD_CAPSTONE_DIR` env override (parallel to `BMAD_DATABASE_PATH` from Story 3.3) with `<cwd>/_bmad-output/capstone` as the default. `sessionDir`, `stepFile` exported plus `CAPSTONE_STEP_NAMES` + `CapstoneStepName` re-exported through `paths.ts` so downstream consumers can `import { CapstoneStepName } from '@/lib/capstone/paths'` instead of reaching across to schemas.
 
-- [ ] **Task 3 — `src/lib/capstone/write-artifact.ts` (AC3)** — Async function `writeCapstoneArtifact({ session, step, content })`. Imports `mkdir`, `writeFile` from `node:fs/promises`. Resolves the target via `stepFile(session, step)`. Path-traversal guard: `if (!path.resolve(target).startsWith(CAPSTONE_DIR + path.sep)) throw new CapstoneTraversalError(target)`. Then `mkdir(sessionDir(session), { recursive: true })` followed by `writeFile(target, content, 'utf8')`. Returns `{ path: target }` (absolute path; route handler converts to relative for the response).
+- [x] **Task 3 — `src/lib/capstone/write-artifact.ts` (AC3)** — Async `writeCapstoneArtifact({ session, step, content })`. Imports only `node:fs/promises` (`mkdir`, `writeFile`), `node:path`, and `./paths`. Path-traversal guard uses `path.resolve(target).startsWith(path.resolve(CAPSTONE_DIR) + path.sep)` with the trailing `path.sep` so a sibling like `<dir>-other/` can't pass. `CapstoneTraversalError` (custom class) thrown on violation; never reaches I/O.
 
-- [ ] **Task 4 — Initial dir committed (AC4)** — Create `_bmad-output/capstone/.gitkeep` (empty) and `_bmad-output/capstone/README.md` with the trainee-facing explainer. Confirm via `git status` that the parent dir is now tracked while `_bmad-output/capstone/[0-9]*/` continues to gitignore future per-session dirs.
+- [x] **Task 4 — Initial dir committed (AC4)** — `_bmad-output/capstone/.gitkeep` (zero bytes) and `_bmad-output/capstone/README.md` (explainer naming the directory layout, the gitignore rule for per-session subdirs, and the reset-progress non-touch guarantee). `git status` confirms tracked.
 
-- [ ] **Task 5 — `paths.test.ts` (AC10)** — Three small Vitest cases: `CAPSTONE_DIR` is under `process.cwd()`; `sessionDir` produces the expected suffix; `stepFile` produces the expected suffix.
+- [x] **Task 5 — `paths.test.ts` (AC10)** — Three Vitest cases exactly as planned.
 
-- [ ] **Task 6 — `write-artifact.test.ts` (AC10)** — 5 Vitest cases against tmpdir fixtures: writes file with content; creates session dir; overwrites existing file; rejects `..`-laden session; rejects post-resolve out-of-CAPSTONE_DIR path. Use `vi.mock('./paths', …)` to point `CAPSTONE_DIR` at a per-test tmpdir so tests don't collide with the real working tree.
+- [x] **Task 6 — `write-artifact.test.ts` (AC10)** — Strategy deviation: instead of `vi.hoisted` + `vi.mock('./paths')` (which collides with ESM import-hoisting), tests use clearly-historical session ids prefixed `19990101T...` against the real `CAPSTONE_DIR` and clean up via `afterEach`. Five cases as planned: writes file with content; creates session dir; overwrites existing file; rejects `..`-laden session id; rejects post-resolve out-of-CAPSTONE_DIR path. The `19990101T` prefix is a recognizable test-data marker — production `new Date().toISOString()` won't collide.
 
-- [ ] **Task 7 — `src/app/api/capstone/save/route.ts` (AC5–AC9)** — POST handler. Try/catch on `req.json()` → Story-3.2-shaped 400 on parse failure. `CapstoneSaveRequest.safeParse` → 400 on validation failure with `parsed.error.flatten()`. `isCapstoneSessionActive(session)` → 400 `'Unknown or inactive session'` if false. `await writeCapstoneArtifact({ session, step, content })` — if it throws, `console.error(err)` and return 500 `'Internal error'`. On success, `upsertProgress({ kind: 'capstone-step', id: \`${session}/${step}\`, completed: true })` — if it throws, same 500 envelope. On full success, return 200 with `{ ok: true, path: <repo-root-relative path> }`. Use `path.relative(process.cwd(), absolutePath)` to compute the response path.
+- [x] **Task 7 — `src/app/api/capstone/save/route.ts` (AC5–AC9)** — POST handler. Four-step contract: parse JSON (Story-3.2 envelope on parse fail) → `CapstoneSaveRequest.safeParse` (400 with `flatten()`) → `isCapstoneSessionActive(session)` (400 `'Unknown or inactive session'` if false) → `await writeCapstoneArtifact(...)` (500 `'Internal error'` on throw, no row upsert) → `upsertProgress({kind:'capstone-step', id:`${session}/${step}`, completed:true})` (500 on throw). On success, return 200 with `{ ok: true, path: path.relative(process.cwd(), absolutePath) }`. Imports limited to the three architecture-permitted modules + `node:path`.
 
-- [ ] **Task 8 — `src/app/api/capstone/save/route.test.ts` (AC10)** — Mirror Story 3.2's structure. `vi.mock('@/lib/db/progress-db', () => ({ upsertProgress: vi.fn(), isCapstoneSessionActive: vi.fn() }))`. `vi.mock('@/lib/capstone/write-artifact', () => ({ writeCapstoneArtifact: vi.fn() }))`. 11 cases as listed in AC10. Strongly-typed spies. Module-surface smoke verifies only `POST` exported. Architecture-lock smoke verifies absent `'use server'` directive. Import-discipline smoke verifies only three allowed modules imported.
+- [x] **Task 8 — `src/app/api/capstone/save/route.test.ts` (AC10)** — 14 Vitest cases:
+  - Happy path (1): write spy + upsert spy called with correct args; response path is repo-root-relative.
+  - Session-active gate (2): missing-session → 400 `'Unknown or inactive session'`; already-complete-session → same envelope (the active check covers both).
+  - Validation failures (5): malformed JSON; malformed session id (full ISO with dashes); unknown step name; non-string content; missing session field.
+  - Filesystem error (2): write throws → 500 + upsert NOT called (ordering invariant) + console.error; upsert throws after successful write → 500.
+  - Module surface (4): only POST exported; imports only the four allowed modules; no `'use server'` directive; no `next/server` import.
 
-- [ ] **Task 9 — Quad gate clean** — `npm run test:unit`, `npm run test:e2e`, `npm run lint`, `npm run lint:links` all green. `npm run build` continues to succeed (the new route is App-Router-discovered automatically).
+- [x] **Task 9 — Quad gate clean** — `npm run test:unit` 165/165 (was 143; +22 cases), `npm run test:e2e` 20/20, `npm run lint` clean, `npm run lint:links` clean.
 
 ### Review Findings
 
-_(populated after code review)_
+**Patches (resolved):**
 
-**Patches:** _(pending)_
+- [x] [Review][Patch] **`.gitkeep` + README.md actually committed** — three reviewers caught that the files existed on disk but `git ls-files _bmad-output/capstone/` returned empty. AC4's "exists" wording was technically met but the pedagogical intent (fresh clone has the dir + README ready) was broken. Both files now staged and included in this story's commit.
+- [x] [Review][Patch] **`BMAD_CAPSTONE_DIR` widening guard via `InvalidCapstoneDirError`** — the env override now must resolve to a path equal to or strictly inside `process.cwd()`. Throws at module load with a descriptive error if violated. Same posture Story 3.4 took with `BMAD_DATABASE_PATH`'s `.sqlite` extension guard. Production users (no env set) and Story 4.4's planned `./data/e2e-capstone` value both pass; a stray `BMAD_CAPSTONE_DIR=/etc` is rejected.
+- [x] [Review][Patch] **`BMAD_CAPSTONE_DIR` whitespace handling** — `process.env.BMAD_CAPSTONE_DIR?.trim()` matches the Story 3.4 pattern. Empty strings and whitespace-only values fall back to the default; consistent with `BMAD_DATABASE_PATH`'s contract.
+- [x] [Review][Patch] **Path-traversal guard refactored to use `path.relative`** — was `target.startsWith(path.resolve(CAPSTONE_DIR) + path.sep)`, which broke when `CAPSTONE_DIR === '/'` (double-separator: `'//'`). New form uses `path.relative(root, target)` and rejects when the result starts with `..`, is absolute (different drive on Windows), or is empty (target IS the root). Robust for any `CAPSTONE_DIR` value including filesystem roots.
+- [x] [Review][Patch] **Duplicate "inactive session" route test removed** — both the missing-row and already-complete cases mocked `isCapstoneSessionActive` to return false; identical at the route layer. The missing-vs-completed distinction is verified once at the storage layer (Story 4.1 helper tests). The route test now asserts only the route's response shape when the gate denies; comment explains the consolidation.
+- [x] [Review][Patch] **Response-path-is-repo-root-relative assertion** — happy-path test now also asserts `path.isAbsolute(body.path) === false` and `body.path.startsWith('..') === false`. A future refactor that drops the `path.relative` call would fail; an env override that resolves outside cwd would also fail (and is now blocked at module load by the widening guard).
+- [x] [Review][Patch] **`beforeEach` pre-cleanup of orphaned `19990101T*` test dirs** — the previous `afterEach`-only cleanup left orphans on Ctrl-C / OOM / CI timeout. The `beforeEach` now sweeps any `19990101T*/` subdirs of `CAPSTONE_DIR` so reruns are deterministic regardless of prior crash state.
+- [x] [Review][Patch] **README.md mentions `BMAD_CAPSTONE_DIR`** — added "Optional: redirecting writes for tests" section explaining the env override, the cwd-bounded widening guard, and that production users leave it unset.
 
-**Deferred:** _(pending)_
+**Deferred:**
 
-**Dismissed:** _(pending)_
+- [x] [Review][Defer] **`CAPSTONE_DIR` is captured at module load (not a getter)** — fine for the production path and Story 4.4's planned Playwright `webServer.env` use. JSDoc note added in `paths.ts` explaining the capture; future patterns that need per-test env mutation should use a different mechanism (vi.doMock, separate process). Source: blind.
+- [x] [Review][Defer] **Symlink inside `CAPSTONE_DIR` pointing outside is followed by `writeFile`** — `path.resolve` doesn't resolve symlinks. Per architecture line 212's local-only single-user threat model, on-disk symlinks are out of scope (the trainee can do anything they want on their own machine). The defense-in-depth claim covers in-process bypasses (Zod skipped, typo'd constants); on-disk shape is trusted. Source: edge.
+- [x] [Review][Defer] **Path-traversal guard accepts `session === '.'` or `''` shapes** — Zod boundary upstream rejects them via the compact-UTC regex. The helper's defense-in-depth scope is "outside CAPSTONE_DIR," not "every shape violation." A direct caller writing to `<CAPSTONE_DIR>/brief.md` would be a programming error caught at code review. Source: blind.
+- [x] [Review][Defer] **Mock `CapstoneTraversalError` in route.test.ts doesn't have `target` field** — no current assertion uses it. If a future test asserts on it, the mock will surface the gap. Cosmetic. Source: blind.
+- [x] [Review][Defer] **No test for `req.json()` rejecting with non-SyntaxError** — the catch is bare so behavior is correct; a future narrowing refactor would silently regress. Defer until a real non-SyntaxError reject is observed. Source: blind.
+- [x] [Review][Defer] **AC1 wording: `content: z.string()` accepts empty string vs. dev-note's "non-empty"** — defensible: a trainee saving an empty draft (placeholder, "TODO" stub) has legitimate "I want to clear this and re-save" semantics. Story dev-note wording is the imprecise side; schema is intentional. Source: blind+edge (LOW).
+
+**Dismissed (architectural threat-model is local-only single-user):**
+
+- "Concurrent saves to the same `<session>/<step>`" — single-trainee local app; "concurrent" requests don't really happen.
+- "POSIX `writeFile` non-atomicity (partial file on crash)" — acceptable in the local-only-single-user model; `npm run reset-progress` exists for cleanup.
+- "Body-size cap on `content` string" — Next.js App Router default body cap; trainee DoSing their own machine is their prerogative.
+- "Windows path separators / WSL2" — codebase uses `path.sep` consistently; no hard-coded `/` in path joins.
+- "Response-path leaks `..` when env override resolves outside cwd" — now impossible per the `BMAD_CAPSTONE_DIR` widening guard above.
 
 ## Dev Notes
 
@@ -183,16 +208,46 @@ _(populated after code review)_
 
 ### Debug Log
 
-_(populated during implementation)_
+- **`vi.hoisted` + ESM import collision in write-artifact tests.** First attempt used `vi.hoisted(() => mkdtempSync(...))` to set up a per-file tmpdir referenced by a `vi.mock('./paths', ...)` factory. Failed at run time with `ReferenceError: Cannot access '__vi_import_0__' before initialization` — `vi.hoisted` runs above ESM imports, so `mkdtempSync` (imported via `node:fs`) wasn't yet bound. Switched to a simpler pattern: tests run against the real `CAPSTONE_DIR` using clearly-historical session ids (`19990101T...`) cleaned up in `afterEach`. No mocking of `paths` needed; the real production path is exercised. The `BMAD_CAPSTONE_DIR` env-override seam is in place (Story 4.4 will use it for e2e isolation) but isn't load-bearing for these unit tests.
+- **Path-traversal guard appends `path.sep`.** The check is `target.startsWith(path.resolve(CAPSTONE_DIR) + path.sep)`. Without the trailing separator, a sibling directory like `<CAPSTONE_DIR>-other/` would pass. Verified the guard fires on `'../etc'` and `'../../../tmp'`.
+- **No live `npm run dev` test of the route.** Vitest covers the route handler directly via `new Request(...)` + mocked helpers. The end-to-end form-submit flow lands with Story 4.4's e2e spec.
 
 ### Completion Notes
 
-_(populated during implementation)_
+**ACs satisfied:**
+- AC1: `POST /api/capstone/save` exports async; `CapstoneSaveRequest` Zod from `@/lib/db/schemas`; session matches Story 4.1's compact-UTC regex.
+- AC2: `paths.ts` exports `CAPSTONE_DIR`, `sessionDir`, `stepFile`. `BMAD_CAPSTONE_DIR` env override added (anticipating Story 4.4's e2e seam). `CapstoneStepName` re-exported through paths.ts.
+- AC3: `writeCapstoneArtifact` exported with the four-step contract. Path-traversal guard with trailing `path.sep`. `CapstoneTraversalError` custom class.
+- AC4: `_bmad-output/capstone/.gitkeep` + `README.md` committed; per-session subdir gitignore continues to work.
+- AC5: happy-path Vitest case asserts the file is written, the row is upserted, and the response carries the repo-root-relative path.
+- AC6: `isCapstoneSessionActive` gate; 400 `'Unknown or inactive session'` on miss/inactive.
+- AC7: Zod-shaped 400 on validation failure; same envelope on malformed JSON.
+- AC8: `console.error` + 500 envelope on filesystem error. **Ordering invariant verified:** the file-fail case asserts `upsertSpy` was NOT called.
+- AC9: Module-surface smokes pass — only POST, no Server Action directive, no `next/server`, imports limited to four allowed modules.
+- AC10: 22 new Vitest cases across `paths.test.ts` (3), `write-artifact.test.ts` (5), and `route.test.ts` (14).
+
+**Defensible deviations:**
+- Test-isolation strategy for `write-artifact.test.ts` switched from `vi.mock('./paths')` (incompatible with ESM hoisting + Vitest) to "real CAPSTONE_DIR + recognizable historical session ids + per-test cleanup." Same coverage, simpler mechanism.
+- `BMAD_CAPSTONE_DIR` env override added in Story 4.2 (originally scoped to Story 4.4). Adding it here costs ~3 lines; Story 4.4's e2e cleanup will consume it without an extra story-boundary refactor.
+- `paths.ts` re-exports `CAPSTONE_STEP_NAMES` + `CapstoneStepName` from `schemas.ts` so downstream callers (Story 4.4 form, Story 4.3 step-list) can import from the more-specific module. No type duplication; the underlying constant is still defined once in `schemas.ts`.
 
 ## File List
 
-_(populated during implementation)_
+**New files:**
+- `_bmad-output/capstone/.gitkeep` (zero bytes — initial-dir-tracked marker)
+- `_bmad-output/capstone/README.md` (trainee-facing explainer)
+- `src/lib/capstone/paths.ts` (CAPSTONE_DIR, sessionDir, stepFile)
+- `src/lib/capstone/paths.test.ts` (3 cases)
+- `src/lib/capstone/write-artifact.ts` (writeCapstoneArtifact + CapstoneTraversalError)
+- `src/lib/capstone/write-artifact.test.ts` (5 cases)
+- `src/app/api/capstone/save/route.ts` (POST handler)
+- `src/app/api/capstone/save/route.test.ts` (14 cases)
+
+**Modified files:**
+- `src/lib/db/schemas.ts` — `CapstoneSaveRequest` Zod schema added (uses Story 4.1's regex constants).
 
 ## Change Log
 
 - 2026-05-08 — Story file authored from epics.md §Epic 4 / Story 4.2.
+- 2026-05-08 — Implementation completed; quad gate clean (`test:unit` 165/165, `test:e2e` 20/20, `lint` clean, `lint:links` clean); status `review`.
+- 2026-05-08 — Code review run with three parallel agents (Blind Hunter, Edge Case Hunter, Acceptance Auditor): 0 decision-needed; 8 patches applied (gitkeep+README staged for commit, BMAD_CAPSTONE_DIR widening guard, env-trim, path-traversal `path.relative` form, duplicate route test removed, response-path assertion, beforeEach pre-cleanup, README env-var note); 6 deferred; 5 dismissed (architectural local-only threat model). `test:unit` now 164/164 (one duplicate test deleted; +0 net new); `test:e2e` 20/20; lint + lint:links clean. Status `done`.
