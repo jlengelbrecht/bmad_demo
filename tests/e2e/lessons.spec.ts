@@ -49,9 +49,7 @@ test.describe("lesson route (Story 2.2)", () => {
     await expect(page.getByLabel(/^Next: /)).toHaveCount(0);
   });
 
-  test("keyboard tab order: prev → next (top), then content links, then prev → next (bottom)", async ({
-    page,
-  }) => {
+  test("keyboard tab order: header → prev (top) → next (top)", async ({ page }) => {
     await page.goto("/lessons/3-stories-as-tool-agnostic-contract");
 
     // Focus the document body so Tab starts from the document beginning.
@@ -64,11 +62,15 @@ test.describe("lesson route (Story 2.2)", () => {
         return null;
       });
 
-    // First tab → top Previous link
+    // First tab → site header home link (Story walkability fix)
+    await page.keyboard.press("Tab");
+    expect(await focusedHref()).toBe("/");
+
+    // Second tab → top Previous link
     await page.keyboard.press("Tab");
     expect(await focusedHref()).toBe("/lessons/2-the-artifact-chain");
 
-    // Second tab → top Next link
+    // Third tab → top Next link
     await page.keyboard.press("Tab");
     expect(await focusedHref()).toBe("/lessons/4-codeowners-and-the-gate");
   });

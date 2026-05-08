@@ -20,4 +20,6 @@ Total: roughly 3 hours self-paced, or one half-day if run as a team workshop.
 
 ## Begin
 
-Open Lesson 1 to start the curriculum. The lessons render through this same portal — there is no signup, no account, no remote service. The local user is trusted; the gate that protects shared work is `CODEOWNERS`, taught in Lesson 4.
+The lessons render through this same portal — there is no signup, no account, no remote service. The local user is trusted; the gate that protects shared work is `CODEOWNERS`, taught in Lesson 4.
+
+**[Begin Lesson 1 — What is BMAD →](/lessons/1-what-is-bmad)**
