@@ -70,3 +70,11 @@
 - **`rehype-autolink-headings` `#` text node read by screen readers** — already deferred from Story 2.1; Epic 5 axe will surface.
 - **`gray-matter` parses the same source twice per request** (once in `generateMetadata`, once in `<Markdown>`) — perf concern; revisit alongside the caching pass.
 - **AC5 only one nonsense slug tested** — adequate per the auditor's LOW grade.
+
+## Deferred from: code review of 2-4-link-integrity-scan (2026-05-08)
+
+- **Extension-less link `[X](./README)` not probed for `.md` fallback** — GitHub-style implicit-extension matching is ambiguous; `existsSync` matching the verbatim path matches the AC literal. Revisit if the curriculum starts using ext-less links.
+- **Case-insensitive FS skew (macOS APFS vs Linux ext4)** — same shape across all link-checking helpers. Address alongside Epic 5's cross-platform CI matrix.
+- **No Vitest assertion of stdout-summary string or stream-split for the CLI** — live-tree smoke covers it; format string isn't AC-mandated verbatim.
+- **Failure-path summary doesn't print `linksScanned`** — cosmetic; defer the format polish.
+- **Embedded raw HTML `<a href>` / `<img src>` in markdown not extracted** — remark parses these as `html` nodes; visit on `link/image/definition` skips them. Curriculum is plain-markdown by convention; document explicitly if curriculum ever leans on inline HTML.

@@ -2,7 +2,7 @@
 
 **Epic:** 2 — Lesson Navigation & Self-Reference Link Integrity
 **Story Key:** 2-4-link-integrity-scan
-**Status:** review
+**Status:** done
 
 ## Story
 
@@ -45,6 +45,35 @@ So that lesson prose silently rotting as artifacts evolve becomes a CI failure, 
 - [x] **Task 5 — `src/lib/markdown/check-links.test.ts`** — 9 Vitest cases via tmpdir fixtures: happy path, broken-target diagnostic shape, http/https/mailto skip, anchor-only skip, site-absolute skip, URL-encoded path resolution, fragment+query stripping, alphabetical traversal, subdirectory recursion.
 - [x] **Task 6 — Live-tree smoke** — `npm run lint:links` exits 0 against the committed tree (12 markdown files / 0 relative links — placeholders have no inter-file links yet).
 - [x] **Task 7 — Quad gate clean** — `test:unit` 35/35, `test:e2e` 16/16, `lint` clean, `lint:links` clean.
+
+### Review Findings
+
+**Patches (resolved):**
+
+- [x] [Review][Patch] **Visit `link` + `image` + `definition`** — three new test cases prove broken `![diagram](./missing.png)`, `[ref][missing-ref]` + `[missing-ref]: ./not-here.md`, and bare relative forms are now caught.
+- [x] [Review][Patch] **Empty href no longer increments `linksScanned`** — short-circuited via `if (!cleaned) return` BEFORE the counter increment.
+- [x] [Review][Patch] **Symlink cycle protection** — `walkMarkdownFiles` skips `entry.isSymbolicLink()`. Test creates a self-loop symlink and verifies the scan still completes.
+- [x] [Review][Patch] **Hidden directories and `node_modules` skipped** — two new test cases prove a `.cache/` dir and a `node_modules/` dir under the scan root are walked past, not recursed into.
+- [x] [Review][Patch] **`readFileSync` guarded** — try/catch surfaces the file as an `unreadable` problem with a dev-mode warning naming the path; the scan continues.
+- [x] [Review][Patch] **Missing-root config error throws `MissingRootError`** — CLI catches and exits 1 with `❌ link-integrity: configured root does not exist: <path>`. Test asserts the rejection. Typos in `ROOTS` no longer produce false-green passes.
+- [x] [Review][Patch] **CLI resolves paths against the script directory** — `path.dirname(fileURLToPath(import.meta.url))` + `..` gives a stable repo root; `ROOTS` is `path.join(repoRoot, "training")`. Diagnostics use `path.relative(repoRoot, problem.file)` so output is consistent regardless of `process.cwd()`.
+- [x] [Review][Patch] **Directory targets flagged via `statSync(resolved).isDirectory()`** — collapsed `existsSync` + `statSync` into one syscall; `LinkProblem` gains a `reason: "missing" \| "directory" \| "unreadable"` discriminator. Test proves `[x](./labs)` produces a `directory`-reason problem.
+- [x] [Review][Patch] **Backslash-normalization branch covered by a test** — case writes `[bs](./nested\target.md)` and asserts the resolution succeeds.
+- [x] [Review][Patch] **Bare relative path covered by a test** — case writes `[good](.github/CODEOWNERS)` (resolves) and `[bad](.github/MISSING)` (broken); only the second appears in `problems`.
+
+**Deferred:**
+
+- [x] [Review][Defer] **Extension-less link `[X](./README)` not probed for `.md` fallback** — GitHub-style implicit-extension matching is ambiguous; `existsSync` matching the verbatim path matches the AC literal. Revisit if the curriculum starts using ext-less links. Source: edge.
+- [x] [Review][Defer] **Case-insensitive FS skew (macOS APFS vs Linux ext4)** — already deferred under "Deferred from Story 2.1" and "Deferred from Story 2.3"; same shape across all link-checking helpers. Will be addressed alongside the Epic 5 cross-platform CI matrix. Source: blind+edge.
+- [x] [Review][Defer] **No Vitest assertion of stdout-summary string or stream-split** — live-tree smoke covers it; format string isn't AC-mandated verbatim. Source: auditor (LOW).
+- [x] [Review][Defer] **Failure-path summary doesn't print `linksScanned`** — cosmetic; defer the format polish. Source: blind.
+- [x] [Review][Defer] **Embedded raw HTML `<a href>` / `<img src>` in markdown are out of scope** — remark parses these as `html` nodes; visit on `link/image/definition` skips them. Document in the script header. Lower priority — curriculum content is plain markdown by convention. Source: edge.
+
+**Dismissed:**
+
+- "`remark-gfm` adds no value to link extraction" — keeping the parser shape parallel with the runtime markdown pipeline (Story 2.1) is itself the value; if a future curriculum uses GFM-specific link forms, this saves a future fix.
+- "Tests couple to output ordering, not file-visitation order" — the returned `problems` order IS the visitation-derived order; coupling on it is fine.
+- "AC text drift on `.github/MISSING` example" — adequately covered by the new patch (test added).
 
 ## Dev Notes
 
@@ -112,3 +141,4 @@ Skipping anchor-only fragments by design rather than resolving against headings.
 ## Change Log
 - 2026-05-08 — Story file authored from epics.md §Epic 2 / Story 2.4
 - 2026-05-08 — Implementation completed; quad gate clean; status `review`
+- 2026-05-08 — Code review run: 0 decision-needed; 10 patches applied (image+ref-link+definition coverage, empty-href short-circuit, symlink cycle guard, hidden+node_modules skip, readFileSync try/catch, MissingRootError on missing root, script-dir-anchored ROOTS+diagnostics, directory-target flag, backslash-normalization test, bare-relative test); 5 deferred; 3 dismissed. `test:unit` now 44/44 (was 35); `test:e2e` 16/16; lint clean; `lint:links` clean. Status `done`.
