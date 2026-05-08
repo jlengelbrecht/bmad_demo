@@ -72,6 +72,7 @@ export default async function LessonPage({
       />
       <Markdown source={source} sourcePath={lesson.filePath} />
       <LessonCompleteButton
+        key={`lesson:${slug}:${!!progress?.completedAt}`}
         kind="lesson"
         id={slug}
         initialCompleted={!!progress?.completedAt}

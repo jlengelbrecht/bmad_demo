@@ -58,6 +58,7 @@ export default async function LabPage({
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
       <Markdown source={content.source} sourcePath={content.sourcePath} />
       <LessonCompleteButton
+        key={`lab:${slug}:${!!progress?.completedAt}`}
         kind="lab"
         id={slug}
         initialCompleted={!!progress?.completedAt}

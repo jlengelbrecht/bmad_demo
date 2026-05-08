@@ -60,8 +60,14 @@ export function LessonNav({
           {sequence.map((lesson) => {
             const isCurrent = lesson.slug === current.slug;
             const isComplete = completedSlugs?.has(lesson.slug) ?? false;
-            const stateLabel = isCurrent ? "current" : isComplete ? "completed" : "not started";
-            const ariaLessonLabel = `Lesson ${lesson.number} — ${lesson.title}, ${stateLabel}`;
+            // Accessible name carries every state that applies — a current lesson
+            // that is also completed gets both ", current, completed" so the SR
+            // user doesn't lose the completion signal on the pill they're on.
+            const stateParts: string[] = [];
+            if (isCurrent) stateParts.push("current");
+            if (isComplete) stateParts.push("completed");
+            if (stateParts.length === 0) stateParts.push("not started");
+            const ariaLessonLabel = `Lesson ${lesson.number} — ${lesson.title}, ${stateParts.join(", ")}`;
             return (
               <li key={lesson.slug}>
                 <Link
@@ -75,6 +81,9 @@ export function LessonNav({
                       : isComplete
                         ? "border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200"
                         : "border-zinc-300 bg-white text-zinc-600 hover:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300",
+                    // Visual signal for current AND completed: emerald ring around the
+                    // dark current pill so glance-readers see both states at once.
+                    isCurrent && isComplete ? "ring-2 ring-emerald-500 ring-offset-1 dark:ring-offset-zinc-900" : "",
                   ].join(" ")}
                 >
                   <span aria-hidden>{isComplete && !isCurrent ? "✓" : lesson.number}</span>

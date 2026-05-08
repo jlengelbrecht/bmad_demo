@@ -6,15 +6,27 @@ import type { Page } from "@playwright/test";
 // to the baseline at the end) so the e2e DB stays predictable across runs.
 
 /**
- * Click a mark-complete button and wait for the API response to land.
- * Without this, optimistic UI updates flip the button before the row is
- * actually persisted — a subsequent navigation/reload can race ahead of
- * the write and read stale state from the DB.
+ * Click a mark-complete button and wait for THIS click's `/api/progress`
+ * POST response to land. The body match (`kind` + `id`) avoids resolving on
+ * a stray POST from an unrelated test or a future feature that also writes
+ * progress in the same browser context.
  */
-async function clickAndWaitForPersist(page: Page, button: ReturnType<Page["getByRole"]>) {
-  const responsePromise = page.waitForResponse(
-    (res) => res.url().endsWith("/api/progress") && res.request().method() === "POST",
-  );
+async function clickAndWaitForPersist(
+  page: Page,
+  button: ReturnType<Page["getByRole"]>,
+  expected: { kind: string; id: string },
+) {
+  const responsePromise = page.waitForResponse((res) => {
+    if (!res.url().endsWith("/api/progress")) return false;
+    if (res.request().method() !== "POST") return false;
+    let body: { kind?: string; id?: string } | null = null;
+    try {
+      body = res.request().postDataJSON() as { kind?: string; id?: string };
+    } catch {
+      return false;
+    }
+    return body?.kind === expected.kind && body?.id === expected.id;
+  });
   await button.click();
   const res = await responsePromise;
   expect(res.status()).toBe(200);
@@ -22,52 +34,52 @@ async function clickAndWaitForPersist(page: Page, button: ReturnType<Page["getBy
 
 test.describe("mark-complete (Story 3.3)", () => {
   test("lesson: click toggles button + persists across reload + toggles off", async ({ page }) => {
-    await page.goto("/lessons/2-the-artifact-chain");
+    const slug = "2-the-artifact-chain";
+    await page.goto(`/lessons/${slug}`);
 
-    const markBtn = page.getByRole("button", { name: /Mark lesson as complete/ });
+    const markBtn = page.getByRole("button", { name: "Mark complete" });
     await expect(markBtn).toBeVisible();
 
     // Click → optimistic update + persists.
-    await clickAndWaitForPersist(page, markBtn);
-    const completedBtn = page.getByRole("button", { name: /Unmark lesson as complete/ });
+    await clickAndWaitForPersist(page, markBtn, { kind: "lesson", id: slug });
+    const completedBtn = page.getByRole("button", { name: /Completed/ });
     await expect(completedBtn).toBeVisible();
     await expect(completedBtn).toHaveText(/Completed/);
 
     // Reload — the Server Component reads progress server-side.
     await page.reload();
-    await expect(page.getByRole("button", { name: /Unmark lesson as complete/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Completed/ })).toBeVisible();
 
     // Cleanup: toggle off.
     await clickAndWaitForPersist(
       page,
-      page.getByRole("button", { name: /Unmark lesson as complete/ }),
+      page.getByRole("button", { name: /Completed/ }),
+      { kind: "lesson", id: slug },
     );
-    await expect(page.getByRole("button", { name: /Mark lesson as complete/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Mark complete" })).toBeVisible();
   });
 
   test("lab: 'Mark this lab as run' toggles + persists", async ({ page }) => {
-    await page.goto("/labs/solo");
+    const slug = "solo";
+    await page.goto(`/labs/${slug}`);
 
-    const markBtn = page.getByRole("button", { name: /Mark lab as run/ });
+    const markBtn = page.getByRole("button", { name: "Mark this lab as run" });
     await expect(markBtn).toBeVisible();
-    await expect(markBtn).toHaveText(/Mark this lab as run/);
 
-    await clickAndWaitForPersist(page, markBtn);
-    await expect(page.getByRole("button", { name: /Unmark lab as run/ })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Unmark lab as run/ })).toHaveText(
-      /Lab marked run/,
-    );
+    await clickAndWaitForPersist(page, markBtn, { kind: "lab", id: slug });
+    await expect(page.getByRole("button", { name: /Lab marked run/ })).toBeVisible();
 
     // Reload + persistence.
     await page.reload();
-    await expect(page.getByRole("button", { name: /Unmark lab as run/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Lab marked run/ })).toBeVisible();
 
     // Cleanup.
     await clickAndWaitForPersist(
       page,
-      page.getByRole("button", { name: /Unmark lab as run/ }),
+      page.getByRole("button", { name: /Lab marked run/ }),
+      { kind: "lab", id: slug },
     );
-    await expect(page.getByRole("button", { name: /Mark lab as run/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Mark this lab as run" })).toBeVisible();
   });
 
   test("LessonNav shows checkmark on completed lesson pills", async ({ page }) => {
@@ -75,9 +87,10 @@ test.describe("mark-complete (Story 3.3)", () => {
     await page.goto("/lessons/1-what-is-bmad");
     await clickAndWaitForPersist(
       page,
-      page.getByRole("button", { name: /Mark lesson as complete/ }),
+      page.getByRole("button", { name: "Mark complete" }),
+      { kind: "lesson", id: "1-what-is-bmad" },
     );
-    await expect(page.getByRole("button", { name: /Unmark lesson as complete/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Completed/ })).toBeVisible();
 
     // Navigate to lesson 3; the nav pill for lesson 1 should carry the
     // 'completed' state in its accessible name.
@@ -91,9 +104,10 @@ test.describe("mark-complete (Story 3.3)", () => {
     await page.goto("/lessons/1-what-is-bmad");
     await clickAndWaitForPersist(
       page,
-      page.getByRole("button", { name: /Unmark lesson as complete/ }),
+      page.getByRole("button", { name: /Completed/ }),
+      { kind: "lesson", id: "1-what-is-bmad" },
     );
-    await expect(page.getByRole("button", { name: /Mark lesson as complete/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Mark complete" })).toBeVisible();
   });
 
   test("optimistic revert: stubbed 500 reverts the button + surfaces an error", async ({
@@ -113,12 +127,12 @@ test.describe("mark-complete (Story 3.3)", () => {
     });
 
     await page.goto("/lessons/4-codeowners-and-the-gate");
-    const markBtn = page.getByRole("button", { name: /Mark lesson as complete/ });
+    const markBtn = page.getByRole("button", { name: "Mark complete" });
     await expect(markBtn).toBeVisible();
     await markBtn.click();
 
     // Button reverts to the "Mark complete" state…
-    await expect(page.getByRole("button", { name: /Mark lesson as complete/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Mark complete" })).toBeVisible();
     // …and an inline error message surfaces.
     await expect(page.getByText(/Couldn.t save/)).toBeVisible();
   });

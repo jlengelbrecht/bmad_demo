@@ -79,6 +79,17 @@
 - **Failure-path summary doesn't print `linksScanned`** — cosmetic; defer the format polish.
 - **Embedded raw HTML `<a href>` / `<img src>` in markdown not extracted** — remark parses these as `html` nodes; visit on `link/image/definition` skips them. Curriculum is plain-markdown by convention; document explicitly if curriculum ever leans on inline HTML.
 
+## Deferred from: code review of 3-3-mark-complete-ui (2026-05-08)
+
+- **AC2 "toast" → inline `<span role="status">`** — original epics.md says "toast surfaces an error message"; impl uses inline span with `role="status" aria-live="polite"`. Architecture's "smallest interactive surface" lock argues against a toast component. Defensible deviation; documented in story.
+- **Discarded server error body on non-2xx** — handler returns Zod-flattened `details`; client shows generic "Couldn't save". Parse for richer UX when feedback identifies friction.
+- **`fetch` follows redirects by default** — set `redirect: 'error'` if a hosted target ever appears.
+- **`SCHEMA_PATH` Turbopack fallback branch has no direct unit test** — covered transitively by Playwright.
+- **Module-level `DEFAULT_DB_PATH` evaluated at import time** — env var must be set before module load. Playwright wires this; no other paths need it today.
+- **Emerald color contrast on pill text/bg** — borderline AAA; Epic 5 axe is the gate.
+- **Comma-in-lesson-title aria-label split** — current 6 titles have no commas.
+- **`expect(res.status()).toBe(200)` brittle if route ever returns 201** — current handler always returns 200.
+
 ## Deferred from: code review of 3-2-progress-route-handler (2026-05-08)
 
 - **`flatten().fieldErrors` echoes field names back to the client** — fine while the schema only has `kind`, `id`, `completed`. Revisit if `ProgressUpsertRequest` ever gains an internal-only field.
