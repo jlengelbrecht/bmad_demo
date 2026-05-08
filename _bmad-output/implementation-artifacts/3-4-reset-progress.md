@@ -2,7 +2,7 @@
 
 **Epic:** 3 — Trainee Progress State & Reset
 **Story Key:** 3-4-reset-progress
-**Status:** review
+**Status:** done
 
 ## Story
 
@@ -45,6 +45,28 @@ So that I can recover from any progress-state error within one minute, without l
 - [x] **Task 3 — `package.json`** — `"reset-progress": "tsx scripts/reset-progress.ts"`. Live-tested: `npm run reset-progress` prints the no-op message against the dev tree (where `data/progress.sqlite` doesn't exist) and is idempotent on second run.
 - [x] **Task 4 — `src/lib/db/reset-progress.test.ts`** — 4 Vitest cases against tmpdir fixtures (deletes main, no-op when missing, deletes all 3 sidecars, cleans stale sidecars when main is missing) plus 4 source-string smokes against the CLI (no `_bmad-output` reference, no `process.argv`, only `node:` / project-internal imports, no Next.js runtime / `better-sqlite3`).
 - [x] **Task 5 — Quad gate clean** — `test:unit` 104/104 (was 96), `test:e2e` 20/20, `lint` clean, `lint:links` clean.
+
+### Review Findings
+
+**Patches (resolved):**
+
+- [x] [Review][Patch] **Env-var guard added** — extracted `resolveProgressTarget({ envPath, defaultPath })` to `src/lib/db/reset-progress.ts`. Throws `InvalidProgressPathError` when the resolved env path doesn't end in `.sqlite`. Live-smoked: `BMAD_DATABASE_PATH=/etc/passwd npm run reset-progress` now exits 1 with `Reset failed: BMAD_DATABASE_PATH must point to a .sqlite file (got /etc/passwd)`.
+- [x] [Review][Patch] **`safeUnlink` helper** — wraps each `unlinkSync` in try/catch. ENOENT (TOCTOU race or already-cleaned-up sidecar) is silently absorbed and returns `false`. Other errors (EISDIR, EACCES, EBUSY, …) surface so the CLI can render a useful message. The `existsSync` pre-check is gone (the unlink-and-catch pattern is atomic). New Vitest case asserts `EISDIR` surfaces when target is a directory.
+- [x] [Review][Patch] **`resolveProgressTarget` Vitest coverage** — 6 new cases: undefined env → default, empty/whitespace env → default, relative env resolved to absolute, absolute `.sqlite` accepted verbatim, non-`.sqlite` env rejected with `InvalidProgressPathError`, `.db` extension rejected.
+- [x] [Review][Patch] **CLI graceful error handling** — `main()` wrapped in try/catch; on throw, prints `Reset failed: <msg>` to stderr and returns exit 1. The trainee-facing UX is now a clear one-line message instead of a stack trace.
+- [x] [Review][Patch] **AC6 round-trip pinned at the unit-test layer** — new Vitest case in `reset-progress.test.ts` exercises the chain directly: `createDb(target)` → schema applied → close → `resetProgressAt(target)` → file gone → `createDb(target)` again → schema re-applied → table empty. The "previously-completed lessons read as not-completed" half of AC6 is the row-count assertion at the end. AC6 is no longer "covered transitively"; it's covered.
+
+**Deferred:**
+
+- [x] [Review][Defer] **Source-string smokes are bypassable via string concat / template literals** — the smokes are drift-detection lints, not malicious-code defenses. A future maintainer accidentally adding `_bmad-output` would be caught; theoretical bypass isn't a real attack surface in this repo. Source: blind.
+- [x] [Review][Defer] **Symlink-pointed-at-arbitrary-file** — `unlinkSync` removes the link, not the target. Safe by default. Source: edge.
+- [x] [Review][Defer] **`import.meta.dirname` in the test file** — same concern Story 3.1 hit; Vitest populates it; we're committed to Vitest. Source: edge.
+- [x] [Review][Defer] **AC2 `Deleted: ` prefix** — AC literal says "prints the absolute path that was deleted". The implementation prints the path with a `Deleted:` label that adds context. Defensible — the path is in the output. Source: auditor (LOW).
+
+**Dismissed:**
+
+- "Concurrent invocations" — second one's `existsSync` returns false; prints no-op message. Correct behavior, not a bug.
+- "Whitespace-only `BMAD_DATABASE_PATH=' '`" — already handled (`.trim().length > 0` rejects).
 
 ## Dev Notes
 
@@ -109,3 +131,4 @@ A direct test that runs `npm run reset-progress && npm run dev && verify state` 
 ## Change Log
 - 2026-05-08 — Story file authored from epics.md §Epic 3 / Story 3.4
 - 2026-05-08 — Implementation completed; quad gate clean; status `review`
+- 2026-05-08 — Code review run: 0 decision-needed; 5 patches applied (env-var `.sqlite` guard, safeUnlink helper, resolveProgressTarget tests, CLI try/catch, AC6 round-trip Vitest); 4 deferred; 2 dismissed. `test:unit` 112/112 (was 104); `test:e2e` 20/20; lint clean; `lint:links` clean. Live smokes confirmed: `npm run reset-progress` no-op message; `BMAD_DATABASE_PATH=/etc/passwd npm run reset-progress` rejects with `Reset failed: …`. Status `done`.

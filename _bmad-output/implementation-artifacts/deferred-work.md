@@ -79,6 +79,13 @@
 - **Failure-path summary doesn't print `linksScanned`** — cosmetic; defer the format polish.
 - **Embedded raw HTML `<a href>` / `<img src>` in markdown not extracted** — remark parses these as `html` nodes; visit on `link/image/definition` skips them. Curriculum is plain-markdown by convention; document explicitly if curriculum ever leans on inline HTML.
 
+## Deferred from: code review of 3-4-reset-progress (2026-05-08)
+
+- **Source-string smokes are bypassable via string concat / template literals** — drift-detection lints, not malicious-code defenses. Fine for a single-maintainer repo.
+- **Symlink-pointed-at-arbitrary-file** — `unlinkSync` removes the link, not the target. Safe.
+- **`import.meta.dirname` in test file** — Vitest populates it; we're committed to Vitest.
+- **AC2 `Deleted: ` prefix** — AC literal says "prints the absolute path"; we print path with a "Deleted:" label that adds context. Defensible.
+
 ## Deferred from: code review of 3-3-mark-complete-ui (2026-05-08)
 
 - **AC2 "toast" → inline `<span role="status">`** — original epics.md says "toast surfaces an error message"; impl uses inline span with `role="status" aria-live="polite"`. Architecture's "smallest interactive surface" lock argues against a toast component. Defensible deviation; documented in story.
