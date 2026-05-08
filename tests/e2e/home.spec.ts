@@ -37,11 +37,12 @@ test.describe("home page (Story 1.2)", () => {
     await page.goto("/");
     await page.getByRole("link", { name: /Trainee — Start Here/ }).click();
     await expect(page).toHaveURL("/start-here");
-    await expect(page.locator("h1")).toHaveText("Trainee — Start Here");
+    // Markdown rendering prepends a `#` anchor link inside the heading; assert containment.
+    await expect(page.locator("h1")).toContainText("Trainee — Start Here");
   });
 });
 
-test.describe("placeholder destination routes (Story 1.2 + 1.3)", () => {
+test.describe("audience-entry routes (Story 2.3)", () => {
   for (const { path, h1, title } of [
     {
       path: "/start-here",
@@ -59,14 +60,13 @@ test.describe("placeholder destination routes (Story 1.2 + 1.3)", () => {
       title: "Facilitator — Workshop Guide · BMAD Demo",
     },
   ]) {
-    test(`${path} renders its h1, per-route title, and noindex robots meta`, async ({ page }) => {
+    test(`${path} renders its markdown via <Markdown> with the expected h1 and title`, async ({
+      page,
+    }) => {
       const response = await page.goto(path);
       expect(response?.status()).toBe(200);
       await expect(page).toHaveTitle(title);
-      await expect(page.locator("h1")).toHaveText(h1);
-      const robots = page.locator('meta[name="robots"]');
-      await expect(robots).toHaveAttribute("content", /noindex/);
-      await expect(robots).toHaveAttribute("content", /nofollow/);
+      await expect(page.locator("h1")).toContainText(h1);
     });
   }
 });
