@@ -23,5 +23,10 @@ export default defineConfig({
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    env: {
+      // Isolate the e2e SQLite from the dev portal's progress so
+      // mark-complete tests don't pollute real trainee state.
+      BMAD_DATABASE_PATH: "./data/e2e-progress.sqlite",
+    },
   },
 });

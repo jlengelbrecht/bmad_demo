@@ -21,6 +21,7 @@ export type ProgressRecord = {
 type PreparedCache = {
   upsert: Statement;
   get: Statement;
+  listCompleted: Statement;
 };
 const stmtCache = new WeakMap<Database, PreparedCache>();
 
@@ -35,6 +36,9 @@ function statements(db: Database): PreparedCache {
     ),
     get: db.prepare(
       `SELECT completed_at AS completedAt FROM progress WHERE kind = ? AND id = ?`,
+    ),
+    listCompleted: db.prepare(
+      `SELECT id FROM progress WHERE kind = ? AND completed_at IS NOT NULL`,
     ),
   };
   stmtCache.set(db, prepared);
@@ -65,4 +69,17 @@ export function getProgress(
 ): ProgressRecord | null {
   const row = statements(db).get.get(kind, id) as ProgressRecord | undefined;
   return row ?? null;
+}
+
+/**
+ * Return the set of `id`s of the given `kind` whose `completed_at` is
+ * non-NULL (i.e., currently marked complete). Mark-incomplete rows are
+ * excluded. Single SELECT per call; statement cached per-connection.
+ */
+export function listCompleted(
+  kind: ProgressKind,
+  db: Database = getDb(),
+): ReadonlySet<string> {
+  const rows = statements(db).listCompleted.all(kind) as { id: string }[];
+  return new Set(rows.map((r) => r.id));
 }

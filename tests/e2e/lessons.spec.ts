@@ -6,7 +6,9 @@ test.describe("lesson route (Story 2.2)", () => {
     expect(response?.status()).toBe(200);
 
     await expect(page.getByRole("heading", { level: 1 })).toContainText("What is BMAD");
-    await expect(page.getByText(/Lesson 1 of 6/i).first()).toBeVisible();
+
+    // Position is now expressed via the LessonNav <ol> aria-label "Lesson N of 6".
+    await expect(page.getByLabel(/Lesson 1 of 6/i).first()).toBeVisible();
 
     // No Previous affordance → instead the "Start of curriculum" sentinel
     await expect(page.getByText("Start of curriculum").first()).toBeVisible();
@@ -21,7 +23,7 @@ test.describe("lesson route (Story 2.2)", () => {
     const response = await page.goto("/lessons/3-stories-as-tool-agnostic-contract");
     expect(response?.status()).toBe(200);
 
-    await expect(page.getByText(/Lesson 3 of 6/i).first()).toBeVisible();
+    await expect(page.getByLabel(/Lesson 3 of 6/i).first()).toBeVisible();
 
     const prev = page.getByLabel("Previous: Lesson 2 — The artifact chain").first();
     await expect(prev).toBeVisible();
@@ -38,7 +40,7 @@ test.describe("lesson route (Story 2.2)", () => {
     const response = await page.goto("/lessons/6-from-lessons-to-capstone");
     expect(response?.status()).toBe(200);
 
-    await expect(page.getByText(/Lesson 6 of 6/i).first()).toBeVisible();
+    await expect(page.getByLabel(/Lesson 6 of 6/i).first()).toBeVisible();
 
     const prev = page.getByLabel("Previous: Lesson 5 — Working as a team").first();
     await expect(prev).toBeVisible();
@@ -49,7 +51,7 @@ test.describe("lesson route (Story 2.2)", () => {
     await expect(page.getByLabel(/^Next: /)).toHaveCount(0);
   });
 
-  test("keyboard tab order: header → prev (top) → next (top)", async ({ page }) => {
+  test("keyboard tab order: header → top-Prev → first nav pill", async ({ page }) => {
     await page.goto("/lessons/3-stories-as-tool-agnostic-contract");
 
     // Focus the document body so Tab starts from the document beginning.
@@ -62,7 +64,7 @@ test.describe("lesson route (Story 2.2)", () => {
         return null;
       });
 
-    // First tab → site header home link (Story walkability fix)
+    // First tab → site header home link
     await page.keyboard.press("Tab");
     expect(await focusedHref()).toBe("/");
 
@@ -70,9 +72,10 @@ test.describe("lesson route (Story 2.2)", () => {
     await page.keyboard.press("Tab");
     expect(await focusedHref()).toBe("/lessons/2-the-artifact-chain");
 
-    // Third tab → top Next link
+    // Third tab → first numbered pill in the LessonNav <ol> (lesson 1).
+    // The pill row inserts six focusable links between Previous and Next.
     await page.keyboard.press("Tab");
-    expect(await focusedHref()).toBe("/lessons/4-codeowners-and-the-gate");
+    expect(await focusedHref()).toBe("/lessons/1-what-is-bmad");
   });
 
   test("unknown slug renders the global not-found page", async ({ page }) => {

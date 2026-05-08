@@ -8,13 +8,25 @@ import type { Database as DatabaseType } from "better-sqlite3";
 
 const REPO_ROOT = path.resolve(process.cwd());
 const DATA_DIR = path.join(REPO_ROOT, "data");
-const DEFAULT_DB_PATH = path.join(DATA_DIR, "progress.sqlite");
 
-// Resolve schema relative to THIS module (not process.cwd()) so the path is
-// invariant under chdir, sub-directory invocations, and downstream tooling
-// that runs the codebase from a non-repo-root cwd. `import.meta.dirname` is
-// the module's own directory (Node 20.11+).
-const SCHEMA_PATH = path.resolve(import.meta.dirname, "..", "..", "db", "schema.sql");
+/**
+ * Default location for the production SQLite file. Honors
+ * `BMAD_DATABASE_PATH` so the e2e test runner can point at a separate
+ * file (`./data/e2e-progress.sqlite`) and keep test mutations from
+ * polluting the dev portal's progress.
+ */
+const DEFAULT_DB_PATH = process.env.BMAD_DATABASE_PATH
+  ? path.resolve(process.env.BMAD_DATABASE_PATH)
+  : path.join(DATA_DIR, "progress.sqlite");
+
+// Resolve the schema. Prefer `import.meta.dirname` (Node 20.11+ ESM, used by
+// Vitest) so the path is invariant under chdir; fall back to a cwd-relative
+// path because Turbopack (Next.js v16's dev/build runtime) does not populate
+// `import.meta.dirname` for App-Router server modules. Production deployment
+// is local-only per architecture, so process.cwd() === repo root.
+const SCHEMA_PATH = import.meta.dirname
+  ? path.resolve(import.meta.dirname, "..", "..", "db", "schema.sql")
+  : path.resolve(process.cwd(), "src", "db", "schema.sql");
 
 // Cache on globalThis so the singleton survives Next.js dev HMR reloads —
 // otherwise every edit reopens a second file handle and orphans the previous

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { createDb } from "./connection";
 import { ProgressUpsertRequest } from "./schemas";
-import { getProgress, upsertProgress } from "./progress-db";
+import { getProgress, listCompleted, upsertProgress } from "./progress-db";
 
 const SCHEMA_PATH = path.resolve(import.meta.dirname, "..", "..", "db", "schema.sql");
 const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
@@ -83,6 +83,45 @@ describe("upsertProgress", () => {
 
   it("returns null from getProgress for a missing row", () => {
     expect(getProgress("lesson", "does-not-exist", db)).toBeNull();
+  });
+});
+
+describe("listCompleted", () => {
+  let db: ReturnType<typeof createDb>;
+
+  beforeEach(() => {
+    db = createDb(":memory:");
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it("returns an empty set when nothing is completed", () => {
+    expect(listCompleted("lesson", db).size).toBe(0);
+  });
+
+  it("returns the ids of completed rows for the given kind", () => {
+    upsertProgress({ kind: "lesson", id: "lesson-1", completed: true }, db);
+    upsertProgress({ kind: "lesson", id: "lesson-3", completed: true }, db);
+    upsertProgress({ kind: "lab", id: "solo", completed: true }, db);
+
+    const lessons = listCompleted("lesson", db);
+    expect(lessons.has("lesson-1")).toBe(true);
+    expect(lessons.has("lesson-3")).toBe(true);
+    expect(lessons.has("solo")).toBe(false);
+    expect(lessons.size).toBe(2);
+  });
+
+  it("excludes rows where completed_at IS NULL (mark-incomplete)", () => {
+    upsertProgress({ kind: "lesson", id: "lesson-1", completed: true }, db);
+    upsertProgress({ kind: "lesson", id: "lesson-2", completed: true }, db);
+    upsertProgress({ kind: "lesson", id: "lesson-1", completed: false }, db);
+
+    const lessons = listCompleted("lesson", db);
+    expect(lessons.has("lesson-1")).toBe(false);
+    expect(lessons.has("lesson-2")).toBe(true);
+    expect(lessons.size).toBe(1);
   });
 });
 

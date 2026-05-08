@@ -4,12 +4,15 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { LessonNav } from "@/components/lesson-nav";
-import { Markdown } from "@/lib/markdown/render";
 import {
   getLessonBySlug,
   getLessonSequence,
   getNeighbors,
 } from "@/lib/lessons/sequence";
+import { getProgress, listCompleted } from "@/lib/db/progress-db";
+import { Markdown } from "@/lib/markdown/render";
+
+import { LessonCompleteButton } from "./lesson-complete-button";
 
 type LessonPageParams = { slug: string };
 
@@ -53,6 +56,9 @@ export default async function LessonPage({
     notFound();
   }
 
+  const progress = getProgress("lesson", slug);
+  const completedSlugs = listCompleted("lesson");
+
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
       <LessonNav
@@ -60,14 +66,23 @@ export default async function LessonPage({
         prev={prev}
         next={next}
         total={sequence.length}
+        sequence={sequence}
+        completedSlugs={completedSlugs}
         ariaLabel="Lesson navigation (top)"
       />
       <Markdown source={source} sourcePath={lesson.filePath} />
+      <LessonCompleteButton
+        kind="lesson"
+        id={slug}
+        initialCompleted={!!progress?.completedAt}
+      />
       <LessonNav
         current={lesson}
         prev={prev}
         next={next}
         total={sequence.length}
+        sequence={sequence}
+        completedSlugs={completedSlugs}
         ariaLabel="Lesson navigation (bottom)"
       />
     </main>
