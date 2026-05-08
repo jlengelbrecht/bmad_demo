@@ -79,6 +79,10 @@
 - **Failure-path summary doesn't print `linksScanned`** — cosmetic; defer the format polish.
 - **Embedded raw HTML `<a href>` / `<img src>` in markdown not extracted** — remark parses these as `html` nodes; visit on `link/image/definition` skips them. Curriculum is plain-markdown by convention; document explicitly if curriculum ever leans on inline HTML.
 
+## Surfaced during Epic 3 retro Playwright walkthrough (2026-05-08)
+
+- **`npm run reset-progress` while the dev server is running leaks stale state until restart** — when the running dev server has the SQLite singleton cached on `globalThis`, deleting the file leaves the OS file handle open (POSIX: deleted-but-still-readable inode). Subsequent reads return the pre-reset rows until the dev server restarts. Story 3.4's AC6 explicitly says "and then `npm run dev`" — a fresh server boot is the intended workflow — but a running-server scenario is realistic. Cheapest fix: append "If a dev server is running, restart it for the reset to take effect." to the script's success output. Stronger fix (deferred): connection module watches the file via fs.watch and reopens on unlink. Surfaced via manual Playwright walkthrough; no automated test catches it.
+
 ## Deferred from: code review of 3-4-reset-progress (2026-05-08)
 
 - **Source-string smokes are bypassable via string concat / template literals** — drift-detection lints, not malicious-code defenses. Fine for a single-maintainer repo.
