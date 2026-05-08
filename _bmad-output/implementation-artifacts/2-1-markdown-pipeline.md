@@ -2,7 +2,7 @@
 
 **Epic:** 2 — Lesson Navigation & Self-Reference Link Integrity
 **Story Key:** 2-1-markdown-pipeline
-**Status:** review
+**Status:** done
 
 ## Story
 
@@ -48,6 +48,41 @@ So that any lesson, lab, or audience-entry route can render content with one con
 - [x] **Task 7 — `pipeline.test.ts`** — 9 cases across 4 describe blocks: GFM (table, footnote, fenced code), heading slug + autolink, relative-link preservation (`../a/b.md`, `.github/CODEOWNERS`, plus negative cases for `/abs`, `#anchor`, `https://...`), frontmatter present + missing.
 - [x] **Task 8 — Smoke + lint** — `npm run test:unit` 9/9 in 257ms; `npm run test:e2e` 6/6 in ~2.5s; `npm run lint` clean; no MDX packages in lockfile.
 - [x] **Task 9 — Story finalization** — File List + Implementation Plan + Completion Notes populated; status set to `review`.
+
+### Review Findings
+
+**Patches (resolved):**
+
+- [x] [Review][Patch] **`render.tsx` + `pipeline.ts` gated with `import "server-only"`** — installed `server-only` package (Next.js's own dep, surfaced as a top-level dependency); Vitest aliases `server-only` to a no-op stub at `src/lib/markdown/__test-stubs__/server-only.ts` so unit tests still run.
+- [x] [Review][Patch] **Vitest alias now uses `fileURLToPath`** — Windows-safe absolute path resolution.
+- [x] [Review][Patch] **`warned` Set scoped per-call** — `pipeline.ts` creates a fresh `Set<string>` for every `renderMarkdownToHtml` invocation and passes it via plugin options; module-level state removed.
+- [x] [Review][Patch] **`Markdown` component try/catches `parseFrontmatter`** — falls back to the raw source on malformed YAML; warns in dev with `sourcePath` context.
+- [x] [Review][Patch] **`dev-link-check` requires absolute `sourcePath`** — throws with a clear error if a relative path is supplied; covered by a Vitest case.
+- [x] [Review][Patch] **`dev-link-check` decodes URI components and normalizes backslashes** — `decodeURIComponent` (try/catch on malformed input) and `\\` → `/` before the existsSync probe.
+- [x] [Review][Patch] **GFM footnote test loosened** — now `#[^"]*fn-1`; resilient to remark-gfm prefix changes.
+- [x] [Review][Patch] **Four new dev-link-check tests added** — warns once on missing target with `sourcePath` context; silent on existing target; throws on relative `sourcePath`; silent in production. Uses `mkdtempSync` fixtures + `vi.spyOn(console, "warn")`.
+- [x] [Review][Patch] **`<script>` regression test added** — confirms raw HTML in markdown source is dropped at the `remark-rehype { allowDangerousHtml: false }` boundary.
+
+**Deferred:**
+
+- [x] [Review][Defer] **`rehype-stringify` `allowDangerousHtml: true` re-opens raw-HTML emission for non-pretty-code plugins** — current chain only has rehype-pretty-code emitting hast nodes after this flag matters; tests + the regression test (above) cover the boundary. Re-evaluate when adding any plugin that uses `raw` nodes. Source: blind.
+- [x] [Review][Defer] **Pipeline rebuilt per call → Shiki re-init cost under concurrency** — real concern but not measurable yet; revisit when a perf pass surfaces it. Source: edge.
+- [x] [Review][Defer] **AC3 WCAG AA contrast claim asserted, not measured** — Epic 5 axe + a manual contrast pass on the rendered code blocks. Source: auditor (MED).
+- [x] [Review][Defer] **Dark-themed code in light-mode page** — visual design call; revisit when Story 2.2/2.3 surfaces actual lesson rendering. Source: auditor (MED).
+- [x] [Review][Defer] **AC2 "every h1–h6" only tested for h2** — `rehype-slug`'s contract is universal; expanding the test is cheap but not essential. Source: auditor (LOW).
+- [x] [Review][Defer] **`gray-matter` data may be array/scalar; cast lies for non-object frontmatter** — author convention is YAML-mapping frontmatter; tighten with a runtime shape check when Story 2.5 (staleness banner) consumes the field. Source: edge.
+- [x] [Review][Defer] **`Markdown` component discards parsed frontmatter** — Story 2.5 (staleness banner) needs the frontmatter; the seam to expose it lives there. Source: blind+edge.
+- [x] [Review][Defer] **rehype-slug collision suffixes `-1`/`-2` shift on heading reorder** — link-integrity stability concern; surface a warning in Story 2.4's static link scan. Source: edge.
+- [x] [Review][Defer] **Case-insensitive FS bugs in `dev-link-check`** — Story 2.4's static link scan owns the cross-platform link-integrity contract; this dev-mode helper is best-effort. Source: edge.
+- [x] [Review][Defer] **`dev-link-check` skipped during `next build`** — Story 2.4 owns CI/build-time link integrity. Source: edge.
+- [x] [Review][Defer] **No warning when inline HTML is silently stripped from markdown** — minor authoring-feedback gap; queue for the same dev-mode helper pass that owns link warnings. Source: edge.
+- [x] [Review][Defer] **Empty href `[a]()` slips through dev-link-check silently** — minor; queue with the previous item. Source: edge.
+
+**Dismissed:**
+
+- "AC1 export shape — function vs pipeline instance" — function form is the API the rest of the codebase consumes; semantic equivalence is fine.
+- "Mailto regex redundant" — dead-code hygiene; not actionable.
+- "AC5 lockfile MDX claim defensible" — confirmed.
 
 ## Dev Notes
 
@@ -122,3 +157,4 @@ Component-level tests (rendering the React component itself) are intentionally o
 ## Change Log
 - 2026-05-08 — Story file authored from epics.md §Epic 2 / Story 2.1
 - 2026-05-08 — Implementation completed; `test:unit` 9/9, `test:e2e` 6/6, lint clean; status set to `review`
+- 2026-05-08 — Code review run: 0 decision-needed; 9 patches applied (server-only guard + test stub, Windows-safe alias, per-call warned Set, frontmatter try/catch, absolute-sourcePath assert, URI/backslash normalization, loosened footnote regex, +4 dev-link-check tests, +1 script-stripping regression); 12 deferred; 3 dismissed. `test:unit` now 14/14; `test:e2e` still 6/6; lint clean. Status set to `done`.

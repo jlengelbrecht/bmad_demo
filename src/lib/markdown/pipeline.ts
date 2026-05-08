@@ -1,3 +1,5 @@
+import "server-only";
+
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypePrettyCode from "rehype-pretty-code";
 import rehypeSlug from "rehype-slug";
@@ -17,6 +19,8 @@ export async function renderMarkdownToHtml(
   body: string,
   { sourcePath }: RenderOptions = {},
 ): Promise<string> {
+  const warned = new Set<string>();
+
   const file = await unified()
     .use(remarkParse)
     .use(remarkGfm)
@@ -34,7 +38,7 @@ export async function renderMarkdownToHtml(
       theme: "github-dark-dimmed",
       keepBackground: true,
     })
-    .use(devLinkCheck, { sourcePath })
+    .use(devLinkCheck, { sourcePath, warned })
     .use(rehypeStringify, { allowDangerousHtml: true })
     .process(body);
 

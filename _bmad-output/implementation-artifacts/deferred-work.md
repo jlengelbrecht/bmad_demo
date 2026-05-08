@@ -31,3 +31,18 @@
 - **Bus-factor disclosure names v1.1 plan elements without linking a tracker** — tracker doesn't exist yet (post-v1).
 - **PRD pointer is to file root, not a `#scope` anchor** — PRD lacks a stable scope-section heading suitable for anchoring.
 - **"Epic 6" wording on `training/tools-reference.md` reference (line 41)** — minor public-facing jargon; cosmetic next pass.
+
+## Deferred from: code review of 2-1-markdown-pipeline (2026-05-08)
+
+- **`rehype-stringify` `allowDangerousHtml: true`** re-opens raw-HTML emission for non-pretty-code plugins; current chain is safe and the `<script>` regression test covers the boundary. Re-evaluate if a plugin that uses `raw` nodes is added.
+- **Pipeline rebuilt per call** — Shiki re-init cost under concurrency. Revisit when a perf pass surfaces it.
+- **AC3 WCAG AA contrast claim asserted, not measured** — Epic 5 axe + manual contrast pass on rendered code blocks.
+- **Dark-themed code in light-mode page** — visual design call; revisit when Story 2.2/2.3 surfaces actual lesson rendering.
+- **AC2 universal h1–h6 only tested for h2** — `rehype-slug`'s contract is universal; expand coverage cheaply if/when the universal claim becomes load-bearing.
+- **Frontmatter shape may be array/scalar** — current `as Record<string, unknown>` cast lies for non-object frontmatter. Tighten with a runtime shape check when Story 2.5 (staleness banner) consumes the field.
+- **`Markdown` component discards parsed frontmatter** — Story 2.5 needs the seam; expose then.
+- **rehype-slug collision suffixes `-1`/`-2` shift on heading reorder** — link-integrity stability concern; surface a warning in Story 2.4's static link scan.
+- **Case-insensitive FS bugs in `dev-link-check`** — Story 2.4's static link scan owns the cross-platform contract; the dev-mode helper is best-effort.
+- **`dev-link-check` skipped during `next build`** — Story 2.4 owns CI/build-time link integrity.
+- **No warning when inline HTML is silently stripped from markdown** — minor authoring-feedback gap; queue for the same dev-mode helper pass.
+- **Empty href `[a]()` slips through dev-link-check silently** — minor; queue with the previous item.

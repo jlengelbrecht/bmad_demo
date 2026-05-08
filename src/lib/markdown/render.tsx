@@ -1,3 +1,5 @@
+import "server-only";
+
 import { parseFrontmatter } from "./frontmatter";
 import { renderMarkdownToHtml } from "./pipeline";
 
@@ -8,7 +10,16 @@ type MarkdownProps = {
 };
 
 export async function Markdown({ source, sourcePath, className }: MarkdownProps) {
-  const { body } = parseFrontmatter(source);
+  let body = source;
+  try {
+    body = parseFrontmatter(source).body;
+  } catch (err) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        `[markdown] frontmatter parse failed${sourcePath ? ` for ${sourcePath}` : ""}; rendering raw body. ${String(err)}`,
+      );
+    }
+  }
   const html = await renderMarkdownToHtml(body, { sourcePath });
   return (
     <article
