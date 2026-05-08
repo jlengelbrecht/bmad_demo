@@ -47,3 +47,20 @@ body {
 .prose .heading-anchor:focus-visible {
   opacity: 1;
 }
+
+/*
+ * Tailwind Typography (`prose`) wraps every inline <code> in
+ * GitHub-style backticks via ::before / ::after pseudo-elements. The
+ * <code> styling itself (monospace font, subtle background, tighter
+ * tracking) already signals "this is code" without the literal
+ * backtick characters. Drop the decorations on inline code so
+ * curriculum prose reads cleanly. Block code (inside <pre>) is
+ * unaffected because the typography plugin already nulls those.
+ *
+ * `!important` is required because the plugin's selector uses
+ * `:where()` (zero specificity) and cascade order alone doesn't win.
+ */
+.prose code::before,
+.prose code::after {
+  content: none !important;
+}

@@ -31,6 +31,10 @@ function main(): number {
       for (const sidecar of result.sidecarsDeleted) {
         console.log(`Deleted: ${sidecar}`);
       }
+      // A long-running dev server keeps an open file handle to the
+      // now-deleted inode; on POSIX that handle continues to read the
+      // pre-reset rows until the connection closes. Tell the user.
+      console.log("If a dev server is running, restart it for the reset to take effect.");
     } else {
       console.log(`nothing to reset (no progress file at ${result.path})`);
     }
