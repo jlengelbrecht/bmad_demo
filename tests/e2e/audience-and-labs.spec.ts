@@ -22,14 +22,16 @@ test.describe("lab route (Story 2.3)", () => {
   test("unknown lab slug renders the global not-found page", async ({ page }) => {
     const response = await page.goto("/labs/this-slug-does-not-exist");
     expect(response?.status()).toBe(404);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Not found");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Not found");
   });
 });
 
 test.describe("/stakeholder excludes lesson navigation (AC2)", () => {
-  test("does not render a 'Lesson N of M' indicator", async ({ page }) => {
+  test("renders no LessonNav region (structural guard, not text-based)", async ({ page }) => {
     await page.goto("/stakeholder");
-    // LessonNav's signature element. Stakeholders are not on the lesson sequence.
+    // Structural guard: LessonNav exposes itself via aria-label="Lesson navigation (top|bottom)".
+    await expect(page.getByRole("navigation", { name: /Lesson navigation/ })).toHaveCount(0);
+    // Belt-and-suspenders: the position indicator's literal label string is also absent.
     await expect(page.getByText(/^Lesson \d+ of \d+$/)).toHaveCount(0);
     // Sanity: page rendered.
     await expect(page.locator("h1")).toContainText("Stakeholder — 15-minute Demo");

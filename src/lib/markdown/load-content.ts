@@ -1,6 +1,6 @@
 import "server-only";
 
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 
 export type LoadedContent = {
@@ -13,10 +13,22 @@ export type LoadedContent = {
  * Loads a markdown (or any text) file relative to the project root.
  * Returns `null` if the file does not exist; callers decide whether to render
  * a 404 or surface the absence differently.
+ *
+ * Defense-in-depth: rejects any path that resolves outside the project root,
+ * even if the caller's `relPath` contains traversal segments.
  */
 export function loadContent(relPath: string): LoadedContent | null {
-  const sourcePath = path.resolve(process.cwd(), relPath);
-  if (!existsSync(sourcePath)) return null;
-  const source = readFileSync(sourcePath, "utf8");
-  return { source, sourcePath };
+  const root = path.resolve(process.cwd());
+  const sourcePath = path.resolve(root, relPath);
+  if (sourcePath !== root && !sourcePath.startsWith(root + path.sep)) {
+    return null;
+  }
+
+  try {
+    const source = readFileSync(sourcePath, "utf8");
+    return { source, sourcePath };
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw err;
+  }
 }

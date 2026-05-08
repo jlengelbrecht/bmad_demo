@@ -12,16 +12,30 @@ export function generateStaticParams(): LabPageParams[] {
   return getLabSlugs().map((slug) => ({ slug }));
 }
 
+function isKnownSlug(slug: string): boolean {
+  return getLabSlugs().includes(slug);
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<LabPageParams>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  if (!isKnownSlug(slug)) return { title: "Lab not found · BMAD Demo" };
+
   const content = loadContent(`training/labs/${slug}.md`);
   if (!content) return { title: "Lab not found · BMAD Demo" };
-  const fm = matter(content.source).data as Record<string, unknown>;
-  const title = typeof fm.title === "string" && fm.title.trim().length > 0 ? fm.title : `Lab — ${slug}`;
+
+  let title = `Lab — ${slug}`;
+  try {
+    const fm = matter(content.source).data as Record<string, unknown>;
+    if (typeof fm.title === "string" && fm.title.trim().length > 0) {
+      title = fm.title;
+    }
+  } catch {
+    // Bad YAML — fall back to the slug-derived title rather than 500 the route.
+  }
   return { title: `${title} · BMAD Demo` };
 }
 
@@ -31,6 +45,8 @@ export default async function LabPage({
   params: Promise<LabPageParams>;
 }) {
   const { slug } = await params;
+  if (!isKnownSlug(slug)) notFound();
+
   const content = loadContent(`training/labs/${slug}.md`);
   if (!content) notFound();
 

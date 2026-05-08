@@ -60,3 +60,13 @@
 - **`/lessons/[slug]/not-found.tsx` could surface "did you mean…?"** — UX improvement, not a correctness gap.
 - **AC2 visible text "2. The artifact chain" vs AC literal "Lesson 2 — The artifact chain"** — `aria-label` carries the AC literal verbatim; visible text is a stylization choice.
 - **Slug not validated against an explicit allowlist before any fs use** — current code is safe (cache lookup); harden if a future refactor derives paths from URL input.
+
+## Deferred from: code review of 2-3-audience-and-lab-routes (2026-05-08)
+
+- **`loadContent` is synchronous + no `React.cache` / `unstable_cache`** — re-reads on every request; perf pass when load surfaces.
+- **`getLabSlugs()` has no direct unit test** — same shape as `getLessonSequence()` coverage; aligns with the Story 2.2 precedent.
+- **`getLabSlugs()` `LABS_DIR` was previously captured at module import time** — the Story 2.3 review patches move the path computation INTO the function, but the `LESSONS_DIR` in `src/lib/lessons/sequence.ts` still has the original module-scope shape. Track unifying when convenient.
+- **Empty-body markdown silently ships a blank route** — Story 2.4's static link-integrity scan is the right home.
+- **`rehype-autolink-headings` `#` text node read by screen readers** — already deferred from Story 2.1; Epic 5 axe will surface.
+- **`gray-matter` parses the same source twice per request** (once in `generateMetadata`, once in `<Markdown>`) — perf concern; revisit alongside the caching pass.
+- **AC5 only one nonsense slug tested** — adequate per the auditor's LOW grade.

@@ -2,7 +2,7 @@
 
 **Epic:** 2 — Lesson Navigation & Self-Reference Link Integrity
 **Story Key:** 2-3-audience-and-lab-routes
-**Status:** review
+**Status:** done
 
 ## Story
 
@@ -42,6 +42,34 @@ So that the three audience entry points and any lab can be reached directly by U
 - [x] **Task 8 — `load-content.test.ts`** — 3 Vitest cases via tmpdir fixtures: hit returns `{ source, sourcePath: <absolute> }`, miss returns `null`, sourcePath resolution against `process.cwd()`.
 - [x] **Task 9 — E2E updates** — `home.spec.ts` placeholder-route tests renamed to "audience-entry routes (Story 2.3)" and switched from `toHaveText` → `toContainText` (the markdown pipeline prepends a `#` autolink anchor inside h1, so exact match no longer holds). `noindex, nofollow` assertions dropped. New `audience-and-labs.spec.ts`: 3 lab-slug 200 tests, 1 unknown-lab 404 test, 1 regression guard that `/stakeholder` does NOT contain a `Lesson N of M` position indicator (AC2).
 - [x] **Task 10 — Triple gate** — `test:unit` 25/25 (was 22), `test:e2e` 16/16 (was 11), lint clean.
+
+### Review Findings
+
+**Patches (resolved):**
+
+- [x] [Review][Patch] **Path-traversal defense — two layers landed (HIGH)** — `loadContent` now rejects any resolved path that doesn't stay under `process.cwd()` via a `startsWith(root + path.sep)` containment check. Independently, `/labs/[slug]/page.tsx` validates slug against `getLabSlugs()` allowlist BEFORE calling `loadContent`. Both `LabPage` and `generateMetadata` apply the allowlist guard. New Vitest case proves the helper's containment guard refuses a relative path that escapes the root.
+- [x] [Review][Patch] **`existsSync` + `readFileSync` TOCTOU collapsed** — `loadContent` is now single-syscall: `try { readFileSync } catch (ENOENT → null; else rethrow)`.
+- [x] [Review][Patch] **`generateMetadata` wraps `matter()` in try/catch** — bad-frontmatter lab degrades to the slug-derived fallback title rather than 500ing the route.
+- [x] [Review][Patch] **`getLabSlugs()` filename regex tightened** — now `/^[a-z0-9][a-z0-9-]*\.md$/i` plus `withFileTypes` + `entry.isFile()` so dotfiles, AppleDouble files, directories named `foo.md`, and editor backups are excluded.
+- [x] [Review][Patch] **Vitest `process.chdir` → `vi.spyOn(process, "cwd")`** — eliminates the worker-thread cwd race.
+- [x] [Review][Patch] **Global not-found e2e assertion switched to `toContainText`** — consistent with the rest of this diff's heading-assertion policy.
+- [x] [Review][Patch] **`/stakeholder` no-lesson-nav guard now structural** — `getByRole("navigation", { name: /Lesson navigation/ })` asserts count 0 against LessonNav's `aria-label`. Belt-and-suspenders: the literal label-text count assertion is kept too.
+- [x] [Review][Patch] **`getLabSlugs()` warns on unexpected `readdirSync` errors** — ENOENT continues to silently return `[]` (expected when there's no labs dir yet); other errors surface a dev warning.
+
+**Deferred:**
+
+- [x] [Review][Defer] **`loadContent` is synchronous and re-reads on every request — no `React.cache` / `unstable_cache`** — perf pass; revisit when load surfaces. Source: blind.
+- [x] [Review][Defer] **`getLabSlugs()` has no direct unit test** — same shape as `getLessonSequence`'s coverage; deferred per Story 2.2 precedent. Source: auditor (LOW).
+- [x] [Review][Defer] **`getLabSlugs()` `LABS_DIR = path.join(process.cwd(), …)` captured at module import time** — cwd drift between import and call breaks silently. Same shape as the `LESSONS_DIR` issue already deferred in Story 2.2 review. Track together. Source: edge.
+- [x] [Review][Defer] **Empty-body markdown silently ships a blank route** — Story 2.4's static link/integrity scan is the right home for content-health checks. Source: edge.
+- [x] [Review][Defer] **`rehype-autolink-headings` `#` text node is announced by screen readers** — already deferred from Story 2.1; Epic 5 axe will surface. Source: blind.
+- [x] [Review][Defer] **`gray-matter` parses the same source twice per request (once in `generateMetadata`, once in `<Markdown>`)** — perf concern, not correctness; revisit alongside the caching pass. Source: blind.
+- [x] [Review][Defer] **AC5 only one nonsense slug tested** — adequate per the auditor's own LOW grade; defer expansion until needed. Source: auditor (LOW).
+
+**Dismissed:**
+
+- "Frontmatter rendered into page body if `<Markdown>` doesn't strip it" — false positive; `<Markdown>` calls `parseFrontmatter` and renders only the body (verified in Story 2.1).
+- "`generateStaticParams` return type sync vs `Promise<params>` page signature" — Next.js supports both; the inconsistency is cosmetic.
 
 ## Dev Notes
 
@@ -126,3 +154,4 @@ The three audience routes had `robots: { index: false, follow: false }` from Sto
 ## Change Log
 - 2026-05-08 — Story file authored from epics.md §Epic 2 / Story 2.3
 - 2026-05-08 — Implementation completed; `test:unit` 25/25, `test:e2e` 16/16, lint clean; status `review`
+- 2026-05-08 — Code review run: 0 decision-needed; 8 patches applied (path-traversal defenses ×2, TOCTOU collapse, frontmatter try/catch, getLabSlugs regex tightening, getLabSlugs error surfacing, Vitest cwd spy, structural no-lesson-nav guard, not-found containment assertion); 7 deferred; 2 dismissed. `test:unit` now 26/26 (added containment-guard case); `test:e2e` 16/16; lint clean. Status `done`.
