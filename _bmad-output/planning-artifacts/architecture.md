@@ -70,7 +70,8 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 
 - Markdown rendering pipeline choice (`next-mdx-remote` vs. `@next/mdx` vs. `remark` + `rehype` direct) and how it supports relative links to repo files, accessible code-block rendering, and the NFR-M4 stale-date banner.
 - SQLite driver choice (`better-sqlite3` vs. `node:sqlite` once Node 22 is feasible vs. an ORM like Drizzle) — must build cleanly on macOS / Linux / WSL2.
-- Capstone working-tree write strategy — target path resolution, conflict handling on resume (FR-3.7), and a guarantee that `npm run reset-progress` does not touch capstone files (NFR-R3).
+- ~~Capstone working-tree write strategy — target path resolution, conflict handling on resume (FR-3.7), and a guarantee that `npm run reset-progress` does not touch capstone files (NFR-R3).~~ — **Settled.** Rebuilt capstone (PRD §FR-3): trainee-chosen CHOSEN_DIR captured by setup wizard with path allowlist (NFR-S7); resume re-spawns AI tool subprocess cold against the persisted CHOSEN_DIR; reset-progress NEVER touches CHOSEN_DIR (NFR-R3 — strengthened semantic). See §"Capstone Runtime" + §"Data Architecture" below.
+- **AI Tool Abstraction Layer design** — central architectural claim of the rebuilt capstone (PRD §FR-3.25): adapter contract per supported tool (claude-code, codex, github-copilot at v1), subprocess discipline (NFR-S4), sandboxing (NFR-S5), localhost-binding (NFR-S6). See §"Capstone Runtime" below.
 - E2E framework choice (Playwright is the default given a11y testing, network-request inspection for no-egress, and golden-path coverage all in one tool — but the call should be explicit).
 - Lesson-to-artifact link-integrity test mechanism (CI step beyond E2E? a dedicated `npm run test:links` script? built into Playwright?) — this is load-bearing for Risk #3.
 - Accessibility automation surface (`axe-core` via Playwright vs. `@axe-core/playwright` vs. `pa11y` — and what passes/fails CI).
@@ -84,7 +85,8 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 - **Pedagogical legibility of the codebase** — the architecture is itself part of the curriculum (lessons 2 and 4 point at it); naming and layout choices must read cleanly to a trainee opening files in their editor.
 - **Cold-clone-to-running-app under 5 minutes** — cross-platform install, no native-build hangs, no manual config, no remote-asset fetches at first boot.
 - **Content freshness signal** — tool-notes with stale-date headers and a ≥120-day visible flag (NFR-M4); cuts across markdown pipeline, rendering, and content authoring conventions.
-- **Two persistence paths** — SQLite for ephemeral progress state, working-tree files for capstone artifacts; reset-progress affects only the former.
+- **Two persistence paths** — SQLite for portal session state (lessons, labs, capstone session metadata: chosen tool, target dir, current phase), trainee-chosen CHOSEN_DIR for capstone artifacts (entirely outside the portal repo); reset-progress affects only the former. See §"Data Architecture" for the full split.
+- **Subprocess discipline** — the rebuilt capstone introduces subprocess spawning (npx install, AI tool chat). Lifecycle invariants (drain stderr, no detached, honor AbortSignal, global SIGTERM, explicit cwd, argv-style, subprocess.log) cut across every endpoint that spawns a child. Centralized in the `runStreaming` module per §"Capstone Runtime → Subprocess Discipline".
 - **Dual-role files** — `AGENTS.md`, `.github/copilot-instructions.md`, `.github/CODEOWNERS`, PR template, **`.vela.yml`**, and **`.github/workflows/ci.yml`** are simultaneously **lesson artifacts** (referenced in prose) and **live tool/governance/pipeline config**. Architecture must avoid duplicating them; lessons point at the live files. The two CI pipelines are paired artifacts that demonstrate platform portability the same way `training/tools-reference.md` demonstrates tool portability — neither YAML wrapper is canonical; the npm scripts are.
 
 ## Starter Template Evaluation
@@ -171,8 +173,10 @@ npx create-next-app@latest bmad-portal-scaffold \
 - SQLite driver
 - E2E test framework
 - Lesson-to-artifact link-integrity mechanism
-- Capstone artifact write path
+- ~~Capstone artifact write path~~ — was load-bearing for the original textarea-form capstone (Epic 4); the rebuilt capstone (PRD §FR-3) writes artifacts to a trainee-chosen CHOSEN_DIR outside the portal repo, addressed in §"Capstone Runtime" below
 - Progress-state persistence path
+- **AI Tool Abstraction Layer** (PRD §FR-3) — adapter contract, subprocess invocation, sandboxing
+- **Capstone runtime threat model** (TM-1 through TM-6) — sandbox, path allowlist, lifecycle, localhost-binding, version pinning, tool-version drift
 
 **Important Decisions (shape architecture):**
 
@@ -182,7 +186,9 @@ npx create-next-app@latest bmad-portal-scaffold \
 - State management approach
 - Accessibility automation surface
 - CI gate composition
-- Capstone resume mechanism (FR-3.7)
+- ~~Capstone resume mechanism (FR-3.7)~~ — was important for the textarea form; the rebuilt capstone's resume model is settled in §"Frontend Architecture → Capstone resume mechanism" + §"Capstone Runtime → AI Tool Abstraction Layer → Session model" below
+- **Browser streaming protocol** (SSE vs WebSocket vs plain ReadableStream) — settled as SSE (Q-Tech-6 research)
+- **Subprocess pattern** (long-running vs spawn-per-message) — settled as spawn-per-message (Q-Tech-5 research)
 
 **Deferred Decisions (post-v1):**
 
@@ -199,28 +205,34 @@ npx create-next-app@latest bmad-portal-scaffold \
 | **ORM / query layer** | **None — hand-written SQL** | — | Single table (`progress`), <10 columns. An ORM (Drizzle/Prisma) is theatre at this scale and adds a lesson distraction (trainees opening `src/db/` see ORM ceremony, not "everything is a file"). |
 | **Schema migrations** | **Single inline schema in `src/db/schema.sql`**, applied idempotently on first connection (`CREATE TABLE IF NOT EXISTS …`) | — | No migrations framework needed at v1; schema is stable and tiny. If schema ever evolves, the next person introduces a migration tool with the second migration, not the first. |
 | **Progress DB location** | `./data/progress.sqlite` (repo-root, gitignored) | — | Visible to trainees in the file tree (reinforces "everything is a file" from PRD §FR-2.5); `npm run reset-progress` echoes this absolute path on delete. |
-| **Capstone artifact location** | `./_bmad-output/capstone/<utc-timestamp>/` (gitignored at the per-trainee level; the directory itself is committed empty with a `.gitkeep` and `README.md`) | — | Pedagogical bonus: trainees see their outputs land *next to* this repo's own `_bmad-output/planning-artifacts/`, reinforcing what BMAD artifacts are. **Reset-progress does not touch this path** (NFR-R3 guarantee, enforced by the script's hardcoded target). |
-| **Progress data model** | Single table:<br>`progress(kind TEXT, id TEXT, completed_at TEXT NULL, PRIMARY KEY(kind, id))`<br>Where `kind ∈ {'lesson', 'lab', 'capstone-session', 'capstone-step'}`.<br><br>**Encoding conventions:**<br>• Lessons: `kind='lesson'`, `id='lesson-1'` … `id='lesson-6'`. `completed_at` set on completion.<br>• Labs: `kind='lab'`, `id='solo'` / `'sync'` / `'async-story-review'`. `completed_at` set on completion.<br>• **Capstone session:** `kind='capstone-session'`, `id=<UTC timestamp string matching the artifact directory name>`. **`completed_at IS NULL`** while the session is in progress; set when the trainee finishes all capstone steps.<br>• Capstone steps: `kind='capstone-step'`, `id='<session-timestamp>/<step-name>'` (e.g., `'20260507T143022Z/brief'`, `'…/epic'`, `'…/story-1'`, `'…/story-2'`, `'…/adr'`). Each step's `completed_at` is set on save. | — | Smallest model satisfying FR-2.1 / 2.2 / 2.3 **and** FR-3.7 (resume). One table, one storage idiom; no JSON blobs, no separate sessions table. The capstone-session row's `id` is the same timestamp as the artifact directory — the file tree and the database speak the same language to the trainee. |
+| **Capstone target location (CHOSEN_DIR)** | A trainee-chosen absolute path captured by the setup wizard (Phase 1) — typically `~/projects/<name>/` or `~/code/<name>/`. The capstone bootstraps a fresh git repo at this path via `npx bmad-method install` (Phase 2) and writes all artifacts (brief.md, prd.md, architecture.md, etc.) here. **CHOSEN_DIR is entirely outside the portal repo** and is owned by the trainee. The portal NEVER deletes from CHOSEN_DIR. The path-write allowlist (NFR-S7) refuses sensitive paths (cwd, ~/.ssh, ~, /etc, etc.) at wizard time. | — | The rebuilt capstone (PRD §FR-3) replaces the previous "_bmad-output/capstone/<utc-timestamp>/" location. The trainee leaves with a real, separate, BMAD-bootstrapped team repo on disk — not a markdown dump under the portal's tree. The portal stores the chosen path in SQLite session state (see *Capstone session state* below) so resume can re-spawn the AI tool subprocess against the right directory. |
+| **Portal session record location** | `./data/capstone-sessions/<session-id>/` (created lazily on first capstone start; gitignored at `data/*`). Each session dir holds: `subprocess.log` (per-session subprocess stderr trail, NFR-S4 part (g)). The trainee-chosen target directory (CHOSEN_DIR) is RECORDED in SQLite but NOT located here — CHOSEN_DIR is the trainee's own path. | — | Splitting "portal session record" from "trainee artifact location" is the new architecture's central data invariant. `npm run reset-progress` operates only on the portal session record; CHOSEN_DIR is sacred. |
+| **Progress data model** | Single table:<br>`progress(kind TEXT, id TEXT, completed_at TEXT NULL, PRIMARY KEY(kind, id))`<br>Where `kind ∈ {'lesson', 'lab', 'capstone-session', 'capstone-step', 'capstone-tool', 'capstone-target'}`.<br><br>**Encoding conventions:**<br>• Lessons: `kind='lesson'`, `id='lesson-1'` … `id='lesson-6'`. `completed_at` set on completion.<br>• Labs: `kind='lab'`, `id='solo'` / `'sync'` / `'async-story-review'`. `completed_at` set on completion.<br>• **Capstone session:** `kind='capstone-session'`, `id=<compact UTC timestamp>` (e.g. `'20260507T143022Z'`). **`completed_at IS NULL`** while in progress; set when Phase 9 completes.<br>• Capstone phase: `kind='capstone-step'`, `id='<session-id>/<phase-name>'` (e.g., `'20260507T143022Z/brief'`, `'…/prd'`, `'…/architecture'`, `'…/epics-and-stories'`, `'…/adr'`, `'…/dev-story-1.1'`). Each phase's `completed_at` is set when the phase-done gate (FR-3.21) is satisfied.<br>• **Capstone tool selection:** `kind='capstone-tool'`, `id='<session-id>'`. The chosen tool id (`claude-code` / `codex` / `github-copilot`) is stored in `completed_at` as the value (overloading: this column historically stores ISO timestamps, but for `capstone-tool` rows it stores the literal tool id). *Rationale:* avoids adding a new column and keeps the single-table-one-idiom property for v1; the tool id is short, the row is keyed by session, and there's no risk of confusion since reads always filter by `kind`. v1.1 may introduce a typed extras column if a third metadata kind appears.<br>• **Capstone target dir:** `kind='capstone-target'`, `id='<session-id>'`. The trainee-chosen absolute path is stored in `completed_at` similarly. | — | Smallest model satisfying FR-2.1 / 2.2 / 2.3 / 2.4 / 2.5 (resume + multi-session + tool/target persistence) **and** FR-3.x. Adds two new kinds (capstone-tool, capstone-target) to keep the storage idiom uniform; the column-overload is a localized v1 affordance flagged in this rationale rather than spreading through the codebase as silent magic. |
 | **Server-side validation** | **Zod** | ^3.x latest | Server-only validation (no client bundle hit); ecosystem default; Valibot's bundle-size win is irrelevant when validation lives on the server. |
 
 ### Authentication & Security
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| **Authentication** | **None** | Per PRD §FR-2.6: explicit non-capability. No users table, no sessions, no SSO. Architecture trusts the local user. |
+| **Authentication (portal)** | **None** | Per PRD §FR-2.8: explicit non-capability. No users table, no sessions, no SSO. Architecture trusts the local user. |
 | **Authorization** | **None** | Same as above. |
 | **CSRF / CSP / CORS** | Default Next.js App Router posture; no public exposure | Local-only; the threat model is "the trainee runs their own clone." We do not invent auth-shaped concerns. |
-| **No-egress verification** | **Playwright network-request interception** (`page.route()` recording all outbound requests on the trainee golden path; the test fails the pipeline if any request leaves the local origin) | Direct mitigation for NFR-S1 — testable, not a posture statement. |
+| **AI tool authentication (capstone runtime)** | **Owned by the trainee's tool, not the portal.** | NFR-S1: the portal makes ZERO portal-originated remote calls. When the capstone spawns the trainee's AI tool as a subprocess, that tool may make remote API calls under the trainee's own auth (Anthropic for Claude Code, OpenAI for Codex, GitHub for Copilot) — those happen in the tool's process, not the portal's, and use credentials the portal never sees. The Phase 0.5 auth pre-check (FR-3.5) probes the tool for an authed status (e.g., `claude auth status`) but does not store, forward, or proxy the credentials. |
+| **Localhost-binding lock (NFR-S6)** | **Portal binds 127.0.0.1 only — never 0.0.0.0.** Verified by the E2E suite. | The capstone runtime introduces filesystem-write surfaces against trainee-chosen paths. Without this lock, a coffee-shop-wifi attacker on the same network could trigger `git init` against an arbitrary path or otherwise drive the runtime. The lock is one config flag (Next.js `--hostname 127.0.0.1`); the cost is zero, the failure mode it prevents is real. |
+| **Path-write allowlist (NFR-S7)** | The capstone setup wizard **hard-refuses** trainee-chosen target paths that resolve at-or-under: the portal's own `process.cwd()`, `~/.ssh`, `~/.aws`, `~/Library`, `~/.config`, `/etc`, `/usr`, `/var`, `/private`, `/System`, the user's home directory itself, or any path whose immediate scan reveals dotfiles. | Defends against a trainee accidentally pointing the bootstrap at `~/.ssh/`, `~/Documents/important-project`, or — most importantly — at the portal's own repo path (which would corrupt the training repo). The allowlist is enforced at the wizard's path-validation step BEFORE bootstrap runs. |
+| **Adapter sandboxing (NFR-S5)** | The AI Tool Abstraction Layer constrains each tool's filesystem access to CHOSEN_DIR. Where the underlying tool exposes a native sandbox primitive (e.g., Claude Code's `--add-dir <CHOSEN_DIR>`), the adapter uses it; where it doesn't, the adapter intercepts tool calls and rejects out-of-tree paths. | The trainee's AI tool runs with trainee privileges; without sandboxing it can read `~/.aws/credentials`, write to `/etc/hosts`, exfiltrate secrets into a transcript, etc. Sandboxing through the tool's native primitive (preferred) or the adapter's interception is the load-bearing security claim of the rebuilt capstone. See §"Capstone Runtime → Capstone Threat Model" for the full TM-1 through TM-6 enumeration. |
+| **No-egress verification** | **Playwright network-request interception** (`page.route()` recording all outbound requests on the trainee golden path; the test fails the pipeline if any request leaves the local origin) | Direct mitigation for NFR-S1 — testable, not a posture statement. The capstone-runtime expansion does NOT relax this: outbound requests from the trainee's tool subprocess are explicitly out-of-scope of this test (they go through the OS, not the browser), but any portal-originated outbound request still fails the test. |
 | **Dependency scanning** | `npm run audit` runs `npm audit --audit-level=high` and is invoked by both bundled pipelines; high or critical findings fail the pipeline, moderate findings tracked. **Adopting teams using a different CI** translate the same `npm run audit` invocation into their platform's syntax. | NFR-S3. The bar is enforceable via `npm run audit`; the bundled pipelines (Vela + GHA) gate it on PR by default; teams on other platforms wrap the same script. |
 
 ### API & Communication Patterns
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| **API style** | **Next.js App Router Route Handlers** under `src/app/api/`; a tiny REST surface | OpenAPI / GraphQL / tRPC are all theatrical at this scale (one resource, two verbs). Route Handlers keep the whole app in one process per PRD lock. |
-| **Endpoints (v1)** | Two POST Route Handlers, period:<br>• `POST /api/progress` — mark a lesson / lab / capstone-step / capstone-session as complete or active.<br>• `POST /api/capstone/save` — write a capstone artifact to the working tree.<br>**Reads** happen in Server Components directly via the SQLite driver — no GET endpoint.<br>**`npm run reset-progress`** deletes `./data/progress.sqlite` directly via the script — no endpoint involved. | Smallest possible surface satisfying FR-2 and FR-3. No phantom endpoints listed; what's documented is what exists. |
-| **Mutation idiom** | **Route Handlers for all mutations.** No Server Actions in v1. | Pedagogical legibility (cross-cutting concern §Pedagogical legibility): a trainee opening `src/app/api/progress/route.ts` sees "this is the endpoint" matching the URL `POST /api/progress`, with no hidden indirection. Server Actions live inside component files, where route → file mapping isn't legible at a glance. The teaching surface wins; we forgo Server Action ergonomics to keep the architecture inspectable. |
-| **Error model** | Plain `Response.json({ error: '…' }, { status: … })`; client surfaces a toast on non-2xx | No global error middleware; no error catalog; one app, two endpoints — simplest thing that works. |
+| **API style** | **Next.js App Router Route Handlers** under `src/app/api/`; a small REST surface plus one streaming endpoint for the capstone chat | OpenAPI / GraphQL / tRPC are all theatrical at this scale. Route Handlers keep the whole app in one process per PRD lock. SSE for streaming because it works natively with Next.js Route Handlers and gets browser auto-reconnect for free. |
+| **Endpoints (v1)** | The "two POST endpoints, period" lock from earlier iterations is **deliberately broken** by the rebuilt capstone (PRD §FR-3). The v1 endpoint set is now seven Route Handlers — every endpoint is documented; no phantom endpoints are listed:<br><br>**Curriculum + lesson/lab progress (Epic 3 surface — stable):**<br>• `POST /api/progress` — mark a lesson / lab / capstone-step / capstone-session as complete or active. Same shape as Story 3.2.<br><br>**Capstone runtime (Epic 5-9 surface — replaces the textarea form):**<br>• `POST /api/capstone/setup/preflight` — run Phase 0 environment checks (node/git/npx versions); return per-check status. Idempotent.<br>• `POST /api/capstone/setup/tool-check` — run Phase 0.5 tool-installed + tool-authed probe for the selected tool; return status.<br>• `POST /api/capstone/setup/bootstrap` — Phase 2: spawn `npx bmad-method install` against the trainee-chosen path with all `--set` flags pre-filled. Long-running; streams stdout/stderr progress via SSE on the same endpoint OR a paired `GET /api/capstone/setup/bootstrap/stream`.<br>• `POST /api/capstone/setup/abort` — kill the in-flight bootstrap subprocess and (on typed-confirmation) `rm -rf` the partially-installed CHOSEN_DIR. (FR-3.12.)<br>• `GET /api/capstone/chat/[sessionId]/stream?phase=<phase>&message=<msg>` — Phase 3-7 + Phase 8: spawn the trainee's AI tool subprocess with `--resume <session-id>`, write the user message to its stdin, stream the agent's stdout JSON-lines back as SSE events. `runtime='nodejs'`, `dynamic='force-dynamic'`. Single endpoint per turn; `req.signal.abort` kills the child on tab close. (FR-3.15-3.20, NFR-S4.)<br>• `POST /api/capstone/phase-done` — verify the expected artifact file exists in CHOSEN_DIR, parse the file shape against the BMAD template for that phase, and on success advance the session's phase pointer. (FR-3.21, FR-3.22.)<br>• `POST /api/capstone/handoff/generate` — Phase 9: write the `HANDOFF.md` doc into CHOSEN_DIR. (FR-6.7.)<br><br>**Out-of-band:** `npm run reset-progress` still operates as a script (no endpoint), and (per NFR-R3) only deletes the portal's SQLite file — never CHOSEN_DIR. | The endpoint count growth is honest: the rebuilt capstone has more state transitions than the textarea form. Each endpoint is a single, named state transition; the SSE stream is the chat-proxy surface. The previous "two POST endpoints, period" lock encoded the textarea form's minimal surface; the rebuilt capstone genuinely needs more, and the architecture documents what exists rather than maintaining a slogan. |
+| **Mutation idiom** | **Route Handlers for all mutations.** No Server Actions in v1. | Pedagogical legibility (cross-cutting concern §Pedagogical legibility): a trainee opening `src/app/api/progress/route.ts` or `src/app/api/capstone/chat/[sessionId]/stream/route.ts` sees "this is the endpoint" matching the URL, with no hidden indirection. Server Actions live inside component files, where route → file mapping isn't legible at a glance. The teaching surface wins; we forgo Server Action ergonomics to keep the architecture inspectable. |
+| **Streaming protocol** | **Server-Sent Events (SSE)** via Next.js Route Handler with `runtime='nodejs'` and `dynamic='force-dynamic'`. Browser uses native `EventSource`. | One-way agent→browser streaming aligns naturally with SSE's shape. WebSocket would add a separate server lifecycle (Next.js Route Handlers don't natively handle the `Upgrade` request). Plain `ReadableStream` Response without SSE framing loses auto-reconnect. EventSource handles HMR-restart reconnection for free, which matters because Turbopack restarts kill in-flight connections. |
+| **Error model** | Plain `Response.json({ error: '…' }, { status: … })` for non-streaming endpoints; SSE `event: error\ndata: {...}` for streaming ones; client surfaces a toast on non-2xx (or visible error in chat surface for streaming). | No global error middleware; no error catalog. The shape stays simple even with the larger endpoint set. |
 
 ### Frontend Architecture
 
@@ -231,9 +243,76 @@ npx create-next-app@latest bmad-portal-scaffold \
 | **Stale-date banner** | A small Server Component (`<StalenessBanner reviewedAt={…} />`) that renders inline above content with a `Last reviewed YYYY-MM-DD; flagged as stale` warning if `now - reviewedAt >= 120 days` (i.e., the 120-day boundary itself counts as stale, matching `epics.md` Story 2.5 AC3 wording "120 or more days"). Reads the date from frontmatter on each tool-notes section file. | NFR-M4 verbatim; no hidden mechanism — frontmatter, banner, done. |
 | **State management** | **React local state + Server Components**; no Redux/Zustand/Jotai | Smallest interactive surface. Server Components handle reads from SQLite directly; mutations go through Route Handlers; the only client state is "is the sidebar open" and "is this button disabled while saving." |
 | **Routing topology** | App Router routes:<br>`/` (home: three audience-entry cards)<br>`/start-here` → renders `training/00-start-here.md`<br>`/stakeholder` → renders `training/stakeholder-demo-script.md`<br>`/facilitator` → renders `training/facilitator-guide.md`<br>`/lessons/[slug]` → renders `training/lessons/<slug>.md`<br>`/labs/[slug]` → renders `training/labs/<slug>.md`<br>`/capstone` (overview + resume/start)<br>`/capstone/[step]` (each capstone step) | Direct mapping `URL → markdown file` keeps the codebase legible (cross-cutting concern §Pedagogical legibility); deep-linkable per FR-1.3; matches the markdown source layout one-to-one. |
-| **Capstone resume mechanism (FR-3.7)** | On a visit to `/capstone`:<br>1. Query the most recent `capstone-session` row by `id DESC`.<br>2. If it exists and `completed_at IS NULL` → **resume** it; render the next incomplete step.<br>3. If it exists and `completed_at IS NOT NULL`, **or** no session exists → **offer to start a new session**, which inserts a fresh `capstone-session` row with `id = <new UTC timestamp>` and creates `_bmad-output/capstone/<that-timestamp>/`.<br>4. Multiple historical sessions are visible on disk (`_bmad-output/capstone/*`) and in the DB; the trainee can re-enter an older session by URL (`/capstone?session=<timestamp>`) but the home `/capstone` route always offers the most-recent-or-new path. | Reuses the existing `progress` table — no schema additions, no rename ceremony. The dated directory name **is** the session id; what's on disk and what's in the DB stay synchronized by construction. Trainees see BMAD-style dated paths in `_bmad-output/capstone/` and recognize them as the same dating convention used elsewhere in `_bmad-output/`. |
+| **Capstone resume mechanism (FR-3 / FR-2.4)** | On a visit to `/capstone`:<br>1. Query the most recent `capstone-session` row by `id DESC`.<br>2. If it exists and `completed_at IS NULL` → **resume** it; route to the next incomplete phase. Re-spawn the AI tool subprocess cold with `--resume <session-id>`; the agent loads prior phase artifacts from CHOSEN_DIR as primer context. Cross-phase context is artifact-driven, not chat-history-driven (FR-3.16, FR-3.30).<br>3. If it exists and `completed_at IS NOT NULL`, **or** no session exists → **offer to start a new session**, which routes the trainee through the setup wizard (Phases 0/0.5/1/2) ending in a fresh `capstone-session` row + a CHOSEN_DIR populated with `npx bmad-method install` output.<br>4. Multiple historical sessions persist in the DB; the trainee can re-enter an older session by URL (`/capstone?session=<id>`) but the home `/capstone` always offers the most-recent-or-new path. The trainee-chosen target dirs (CHOSEN_DIRs) are entirely under the trainee's control and may be cleaned up, moved, or pushed-and-deleted at any time without the portal noticing. | The resume model deliberately re-spawns the AI tool process cold rather than replaying chat history into it: chat is for the trainee, files are the contract. This is testable (the agent reads `brief.md` from CHOSEN_DIR at PRD-phase start) and avoids the "officially-undocumented stdin NDJSON schema" trap flagged in Q-Tech research. See §"Capstone Runtime" below for the full state model. |
 | **UI primitives** | Tailwind utility classes + a small set of accessible Radix primitives (`@radix-ui/react-*`) for any non-trivial interactive widget (dialogs, popovers, disclosure). No design-system library. | Radix gives us WCAG AA-grade keyboard/aria semantics for free; Tailwind handles styling. Avoids hand-rolling accessibility for the few interactive bits we have. |
 | **Fonts and assets** | All fonts and assets **vendored locally** (no Google Fonts CDN, no external image hosts) | NFR-S1 — no egress at runtime. Easier to verify in the network-interception test. |
+
+### Capstone Runtime
+
+The rebuilt capstone (PRD §FR-3) replaces the textarea form with a tool-portable, localhost-only experience that hooks the portal UI into the trainee's local AI tool. The portal is the orchestrator + chat-proxy UI; the trainee's tool is the runtime. This subsection captures the central architectural claim, the adapter contract, the v1 supported-tools matrix, the subprocess discipline non-negotiables, and the threat-model expansion.
+
+#### AI Tool Abstraction Layer
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| **Central architectural claim** | The portal includes an "AI Tool Abstraction Layer" (`src/lib/capstone/adapters/`) that runs the trainee's local AI tool as a background subprocess. The portal UI renders the subprocess's chat as if it were native, captures the trainee's typed messages and forwards them via stdin, and additionally invokes shell commands (`npx`, `git`, `mkdir`) on behalf of the trainee in response to setup-wizard answers. The abstraction is per-tool (claude-code / codex / github-copilot at v1) with a uniform contract upward to the portal. | Tool-portable by design (PRD §FR-3.25): same property the lessons teach (story-file = tool-portable contract). NO portal-originated cloud calls (NFR-S1); chat is a proxy to a trainee-local AI tool. |
+| **Adapter contract** | A TypeScript interface implemented per-tool. Hybrid declarative-manifest + imperative-method shape:<br><br>```typescript<br>interface ToolAdapter {<br>  manifest: {<br>    id: 'claude-code' \| 'codex' \| 'github-copilot'<br>    displayName: string                // "Claude Code"<br>    cliBinary: string                  // "claude"<br>    minVersion: string                 // semver range<br>    docsUrl: string                    // for "install instructions"<br>    supportedOS: ('darwin' \| 'linux')[]<br>  }<br>  detectInstalled(): Promise&lt;boolean&gt;       // sniff $PATH + run --version<br>  detectAuthenticated(): Promise&lt;boolean&gt;   // tool-specific auth probe<br>  buildSpawnArgs(opts: ChatSpawnOpts): string[]    // produces argv for spawn<br>  parseStreamChunk(raw: string): ChatStreamEvent[] // tool-specific output parsing<br>  formatUserMessage(text: string): string   // tool-specific stdin format<br>  buildPrimer(phase: CapstonePhase): string // BMAD skill content per phase<br>}<br>```<br><br>**Manifest** captures static facts (binary name, supported OS, min version) — queryable without running code, maps to `bmad-method install --tools <id>`. **Class methods** capture imperative behavior (auth detection differs per tool, arg-building differs, parsing differs). One adapter per tool: `src/lib/capstone/adapters/claude-code.ts`, `codex.ts`, `github-copilot.ts`. A registry module imports all and exposes `Map<id, ToolAdapter>` for the setup wizard. | Pure-YAML manifest is too rigid (tool-specific parsing logic doesn't fit YAML). Pure TS module without a manifest concept loses the "list available tools" surface. Hybrid is the minimal honest contract. |
+| **Session model** | **Spawn-per-message** with session continuity via tool-native `--resume <session-id>`. Each user turn = a fresh subprocess invocation. First turn captures `session_id` from the `system/init` event in the agent's output; subsequent turns pass `--resume <session-id>`. The session id is persisted in SQLite keyed by `(trainee, capstone_phase)`. | **Pivoted from "long-running per phase" after Q-Tech research:** Claude Code's stdin NDJSON schema is officially [undocumented](https://github.com/anthropics/claude-code/issues/24594). Spawn-per-message + `--resume` is the documented stable surface AND gives free crash recovery (HMR restart, browser close, idle laptop = next message just spawns fresh + resumes). Cold-start cost (~hundreds of ms) is in the noise compared to per-turn model latency. |
+| **Browser transport** | **Server-Sent Events (SSE)** via Next.js Route Handler with `runtime='nodejs'`, `dynamic='force-dynamic'`. Browser uses native `EventSource`. Per-turn flow: GET `/api/capstone/chat/[sessionId]/stream?phase=<phase>&message=<msg>` opens the SSE connection AND triggers the subprocess spawn; the spawned subprocess's stdout JSON-lines are forwarded to the browser as `event: msg\ndata: <json-line>\n\n` SSE events; on subprocess exit, an `event: done\ndata: {"code":<n>}\n\n` event closes the stream. | One-way agent→browser streaming aligns naturally with SSE. `EventSource` auto-reconnects on connection loss with `Last-Event-ID` echoed back — free in the browser, no client-side library. WebSocket would force a separate server lifecycle (Route Handlers don't natively handle `Upgrade`). Plain `ReadableStream` Response loses framing across reconnects. |
+
+#### v1 Supported Tools
+
+| Tool | Manifest highlights | Per-tool implementation notes |
+|---|---|---|
+| **claude-code** (gold standard) | `cliBinary: 'claude'`, supportedOS: ['darwin','linux']. Native stream-json bidirectional + native `--system-prompt` flag + native `--add-dir` sandbox + native `--session-id`/`--resume`. | Spawn args: `claude --print --input-format stream-json --output-format stream-json --include-partial-messages --system-prompt-file <path-to-bmad-phase-primer.md> --session-id <session-uuid> --add-dir <CHOSEN_DIR> --bare`. Sandbox: native `--add-dir`. Auth probe: `claude --version` succeeds + (probe TBD; spike). API key passed via env (`ANTHROPIC_API_KEY`). |
+| **codex** | `cliBinary: 'codex'`, supportedOS: ['darwin','linux']. JSONL bidirectional via `codex exec --json`. No `--system-prompt` flag; primer carried as leading user message (per-adapter). | Spawn args: `codex exec --json -C <CHOSEN_DIR> --add-dir <CHOSEN_DIR> resume <session-id>` (or first-time without `resume`). Sandbox: native `-C` + `--add-dir` + `--sandbox <level>`. Auth probe: `codex --version` succeeds. API key passed via env (`OPENAI_API_KEY`). Primer: write a config snippet to `<session-dir>/codex-primer.toml` AND/OR carry as leading user-message text. |
+| **github-copilot** | `cliBinary: 'copilot'`, supportedOS: ['darwin','linux']. Plain-text streaming via `copilot --prompt` (no JSONL by default in v1; ACP integration deferred to v1.1). | Spawn args: `copilot --prompt <user-msg> -C <CHOSEN_DIR> --resume <session-id>`. Sandbox: `-C` + `/add-dir` slash command + Copilot's trusted-directories model. Auth: requires active **Copilot subscription** + **`GH_TOKEN`** env var. Auth probe: `gh auth status` returns authed AND probe Copilot subscription (`gh api user/copilot_billing` — spike). Primer: file-based "custom instructions." Output parsing: per-line plain text → render as chat-bubble text (no inline tool-call cards). |
+
+#### Subprocess Discipline (NFR-S4)
+
+The seven non-negotiables, centralized in a single `runStreaming(opts): AsyncIterable<ProcEvent>` module under `src/lib/capstone/subprocess/`:
+
+1. **Always drain BOTH stdout and stderr.** Even if the consumer doesn't read stderr, attach a `data` listener. The Node docs are explicit that pipe buffers fill at ~64 KB; an undrained pipe deadlocks the child. [anthropics/claude-code issue #1970](https://github.com/anthropics/claude-code/issues/1970) is the canonical case study.
+2. **Never pass `detached: true`.** Default keeps the child in the parent's process group, so SIGINT to the parent (Ctrl-C in the terminal running `next dev`) propagates to children automatically.
+3. **Honor `AbortSignal` from the incoming Request.** When the trainee closes the tab / navigates away, the SSE connection's `req.signal.abort` fires; we SIGTERM the child. Without this, abandoned tabs leak subprocesses (F-CRIT-5).
+4. **Register a single global `process.on('exit'|'SIGINT'|'SIGTERM')` handler** in the runStreaming module that SIGTERMs all tracked children. Track them in a `Set<ChildProcess>` keyed by PID.
+5. **Always pass `cwd` explicitly.** Never trust ambient cwd. `cwd: <CHOSEN_DIR>` for capstone subprocesses; never let the inherited cwd determine where files land.
+6. **Always use argv-style `spawn`.** Pass paths and flags as separate argv entries; never shell-string interpolation. Node's `spawn` handles per-OS quoting correctly when given an args array.
+7. **Subprocess.log is a function of `runStreaming`.** Every spawn writes its stderr to `<session-dir>/subprocess.log` regardless of consumer. Bootstrap commands AND chat sessions both get a debug trail; trainees can attach the log to bug reports.
+
+**Single primitive, two consumers:**
+
+```typescript
+type ProcEvent =
+  | { kind: 'stdout-line'; text: string }
+  | { kind: 'stderr-line'; text: string }
+  | { kind: 'exit'; code: number | null; signal: NodeJS.Signals | null };
+
+function runStreaming(opts: RunOptions): AsyncIterable<ProcEvent>;
+```
+
+Chat consumer (Phase 3-7) iterates the events, forwards each `stdout-line` to SSE. Bootstrap consumer (Phase 2) iterates, accumulates, returns `{ stdout, stderr, code }` on `exit`. Same module, two consumers, one place to enforce all seven invariants.
+
+**ANSI handling:** Strip server-side in `runStreaming` using Node's built-in `util.stripVTControlCharacters` (Node ≥20, already required). No `xterm.js` in v1.
+
+**Documented troubleshooting (also surfaced in the README):**
+- **macOS `com.apple.quarantine` xattr** propagates onto installed binaries via some package managers (e.g., pnpm), and Gatekeeper blocks them. v1 uses `npm`/`yarn` (not pnpm); `xattr -cr node_modules/` is the documented escape hatch. ([pnpm issue #11056](https://github.com/pnpm/pnpm/issues/11056) is the canonical reference.)
+- **Block-buffering on pipes:** Most CLIs default to line-buffered when stdout is a TTY but block-buffered when piped. Claude Code in `--output-format stream-json` flushes per event (verified). For arbitrary future tools that block-buffer, document `stdbuf -oL -eL <cmd>` (Linux) or `unbuffer <cmd>` (macOS) as workaround. Don't pre-emptively wrap.
+
+#### Capstone Threat Model
+
+The rebuilt capstone introduces filesystem-write surfaces against trainee-chosen paths and subprocess invocation against the trainee's machine. The original portal's threat model ("local-only, single-trainee, trusts-the-local-user") still holds, but the surface area expands. Six explicit threat-model items:
+
+| TM | Threat | Mitigation | Where enforced |
+|---|---|---|---|
+| **TM-1** | The trainee's AI tool runs with trainee privileges and could read `~/.aws/credentials`, write to `/etc/hosts`, exfiltrate secrets into a transcript file we then commit. | **Adapter sandboxing.** Every tool's filesystem access constrained to CHOSEN_DIR. Prefer the tool's native sandbox primitive (Claude Code `--add-dir`, Codex `--add-dir`/`--sandbox`); fall back to adapter-layer interception. Out-of-tree tool calls surfaced in chat as "tool tried to write outside the project — denied." | NFR-S5 (PRD); each adapter's `buildSpawnArgs`. |
+| **TM-2** | Trainee picks a target path that resolves to a sensitive location (`~/.ssh/`, the portal's own repo, `/etc/`). | **Path-write allowlist** at the setup wizard. Hard-refuses paths at-or-under: `process.cwd()`, `~/.ssh`, `~/.aws`, `~/Library`, `~/.config`, `/etc`, `/usr`, `/var`, `/private`, `/System`, `~`, dotfile-bearing dirs. Wizard stops at validation; bootstrap never runs. | NFR-S7 (PRD); setup-wizard step in Epic 6. |
+| **TM-3** | Subprocesses leak across portal restarts → zombie processes accumulate, exhaust pty count or session-state corruption. | **Subprocess lifecycle ownership.** Portal registers global SIGINT/SIGTERM handlers that SIGTERM tracked children before exit. Periodic reaper (v1.1) sweeps orphans-from-crash. Per-session `subprocess.log` makes diagnosis tractable. | NFR-S4 (PRD); `runStreaming` module. |
+| **TM-4** | Anyone on the same network (coffee shop wifi) reaches the portal and triggers `git init` against an arbitrary path. | **Localhost-binding lock.** Portal binds 127.0.0.1 only — never 0.0.0.0. Verified in E2E. | NFR-S6 (PRD); Next.js dev/start config. |
+| **TM-5** | Drift between the BMAD version we built and tested against vs. the version the trainee's `npx bmad-method` actually fetches at install time. | **Version pinning.** The bootstrap runs `npx bmad-method@<version>` where `<version>` matches the portal's own `_bmad/_config/manifest.yaml` (currently 6.6.0). Trainee's repo gets the same BMAD the portal runs against. Document upgrade path: bumping the portal's BMAD version is a deliberate epic. | FR-3.11 (PRD); setup-wizard install command. |
+| **TM-6** | Adopted tool ships a breaking change (CLI flag rename, JSONL schema change) and our adapter silently regresses. | **Tool-version drift detection.** Each adapter's `manifest.minVersion` declares supported version range. At spawn time, the adapter probes `<tool> --version` and refuses to launch if the installed version is outside range. Surface "your <tool> version is X; v1 capstone tested with Y. <upgrade-link>". | NFR-S6 / Q-Tech-2 research findings; per-adapter `detectInstalled()`. |
+
+**Pipe-buffer deadlock (documented but not in the TM table):** [anthropics/claude-code issue #1970](https://github.com/anthropics/claude-code/issues/1970) documents the canonical "spawn with `stdio: 'pipe'` and don't drain stderr → pipe full → child blocks → parent waits → deadlock" failure mode at scale. Defended at NFR-S4 (subprocess discipline non-negotiable #1).
 
 ### Infrastructure & Deployment
 
@@ -254,7 +333,9 @@ npx create-next-app@latest bmad-portal-scaffold \
 | **Unit/integration tests** | **Vitest** for pure functions (markdown pipeline plugins, validation schemas, the staleness check). No React-component-level tests at v1 | Most app logic is Server Component data flow + Playwright covers UX. Vitest is the lightweight default; component tests would duplicate Playwright coverage. |
 | **Accessibility automation** | `@axe-core/playwright` run on each route in the trainee golden path; **AA-level rule violations fail the pipeline** | NFR-A2. Auto-injection means no `injectAxe()` boilerplate. |
 | **Lesson-to-artifact link-integrity** | **Two-layer:**<br>1. Static scan (`npm run lint:links`): a Node script in `scripts/check-links.ts` walks every `*.md` in `training/` and resolves relative links against the working tree; fails on any missing target. Fast, deterministic, cheap to keep green.<br>2. Playwright DOM check: navigates each lesson route and asserts every `<a href="…">` resolves to an existing file (catches rendering-layer breakage where the DOM diverges from the markdown source). | Risk #3 mitigation. The static scan catches the 95% case (author typos); Playwright catches the rendering-layer regression case. Both fail the pipeline on regression. |
-| **No-egress test** | A dedicated Playwright spec that walks the golden path with `page.route('**/*', …)` recording outbound requests; **fails the pipeline if any request targets a non-`localhost` origin** | NFR-S1 verbatim. |
+| **No-egress test** | A dedicated Playwright spec that walks the golden path with `page.route('**/*', …)` recording outbound requests; **fails the pipeline if any portal-originated request targets a non-`localhost` origin**. Subprocess outbound requests (the trainee's AI tool calling its provider) are out-of-scope of this test — they don't go through the browser. | NFR-S1 verbatim. The capstone-runtime expansion does NOT relax this; the no-egress claim is specifically about portal-originated requests. |
+| **Capstone adapter integration tests** | Each adapter (`claude-code`, `codex`, `github-copilot`) has a Vitest integration spec under `src/lib/capstone/adapters/<tool>.integration.test.ts` that runs against the actual tool binary in CI. The CI environment pins exact tool versions (e.g., `claude@2.1.x`) matching each adapter's `manifest.minVersion` range. Tests cover: `detectInstalled()`, `detectAuthenticated()` (with mocked or test-account credentials), a smoke "ask the agent for a brief one-line response" run, and `parseStreamChunk` validation against the actual stream output. | TM-6 (tool-version drift) demands this — without an integration test that runs against the real binary, an adapter can rot silently as the tool ships breaking changes. Pinning the version in CI lets us flag drift early; the test failure IS the upgrade signal. |
+| **Capstone full-flow E2E** | A Playwright spec that walks the full capstone end-to-end: pre-flight → tool selection → setup wizard → bootstrap (`npx bmad-method install` against a test-isolated CHOSEN_DIR) → all phase chats (mocked agent responses via stub adapter) → phase-done gates → handoff. Stub adapter returns canned JSONL for the chat phases so the test is deterministic; real-adapter flow is covered by the integration tests above. | Full-flow E2E catches integration regressions across the bootstrap → chat → phase-done → handoff seams that adapter integration tests don't see. Stubbing the adapter (rather than running real `claude`/`codex`) keeps the E2E fast and deterministic. |
 
 ### Folder Layout (preview — formalized in step-06)
 
@@ -263,7 +344,14 @@ bmad_demo/
   _bmad/                       # BMAD scaffolding (existing)
   _bmad-output/
     planning-artifacts/        # PRD, brief, this architecture (existing)
-    capstone/                  # capstone outputs (created by capstone harness)
+    brainstorming/             # brainstorming session outputs (existing)
+    research/                  # ADR-style research findings (existing)
+    implementation-artifacts/  # story files, retros (existing)
+    # NOTE: the rebuilt capstone (PRD §FR-3) writes artifacts to a
+    # trainee-chosen CHOSEN_DIR OUTSIDE this repo (e.g., ~/projects/<name>/),
+    # NOT into _bmad-output/capstone/. The _bmad-output/capstone/ directory
+    # from Epic 4 is removed by Epic 10's migration story; the per-session
+    # data the portal needs lives at data/capstone-sessions/<session-id>/.
   .github/
     CODEOWNERS                 # FR-6.1
     pull_request_template.md   # FR-6.3
@@ -280,20 +368,46 @@ bmad_demo/
       facilitator/page.tsx
       lessons/[slug]/page.tsx
       labs/[slug]/page.tsx
-      capstone/page.tsx
-      capstone/[step]/page.tsx
+      capstone/page.tsx          # overview + resume-or-start (existing Epic 4 surface; rebuilt in Epic 5+)
+      capstone/setup/            # Phase 0/0.5/1/2 setup wizard pages (Epic 6)
+        page.tsx                 # wizard entry (preflight + tool selection)
+        wizard/page.tsx          # multi-step wizard
+        bootstrap/page.tsx       # Phase 2 progress + abort
+      capstone/chat/[sessionId]/[phase]/page.tsx  # Phases 3-8 chat surface (Epic 7+)
+      capstone/handoff/[sessionId]/page.tsx       # Phase 9 (Epic 9)
       api/
-        progress/route.ts
-        capstone/save/route.ts
+        progress/route.ts        # POST /api/progress (Epic 3 surface, stable)
+        capstone/save/route.ts   # POST /api/capstone/save (Epic 4 — to be removed in migration story per Epic 10)
+        capstone/setup/preflight/route.ts        # Epic 6
+        capstone/setup/tool-check/route.ts       # Epic 6
+        capstone/setup/bootstrap/route.ts        # Epic 6 (POST + paired GET stream)
+        capstone/setup/abort/route.ts            # Epic 6
+        capstone/chat/[sessionId]/stream/route.ts  # Epic 7+ (GET, SSE, runtime='nodejs')
+        capstone/phase-done/route.ts             # Epic 7+
+        capstone/handoff/generate/route.ts       # Epic 9
     components/                # client + server components
     lib/
       markdown/                # remark/rehype pipeline
       db/                      # better-sqlite3 connection + queries
-      capstone/                # working-tree write helpers
+      capstone/                # capstone runtime helpers
+        adapters/              # AI Tool Abstraction Layer — one module per tool (Epic 5)
+          index.ts             # adapter registry: Map<id, ToolAdapter>
+          types.ts             # ToolAdapter interface + supporting types
+          claude-code.ts       # v1
+          codex.ts             # v1
+          github-copilot.ts    # v1
+        subprocess/            # subprocess discipline (Epic 5)
+          run-streaming.ts     # the runStreaming(opts): AsyncIterable<ProcEvent> module
+          tracked-children.ts  # global Set<ChildProcess> + signal handlers
+        sessions/              # capstone session state queries (Epic 5)
+        bootstrap/             # npx install orchestration (Epic 6)
+        primers/               # per-phase BMAD primer markdown (Epic 7+)
+        handoff/               # HANDOFF.md generator (Epic 9)
     db/
       schema.sql
   data/
     .gitkeep                   # progress.sqlite lives here at runtime, gitignored
+    capstone-sessions/         # per-session subprocess.log + ephemeral state (gitignored)
   training/                    # all curriculum content (existing scaffold)
     00-start-here.md
     stakeholder-demo-script.md
