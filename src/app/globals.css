@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 @config "../../tailwind.config.ts";
 
 :root {
@@ -24,4 +25,25 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans, var(--font-geist-sans, system-ui)), system-ui, -apple-system, sans-serif;
+}
+
+/*
+ * Heading-anchor links from rehype-autolink-headings.
+ * Hidden visually by default so the heading reads cleanly; revealed on
+ * heading hover or anchor keyboard-focus so deep-link copying still works.
+ * Screen readers always read the link via its aria-label, regardless of
+ * opacity.
+ */
+.prose :where(h1, h2, h3, h4, h5, h6) .heading-anchor {
+  display: inline-block;
+  margin-right: 0.4em;
+  text-decoration: none;
+  color: var(--color-zinc-400);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.prose :where(h1, h2, h3, h4, h5, h6):hover .heading-anchor,
+.prose .heading-anchor:focus-visible {
+  opacity: 1;
 }
