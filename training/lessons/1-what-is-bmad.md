@@ -1,6 +1,5 @@
 ---
 title: What is BMAD
-order: 1
 ---
 
 # Lesson 1 — What is BMAD

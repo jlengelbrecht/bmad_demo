@@ -2,7 +2,7 @@
 
 **Epic:** 2 — Lesson Navigation & Self-Reference Link Integrity
 **Story Key:** 2-2-lesson-route
-**Status:** review
+**Status:** done
 
 ## Story
 
@@ -52,6 +52,38 @@ So that I can move through lessons in order, deep-link to any lesson, and use br
 - [x] **Task 6 — `src/lib/lessons/sequence.test.ts`** — 8 cases: sort order + titles from frontmatter, getLessonBySlug hit/miss, getNeighbors first/last/middle/unknown.
 - [x] **Task 7 — `tests/e2e/lessons.spec.ts`** — 4 cases: lesson 1 boundary (no Prev), lesson 3 middle (Prev=2, Next=4), lesson 6 boundary (no Next), garbage slug → 404.
 - [x] **Task 8 — Smoke + lint + finalize** — `test:unit` 22/22 in 271ms, `test:e2e` 10/10 in 3.6s, `lint` clean.
+
+### Review Findings
+
+**Patches (resolved):**
+
+- [x] [Review][Patch] **`aria-current="page"` removed from `LessonNav` position indicator** — was misused on a non-link text node.
+- [x] [Review][Patch] **`getLessonSequence()` skips the cache outside production** — authoring loop in `next dev` now picks up new/edited lessons without a server restart.
+- [x] [Review][Patch] **Lesson route's `readFileSync` wrapped in try/catch → `notFound()`** — ENOENT race surfaces as a graceful 404 instead of a 500.
+- [x] [Review][Patch] **Sort tiebreaker added** — secondary key is `slug.localeCompare(other.slug)`, so duplicate-prefix files have a deterministic order across machines.
+- [x] [Review][Patch] **`order:` dropped from all six lesson frontmatter files** — filename prefix is now the sole source of truth.
+- [x] [Review][Patch] **Lesson 6 e2e adds negative assertion** — `await expect(page.getByLabel(/^Next: /)).toHaveCount(0);` pins the AC4 behavior.
+- [x] [Review][Patch] **Keyboard tab-order test added** — Playwright walks Tab from `document.body`, asserts focus traverses top-Previous → top-Next link in the visible order. Pins AC6.
+- [x] [Review][Patch] **Dev-mode title-fallback warning** — `sequence.ts` warns when frontmatter `title` is present but not a non-empty string, so author bugs (`title: 1`, `title: ~`, etc.) surface immediately.
+- [x] [Review][Patch] **`__resetLessonCacheForTests()` moved to Vitest `beforeAll`** — explicit suite-hygiene contract instead of module-load side effect.
+
+**Deferred:**
+
+- [x] [Review][Defer] **`generateMetadata` returns a "Lesson not found" title for unknown slugs instead of calling `notFound()`** — when the page calls `notFound()`, Next renders `app/not-found.tsx` (which has its own metadata), so this string never reaches the response in practice. Cosmetic. Source: blind.
+- [x] [Review][Defer] **Vitest sequence tests couple to the real production fixture (`toHaveLength(6)` + literal slugs)** — adding a 7th lesson breaks the unit suite. Refactor to a tmpdir fixture (mirroring the dev-link-check test pattern) when the suite grows. Source: edge+blind.
+- [x] [Review][Defer] **404 e2e brittle to Next.js dev overlay** — passes today against `next dev` (overlay only fires for runtime errors, not 404s). Re-evaluate if the e2e config switches to `next build && next start`. Source: blind.
+- [x] [Review][Defer] **`generateStaticParams` SSG export-mode caveat** — pure SSG export wouldn't pick up a new lesson added post-build. Project doesn't use `output: 'export'`; revisit only if it ever does. Source: edge.
+- [x] [Review][Defer] **Lesson number contiguity / duplicate-number validation** — currently silent on `[1,2,3,5,6]` (missing 4) or two `3-*.md` files. Story 2.4's static link-integrity scan is the right home for this kind of validation. Source: blind.
+- [x] [Review][Defer] **`FILENAME_PREFIX` regex captures slug suffix unused; slug derived from filename via separate `replace`** — minor dead code; cleanup pass. Source: blind.
+- [x] [Review][Defer] **`LESSONS_DIR` resolved against `process.cwd()`** — works for the current single-package layout; revisit when/if a monorepo split happens. Source: edge.
+- [x] [Review][Defer] **Top + bottom nav duplicate links** — distinct `aria-label`s mitigate; deeper a11y refinement (single landmark + scroll-to-bottom-nav button) is Epic 5 axe work. Source: blind.
+- [x] [Review][Defer] **`/lessons/[slug]/not-found.tsx` could surface "did you mean…?" rather than the global handler** — UX improvement, not a correctness gap. Source: edge.
+- [x] [Review][Defer] **AC2 visible text "2. The artifact chain" vs AC literal "Lesson 2 — The artifact chain"** — `aria-label` carries the AC literal verbatim (verified by E2E `getByLabel`); visible text is a stylization choice. Acceptable per AC's "the strip shows…" phrasing. Source: auditor (LOW).
+- [x] [Review][Defer] **Slug not validated against an allowlist before any fs use** — current code derives `filePath` from the cache, never from URL input, so this is a near-miss not a vuln. Defer hardening (explicit allowlist match) until any future refactor that derives paths from the URL. Source: edge.
+
+**Dismissed:**
+
+- "Path-traversal in `LessonPage`" — false positive; `filePath` is only ever read from the validated cache entry, never composed from URL input.
 
 ## Dev Notes
 
@@ -136,3 +168,4 @@ Sort by `parseInt(filename.split("-")[0], 10)`. This handles 1–9 in their natu
 ## Change Log
 - 2026-05-08 — Story file authored from epics.md §Epic 2 / Story 2.2
 - 2026-05-08 — Implementation completed; `test:unit` 22/22, `test:e2e` 10/10, lint clean; status `review`
+- 2026-05-08 — Code review run: 0 decision-needed; 9 patches applied (a11y, dev-HMR cache bypass, ENOENT→404, sort tiebreaker, single-source-of-truth cleanup, +2 test-coverage gaps closed, dev title-fallback warning, beforeAll cache reset); 11 deferred; 1 dismissed. `test:unit` still 22/22; `test:e2e` now 11/11 in 3.9s; lint clean. Status `done`.

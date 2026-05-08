@@ -45,6 +45,32 @@ test.describe("lesson route (Story 2.2)", () => {
 
     // Next is hidden → "End of curriculum" sentinel shown instead
     await expect(page.getByText("End of curriculum").first()).toBeVisible();
+    // Negative assertion: no Next: link of any kind on lesson 6
+    await expect(page.getByLabel(/^Next: /)).toHaveCount(0);
+  });
+
+  test("keyboard tab order: prev → next (top), then content links, then prev → next (bottom)", async ({
+    page,
+  }) => {
+    await page.goto("/lessons/3-stories-as-tool-agnostic-contract");
+
+    // Focus the document body so Tab starts from the document beginning.
+    await page.evaluate(() => document.body.focus());
+
+    const focusedHref = async () =>
+      page.evaluate(() => {
+        const el = document.activeElement;
+        if (el && el.tagName === "A") return (el as HTMLAnchorElement).getAttribute("href");
+        return null;
+      });
+
+    // First tab → top Previous link
+    await page.keyboard.press("Tab");
+    expect(await focusedHref()).toBe("/lessons/2-the-artifact-chain");
+
+    // Second tab → top Next link
+    await page.keyboard.press("Tab");
+    expect(await focusedHref()).toBe("/lessons/4-codeowners-and-the-gate");
   });
 
   test("unknown slug renders the global not-found page", async ({ page }) => {

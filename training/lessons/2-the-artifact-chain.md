@@ -1,6 +1,5 @@
 ---
 title: The artifact chain
-order: 2
 ---
 
 # Lesson 2 — The artifact chain

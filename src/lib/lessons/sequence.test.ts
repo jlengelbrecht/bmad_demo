@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import {
   __resetLessonCacheForTests,
@@ -8,7 +8,9 @@ import {
 } from "./sequence";
 
 // Reset the module-scoped cache so the suite is order-independent.
-__resetLessonCacheForTests();
+beforeAll(() => {
+  __resetLessonCacheForTests();
+});
 
 describe("lesson sequence", () => {
   it("returns six lessons sorted by leading number prefix (numeric, not lexicographic)", () => {

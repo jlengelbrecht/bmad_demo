@@ -31,15 +31,35 @@ function readLessons(): Lesson[] {
     const filePath = path.join(LESSONS_DIR, entry.name);
     const raw = readFileSync(filePath, "utf8");
     const fm = matter(raw).data as Record<string, unknown>;
-    const title = typeof fm.title === "string" && fm.title.trim().length > 0 ? fm.title : `Lesson ${number}`;
+
+    let title: string;
+    if (typeof fm.title === "string" && fm.title.trim().length > 0) {
+      title = fm.title;
+    } else {
+      title = `Lesson ${number}`;
+      if (process.env.NODE_ENV !== "production" && fm.title !== undefined) {
+        console.warn(
+          `[lessons] frontmatter title for ${entry.name} is not a non-empty string (got ${typeof fm.title}); falling back to "${title}"`,
+        );
+      }
+    }
 
     lessons.push({ slug, number, title, filePath });
   }
 
-  return lessons.sort((a, b) => a.number - b.number);
+  return lessons.sort((a, b) => {
+    const byNumber = a.number - b.number;
+    if (byNumber !== 0) return byNumber;
+    return a.slug.localeCompare(b.slug);
+  });
 }
 
 export function getLessonSequence(): Lesson[] {
+  // Skip the cache in dev so authoring loop changes (new lessons, edited
+  // frontmatter) surface without restarting the dev server.
+  if (process.env.NODE_ENV !== "production") {
+    return readLessons();
+  }
   if (cached) return cached;
   cached = readLessons();
   return cached;

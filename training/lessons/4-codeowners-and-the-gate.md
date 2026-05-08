@@ -1,6 +1,5 @@
 ---
 title: CODEOWNERS and the gate
-order: 4
 ---
 
 # Lesson 4 — CODEOWNERS and the gate

@@ -1,6 +1,5 @@
 ---
 title: From lessons to capstone
-order: 6
 ---
 
 # Lesson 6 — From lessons to capstone

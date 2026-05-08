@@ -41,7 +41,17 @@ export default async function LessonPage({
 
   const sequence = getLessonSequence();
   const { prev, next } = getNeighbors(slug);
-  const source = readFileSync(lesson.filePath, "utf8");
+
+  let source: string;
+  try {
+    source = readFileSync(lesson.filePath, "utf8");
+  } catch (err) {
+    // File may have been removed between sequence cache and request — surface as 404.
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(`[lessons] failed to read ${lesson.filePath}: ${String(err)}`);
+    }
+    notFound();
+  }
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">

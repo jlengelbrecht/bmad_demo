@@ -1,6 +1,5 @@
 ---
 title: Working as a team
-order: 5
 ---
 
 # Lesson 5 — Working as a team

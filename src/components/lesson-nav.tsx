@@ -37,10 +37,7 @@ export function LessonNav({ current, prev, next, total, ariaLabel }: LessonNavPr
         )}
       </div>
 
-      <p
-        className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
-        aria-current="page"
-      >
+      <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
         Lesson {current.number} of {total}
       </p>
 

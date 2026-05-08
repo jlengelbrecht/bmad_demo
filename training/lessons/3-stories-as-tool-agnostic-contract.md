@@ -1,6 +1,5 @@
 ---
 title: Stories as tool-agnostic contract
-order: 3
 ---
 
 # Lesson 3 — Stories as tool-agnostic contract

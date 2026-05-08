@@ -46,3 +46,17 @@
 - **`dev-link-check` skipped during `next build`** — Story 2.4 owns CI/build-time link integrity.
 - **No warning when inline HTML is silently stripped from markdown** — minor authoring-feedback gap; queue for the same dev-mode helper pass.
 - **Empty href `[a]()` slips through dev-link-check silently** — minor; queue with the previous item.
+
+## Deferred from: code review of 2-2-lesson-route (2026-05-08)
+
+- **`generateMetadata` returns "Lesson not found" title for unknown slugs** — covered by global `not-found.tsx` metadata in practice; cosmetic.
+- **Vitest sequence tests couple to the real production fixture** (`toHaveLength(6)`, literal slugs) — refactor to a tmpdir fixture when the suite grows.
+- **404 e2e brittle to Next.js dev overlay** — passes against `next dev` today; revisit if e2e config switches to `next build && next start`.
+- **`generateStaticParams` SSG export-mode caveat** — pure SSG export wouldn't pick up post-build lesson additions; project doesn't use `output: 'export'`.
+- **Lesson contiguity / duplicate-number validation** — silent on `[1,2,3,5,6]` (missing 4) or two `3-*.md` files; Story 2.4's static link-integrity scan is the right home.
+- **`FILENAME_PREFIX` regex captures slug suffix unused** — minor dead code; cleanup pass.
+- **`LESSONS_DIR` resolved against `process.cwd()`** — works for current single-package layout; revisit if monorepo split happens.
+- **Top + bottom nav landmarks duplicate links** — distinct `aria-label`s mitigate; deeper a11y refinement is Epic 5 axe work.
+- **`/lessons/[slug]/not-found.tsx` could surface "did you mean…?"** — UX improvement, not a correctness gap.
+- **AC2 visible text "2. The artifact chain" vs AC literal "Lesson 2 — The artifact chain"** — `aria-label` carries the AC literal verbatim; visible text is a stylization choice.
+- **Slug not validated against an explicit allowlist before any fs use** — current code is safe (cache lookup); harden if a future refactor derives paths from URL input.
