@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Trainee — Start Here · BMAD Demo",
+  robots: { index: false, follow: false },
+};
 
 export default function StartHerePage() {
   return (

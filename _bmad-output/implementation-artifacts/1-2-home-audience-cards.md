@@ -2,7 +2,7 @@
 
 **Epic:** 1 — Project Foundation & One-Command Boot
 **Story Key:** 1-2-home-audience-cards
-**Status:** review
+**Status:** done
 
 ## Story
 
@@ -74,6 +74,36 @@ So that I can self-select my path (start-here / stakeholder demo / facilitator g
   - [x] `npm run lint` clean (after switching placeholder back-links to `next/link`)
   - [x] File List + Completion Notes populated
   - [x] Status set to `review`
+
+### Review Findings
+
+**Patches (resolved):**
+
+- [x] [Review][Patch] **`AudienceCard` switched to `next/link`** — `<a>` → `<Link>`; preserves prefetch + client-side routing; matches placeholder convention.
+- [x] [Review][Patch] **Body font fallback chain hardened** [`src/app/globals.css:26`] — now `var(--font-sans, var(--font-geist-sans, system-ui)), system-ui, -apple-system, sans-serif`. Geist degrades cleanly through Tailwind v4 `@theme inline` indirection AND through the raw `next/font` variable AND finally to system-ui.
+- [x] [Review][Patch] **Composite `aria-label` redundancy fixed** — dropped audience prefix; now `${title} (${timeInvestment})`. Verified rendered HTML: `aria-label="Trainee — Start Here (~3 hours · self-paced)"` etc.
+- [x] [Review][Patch] **Per-route metadata on placeholders** — each placeholder exports `Metadata` with a distinct title and `robots: { index: false, follow: false }`. Verified: `<title>Trainee — Start Here · BMAD Demo</title>` and `<meta name="robots" content="noindex, nofollow"/>`.
+
+**Deferred (real but out-of-Story-1.2 scope):**
+
+- [x] [Review][Defer] **`<h2>` inside `<a>` with `aria-label` override** — `aria-label` becomes the link's accessible name, but heading-jump SR navigation still announces the bare title without time/blurb. Refine when axe + a11y stories land in Epic 5. Source: blind+edge.
+- [x] [Review][Defer] **Dark-mode badge contrast may dip below 4.5:1** — `dark:bg-{accent}-900/40` + `dark:text-{accent}-200`. Verify via axe in Epic 5; bump alpha or text variant if it fails. Source: edge.
+- [x] [Review][Defer] **`focus-visible:outline-current` may have weak contrast on certain bgs** — currently fine on the white/dark-zinc card backgrounds (text vs bg passes), but Epic 5 axe should verify. Source: blind+edge.
+- [x] [Review][Defer] **Three placeholder pages are near-identical copy-paste** — rule-of-three says extract; Epic 2 replaces all three with markdown rendering, so extracting now is YAGNI. Source: blind.
+- [x] [Review][Defer] **`next/font/google` vs architecture "no Google Fonts CDN / vendored locally"** — re-raised by auditor (MED); deferred from Story 1.1; verification lands with Epic 5 no-egress E2E. Source: auditor+edge.
+- [x] [Review][Defer] **No `not-found.tsx`, no trailing-slash policy, case-sensitivity** — Next.js defaults handle 404 ungracefully; future-story concern. Source: edge.
+- [x] [Review][Defer] **AudienceCard nested-interactive landmine for future** — if a future story adds a button inside the card, the whole-card-as-link pattern fails. Refactor when that need arrives. Source: edge.
+- [x] [Review][Defer] **Mixed em-dash encoding in `page.tsx` (`&mdash;`/`&rsquo;` vs literal `—`)** — cosmetic; can normalize during the next content pass. Source: blind.
+- [x] [Review][Defer] **Stale `public/*.svg` files from scaffold (`next.svg`, `vercel.svg`, etc.)** — unreferenced; safe to remove; defer cleanup pass to a follow-up commit. Source: auditor.
+
+**Dismissed:**
+
+- "Story claims 4 `aria-label`s but only 3 exist" — actual count is 4 (section's `aria-label="Choose your path"` + 3 cards). Auditor missed the section.
+- "`aria-hidden` boolean without value" — React JSX emits this as the canonical truthy value; modern SRs treat it correctly.
+- "`HomePage` removed outer wrapping `<div>` with `bg-zinc-50 dark:bg-black`" — intentional design simplification; body bg is set via `globals.css` and `var(--background)`.
+- "`accent` is a string union but not validated at runtime" — TS protects, internal call site only, no untrusted input reaches it.
+- "`flex-1` on `<main>` with no flex parent shown" — body in `layout.tsx` IS `flex flex-col`; `flex-1` works.
+- "Smoke test 'no `http(s)://` URLs in rendered HTML' is unverifiable" — claim is true for the grep that ran; not asserting beyond that.
 
 ## Dev Notes
 
@@ -153,4 +183,5 @@ No Vitest/Playwright frameworks yet (Epic 5). Smoke tests are HTTP 200 + grep fo
 
 - 2026-05-07 — Story file authored from epics.md §Epic 1 / Story 1.2
 - 2026-05-07 — Implementation completed; lint clean; HTTP 200 on all four routes; status set to `review`
+- 2026-05-07 — Code review run: 0 decision-needed; 4 patches applied (Link migration, font fallback chain, aria-label cleanup, per-route placeholder metadata); 9 deferred to `deferred-work.md`; 6 dismissed. Re-smoke + re-lint clean. Status set to `done`.
 

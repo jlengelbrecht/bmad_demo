@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 type Accent = "trainee" | "stakeholder" | "facilitator";
@@ -41,9 +42,9 @@ export function AudienceCard({
 }: AudienceCardProps) {
   const styles = accentStyles[accent];
   return (
-    <a
+    <Link
       href={href}
-      aria-label={`${audience}: ${title} — ${timeInvestment}`}
+      aria-label={`${title} (${timeInvestment})`}
       className={`group flex flex-col gap-4 rounded-lg border-2 ${styles.border} bg-white p-6 shadow-sm transition hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current dark:bg-zinc-900`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -66,6 +67,6 @@ export function AudienceCard({
       <p className="mt-auto text-xs font-medium text-zinc-500 dark:text-zinc-400">
         {timeInvestment}
       </p>
-    </a>
+    </Link>
   );
 }

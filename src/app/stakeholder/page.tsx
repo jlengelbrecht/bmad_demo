@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Stakeholder — 15-minute Demo · BMAD Demo",
+  robots: { index: false, follow: false },
+};
 
 export default function StakeholderPage() {
   return (
