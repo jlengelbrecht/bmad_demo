@@ -13,21 +13,21 @@ Curriculum maintainer: **Devbox** ([@jlengelbrecht](https://github.com/jlengelbr
 Requires **Node 20+** and **npm**.
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/jlengelbrecht/bmad_demo.git
 cd bmad_demo
 npm install
 npm run dev
 ```
 
-The dev server starts on `http://localhost:3000`. No account, no signup, no remote services — open the URL and pick a path.
+The dev server starts on `http://localhost:3000` (Next.js falls back to the next free port if 3000 is taken — check the terminal output). No account, no signup, no remote services — open the URL and pick a path.
 
 ## Pick your path
 
 The portal home page presents three audience-entry cards. You can also navigate by route or read the markdown sources directly:
 
-- **Trainee — Start Here** · route [`/start-here`](http://localhost:3000/start-here) · markdown [`training/00-start-here.md`](training/00-start-here.md) — six lessons, three labs, ~3 hours self-paced. Ends with a capstone that produces a real BMAD artifact set.
-- **Stakeholder — 15-minute Demo** · route [`/stakeholder`](http://localhost:3000/stakeholder) · markdown `training/stakeholder-demo-script.md` *(authored in Epic 6)* — a timed walkthrough of what BMAD looks like in practice and the trade-offs it makes, with explicit objections and answers.
-- **Facilitator — Workshop Guide** · route [`/facilitator`](http://localhost:3000/facilitator) · markdown `training/facilitator-guide.md` *(authored in Epic 6)* — timing, prompts, and rituals to run a half-day or full-day BMAD workshop with your team.
+- **Trainee — Start Here** · route `/start-here` · markdown [`training/00-start-here.md`](training/00-start-here.md) — six lessons, three labs, ~3 hours self-paced. Ends with a capstone that produces a real BMAD artifact set.
+- **Stakeholder — 15-minute Demo** · route `/stakeholder` · markdown `training/stakeholder-demo-script.md` *(coming in a future release)* — a timed walkthrough of what BMAD looks like in practice and the trade-offs it makes, with explicit objections and answers.
+- **Facilitator — Workshop Guide** · route `/facilitator` · markdown `training/facilitator-guide.md` *(coming in a future release)* — timing, prompts, and rituals to run a half-day or full-day BMAD workshop with your team.
 
 ## Supported AI tooling
 
@@ -44,7 +44,7 @@ A team can mix tools across engineers — Lesson 5 covers how to keep BMAD coher
 
 ```
 bmad_demo/
-├── src/                                Next.js App Router source (pages, components, lib)
+├── src/                                Next.js App Router source (pages, components)
 ├── public/                             Static assets vendored locally
 ├── training/                           Curriculum markdown (lessons, labs, audience guides)
 ├── _bmad/                              Installed BMAD framework (skills, scripts, configs)
@@ -71,7 +71,7 @@ The planning artifacts in `_bmad-output/planning-artifacts/` are the actual outp
 
 bmad_demo is intentionally narrow at v1 to keep the curriculum legible. The portal does **not** include:
 
-- **Authentication or user accounts.** The local user is trusted; progress is stored in a local SQLite file.
+- **Authentication or user accounts.** The local user is trusted. Progress will persist to a local SQLite file once Epic 3 wires the storage layer.
 - **A SaaS deployment target.** The portal runs locally only — `npm run dev` for trainees, `npm run start` for production-mode local.
 - **Remote services or telemetry.** No analytics, no error reporters, no font CDNs, no external APIs.
 

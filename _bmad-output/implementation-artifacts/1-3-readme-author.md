@@ -2,7 +2,7 @@
 
 **Epic:** 1 — Project Foundation & One-Command Boot
 **Story Key:** 1-3-readme-author
-**Status:** review
+**Status:** done
 
 ## Story
 
@@ -37,6 +37,35 @@ So that I can decide what to do next within 30 seconds of opening the repo.
 - [x] **Task 5 — Platforms, Node, npm-only (AC2)** — Dedicated "Platforms and constraints" section: macOS / Linux / Windows-via-WSL2; Node 20+ floor with cross-reference to `engines.node` and `.nvmrc`; npm-only-for-v1 with post-v1 note.
 - [x] **Task 6 — v1 non-capabilities (AC3)** — Three named non-capabilities (no auth, no SaaS deployment, no remote services / telemetry) plus pointer to PRD scope.
 - [x] **Task 7 — Smoke + commit prep** — In-repo links verified: `LICENSE`, `_bmad-output/planning-artifacts/prd.md`, `training/00-start-here.md` all resolve; placeholder markdown paths (stakeholder/facilitator) flagged as Epic 6 follow-on.
+
+### Review Findings
+
+**Patches (resolved in follow-up):**
+
+- [x] [Review][Patch] **Dropped `npm run start` reference** — Quickstart now only documents `npm run dev`; production-mode mention removed.
+- [x] [Review][Patch] **SQLite reframed as future-tense** — "Progress will persist to a local SQLite file once Epic 3 wires the storage layer." No current-capability misclaim.
+- [x] [Review][Patch] **`lib/` removed from `src/` description** — repo-structure block now says `(pages, components)`.
+- [x] [Review][Patch] **`<repo-url>` placeholder replaced** with `https://github.com/jlengelbrecht/bmad_demo.git` (verified GitHub user exists per edge-hunter check).
+- [x] [Review][Patch] **Audience-route URLs now relative** (`route /start-here` rather than `http://localhost:3000/start-here`) and a port-collision note added to the Quickstart paragraph.
+- [x] [Review][Patch] **Audience markdown paths consistent** — all three use bare backtick code; the trainee one keeps the live markdown link in addition (it exists), while stakeholder/facilitator are code-styled with `*(coming in a future release)*` (replacing the internal "Epic 6" jargon).
+
+**Deferred:**
+
+- [x] [Review][Defer] **Install command rendered as four-line bash block instead of AC's chained one-liner (`<repo-url>` vs `<repo>`)** — multi-line is more readable; AC says "documents the install path" not "shows the verbatim string." LOW. Source: auditor.
+- [x] [Review][Defer] **macOS / Windows-via-WSL2 platform claim unverified** — Epic 5 owns the cross-platform install checklist. README states the support intent; CI matrix is post-v1 work. Source: edge.
+- [x] [Review][Defer] **Node 22 LTS compatibility unverified** — claim aligns with `engines.node >=20`; defer real verification to Epic 5 CI matrix. Source: edge.
+- [x] [Review][Defer] **Repo-structure block omits `.gitignore`, `.nvmrc`, `next-env.d.ts`, `postcss.config.mjs`, `package.json`, `package-lock.json`** — block is "key entries for curriculum" not exhaustive; conventional Node config files don't need to be enumerated. Defer if a complete tree is desired. Source: edge.
+- [x] [Review][Defer] **Bus-factor disclosure names v1.1 plan elements without linking a tracker** — tracker doesn't exist yet (post-v1); the disclosure quote-block is acceptable as named-but-unlinked. Source: blind.
+- [x] [Review][Defer] **PRD pointer is to file root, not a `#scope` anchor** — PRD doesn't have a stable scope-section heading suitable for anchoring; pointer-to-file is sufficient. AC3 satisfied via the inline non-capability list anyway. Source: auditor.
+- [x] [Review][Defer] **"authored in Epic 6" jargon in public README** — internal planning concept exposed; soften to "coming in a future release" if a public audience is the priority. Defer cosmetic pass. Source: blind.
+
+**Dismissed:**
+
+- "AC1 contact-handle nit (GitHub handle vs email)" — GitHub handle + issues link is a valid contact handle; auditor flagged at LOW for completeness only.
+- "Tone wobble" — subjective; not actionable.
+- "`.nvmrc` cross-reference unverified" — verified to exist (Story 1.1 added it).
+- "Repo-structure files claimed but unverified" — all confirmed present (`eslint.config.mjs`, `next.config.ts`, `tsconfig.json`, `tailwind.config.ts`, `AGENTS.md`).
+- "Lede buries team-rituals thesis" — lede DOES open with "teaches teams how to adopt BMAD"; the team angle is in the first eight words.
 
 ## Dev Notes
 
@@ -97,4 +126,5 @@ README is content. Validation = (a) every in-repo link resolves to a real file/r
 
 - 2026-05-07 — Story file authored from epics.md §Epic 1 / Story 1.3
 - 2026-05-07 — README rewritten; in-repo links verified; status set to `review`
+- 2026-05-08 — Code review run: 0 decision-needed; 6 patches applied (drop `npm run start`, future-tense SQLite, drop `lib/`, real clone URL, relative route URLs + port-collision note, consistent markdown-path treatment with public-friendly framing); 7 deferred; 5 dismissed. Status set to `done`.
 

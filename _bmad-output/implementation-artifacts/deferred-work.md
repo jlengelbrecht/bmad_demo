@@ -21,3 +21,13 @@
 - **AudienceCard whole-card-link locks out nested interactive elements** — if a future story adds a button inside the card, the pattern needs a refactor (e.g., card-link with `::after` trick).
 - **Mixed em-dash encoding in `page.tsx`** (`&mdash;`/`&rsquo;` vs literal `—`) — cosmetic; normalize during next content pass.
 - **Stale `public/*.svg` files from scaffold** (`next.svg`, `vercel.svg`, `globe.svg`, `window.svg`, `file.svg`) — unreferenced; remove in a cleanup commit.
+
+## Deferred from: code review of 1-3-readme-author (2026-05-08)
+
+- **README install command rendered multi-line vs the AC's chained one-liner** — multi-line is more readable; AC says "documents the install path," not "verbatim string." LOW.
+- **macOS / Windows-via-WSL2 platform claim unverified** — Epic 5 owns the cross-platform install checklist + CI matrix.
+- **Node 22 LTS compatibility unverified** — defer real verification to Epic 5 CI matrix.
+- **README repo-structure block omits dotfiles + conventional Node configs** — block is "key entries for curriculum"; non-essential entries elided. Defer if a complete tree is desired.
+- **Bus-factor disclosure names v1.1 plan elements without linking a tracker** — tracker doesn't exist yet (post-v1).
+- **PRD pointer is to file root, not a `#scope` anchor** — PRD lacks a stable scope-section heading suitable for anchoring.
+- **"Epic 6" wording on `training/tools-reference.md` reference (line 41)** — minor public-facing jargon; cosmetic next pass.
