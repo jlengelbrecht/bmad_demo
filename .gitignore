@@ -36,6 +36,10 @@ coverage/
 playwright-report/
 test-results/
 
+# Playwright MCP browser-tool output (screenshots, console logs, page snapshots
+# from interactive walkthroughs). Transient; not committed.
+.playwright-mcp/
+
 # Logs
 *.log
 npm-debug.log*
