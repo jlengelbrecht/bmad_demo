@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Database (development only)
+*.db
+*.sqlite
+*.sqlite3
+data/*.sqlite
+data/*.sqlite-journal
+
+# Capstone outputs (per-trainee runs)
+_bmad-output/capstone/[0-9]*/
+
+# Test output
+coverage/
+*.lcov
+playwright-report/
+test-results/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Secrets / keys (defense in depth — repo is local-only and has no .env in v1)
+*.pem
+*.key
+
+# Turbo cache
+.turbo
+
+# Vercel
+.vercel
+
+# AI assistant — local/personal artifacts only.
+# Team-shared agent context (AGENTS.md, .github/copilot-instructions.md) is committed —
+# see training/tools-reference.md for the multi-tool setup pattern.
+CLAUDE.md
+.claude/
