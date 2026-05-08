@@ -81,7 +81,8 @@
 
 ## Surfaced during Epic 3 retro Playwright walkthrough (2026-05-08)
 
-- **`npm run reset-progress` while the dev server is running leaks stale state until restart** — when the running dev server has the SQLite singleton cached on `globalThis`, deleting the file leaves the OS file handle open (POSIX: deleted-but-still-readable inode). Subsequent reads return the pre-reset rows until the dev server restarts. Story 3.4's AC6 explicitly says "and then `npm run dev`" — a fresh server boot is the intended workflow — but a running-server scenario is realistic. Cheapest fix: append "If a dev server is running, restart it for the reset to take effect." to the script's success output. Stronger fix (deferred): connection module watches the file via fs.watch and reopens on unlink. Surfaced via manual Playwright walkthrough; no automated test catches it.
+- ✅ **RESOLVED in 725f5a4** — `npm run reset-progress` while the dev server is running used to leak stale state until restart. Cheapest fix landed: the script's success output now includes "If a dev server is running, restart it for the reset to take effect." A stronger fix (connection module watches the file via fs.watch and reopens on unlink) remains deferred; revisit if the manual restart hint proves insufficient.
+- ✅ **RESOLVED in 725f5a4** — Tailwind Typography's GitHub-style backtick decorations on inline `<code>` removed via a `content: none !important` rule in globals.css. Lesson prose now renders inline code as monospace without surrounding backtick characters.
 
 ## Deferred from: code review of 3-4-reset-progress (2026-05-08)
 
