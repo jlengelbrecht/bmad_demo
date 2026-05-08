@@ -10,9 +10,17 @@ export function SiteHeader() {
         >
           BMAD Demo
         </Link>
-        <span className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          Training Portal
-        </span>
+        <nav aria-label="Primary" className="flex items-center gap-4">
+          <Link
+            href="/capstone"
+            className="text-xs font-medium uppercase tracking-wide text-zinc-600 hover:text-zinc-900 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current dark:text-zinc-400 dark:hover:text-zinc-100"
+          >
+            Capstone
+          </Link>
+          <span className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Training Portal
+          </span>
+        </nav>
       </div>
     </header>
   );

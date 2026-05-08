@@ -2,7 +2,11 @@ import "server-only";
 
 import type { Database, Statement } from "better-sqlite3";
 
+import { CAPSTONE_STEP_NAMES, type CapstoneStepName } from "./schemas";
+
 import { getDb } from "./connection";
+
+const CANONICAL_STEP_SET: ReadonlySet<string> = new Set(CAPSTONE_STEP_NAMES);
 
 /*
  * Capstone-session schema-shape decision (Story 4.1)
@@ -182,6 +186,40 @@ export function isCapstoneSessionActive(
   db: Database = getDb(),
 ): boolean {
   return statements(db).isCapstoneActive.get(sessionId) !== undefined;
+}
+
+/**
+ * Return the set of step-name suffixes (e.g. `'brief'`, `'epic'`) for
+ * the given session whose capstone-step row is currently completed.
+ *
+ * Composes `listCompleted('capstone-step')` and filters in JavaScript:
+ * a single trainee will have a small number of capstone sessions, so
+ * the O(n) filter beats adding a dedicated prepared statement (rule of
+ * three; revisit if a third caller appears).
+ */
+export function completedStepsForSession(
+  sessionId: string,
+  db: Database = getDb(),
+): ReadonlySet<CapstoneStepName> {
+  // Defensive guards: the empty session id would build prefix `'/'` and
+  // over-match `/<step>` rows; a session id containing `/` would create
+  // a multi-segment prefix. Both shapes are blocked at the Zod boundary
+  // upstream; the helper refuses to compute a result regardless.
+  if (sessionId === "" || sessionId.includes("/")) return new Set();
+  const prefix = `${sessionId}/`;
+  const all = listCompleted("capstone-step", db);
+  const result = new Set<CapstoneStepName>();
+  for (const id of all) {
+    if (!id.startsWith(prefix)) continue;
+    const suffix = id.slice(prefix.length);
+    // Filter to canonical step names so the return type narrows truthfully.
+    // A non-canonical suffix (impossible via Zod today; possible via a
+    // future migration or direct SQL) is silently dropped.
+    if (CANONICAL_STEP_SET.has(suffix)) {
+      result.add(suffix as CapstoneStepName);
+    }
+  }
+  return result;
 }
 
 /**

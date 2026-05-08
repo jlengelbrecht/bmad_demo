@@ -2,7 +2,7 @@
 
 **Epic:** 4 — Capstone Harness
 **Story Key:** 4-3-capstone-overview
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 
@@ -141,13 +141,32 @@ So that I never have to remember a session id and never accidentally clobber pri
 
 ### Review Findings
 
-_(populated after code review)_
+**Patches (resolved):**
 
-**Patches:** _(pending)_
+- [x] [Review][Patch] **AC4 fix — on-disk path code-block visible on the complete branch** — was hidden behind `isComplete ? null : (...)` ternary. Now both branches render the path; the prefix label switches to "Find your artifacts at " on complete vs "Artifacts land at " on in-progress. Complete branch also adds " — commit them to your team's repo." Caught by all three reviewers (Auditor: PARTIAL; Blind: HIGH; Edge: implied via AC10 missing assertion).
+- [x] [Review][Patch] **AC3 wording — "started" instead of "last activity"** — the value renders is derived from the session id (creation date), not the most recent step's `completed_at`. Renaming to "started" is honest with what the value represents; computing real last-activity would require an additional storage helper that's outside Story 4.3's scope.
+- [x] [Review][Patch] **`searchParams.session` array guard** — Next.js 15+'s `searchParams` is `string | string[] | undefined`. The page now types it accordingly, treats `Array.isArray` as malformed, and calls `notFound()`. Prevents `RegExp.test(['…'])` String-coercion silently slipping through plus `idToIsoDate(arr)` UI corruption.
+- [x] [Review][Patch] **`completedStepsForSession` filters to canonical step names** — return type narrowed from `ReadonlySet<string>` to `ReadonlySet<CapstoneStepName>`. Drops non-canonical suffixes silently. Empty session id and slash-containing session id return empty set defensively. Removes the unsafe `as ReadonlySet<CapstoneStepName>` cast in the page.
+- [x] [Review][Patch] **`<StartCapstoneButton>` `try/finally` resets `isSaving` + `inFlight`** — restructured to match `<LessonCompleteButton>`'s pattern. If `router.push` is interrupted (slow nav, error boundary, route 404 boundary), the button is recoverable on the next click instead of stuck on "Starting…" with `inFlight.current === true`. The `navigated` flag prevents the post-success state-write when the component is about to unmount.
+- [x] [Review][Patch] **e2e: complete-branch test asserts AC4 path code-block + 5 step ✓ marks** — the previous test only asserted heading + start-new button; the AC4 contract is now locked in. New `getByRole("listitem", { name: /…, completed/ })` assertions for each of the five canonical steps.
+- [x] [Review][Patch] **e2e: `afterEach` cleanup so failed tests don't leak rows** — was `beforeEach` + `afterAll` only. Adding `afterEach` ensures a failed test mid-suite doesn't leave capstone-session rows in `data/e2e-progress.sqlite` for unrelated specs to pick up.
+- [x] [Review][Patch] **e2e: URL-pin priority test** — new case seeds an OLDER session (queried via `?session=`) AND a NEWER session (which `getRecentCapstoneSession` would otherwise pick); asserts the URL-pinned older session id is visible and the newer one is absent. Locks the branching priority in `page.tsx`.
 
-**Deferred:** _(pending)_
+**Deferred:**
 
-**Dismissed:** _(pending)_
+- [x] [Review][Defer] **`compactUtcNow` produces malformed ids for years > 9999** — `Date.toISOString()` switches to extended format (`+275760-…`) outside 1–9999. Per architecture's local-only single-trainee threat model, a system clock set wildly into the year 10000 is not a real concern. Source: edge.
+- [x] [Review][Defer] **Cross-story id-collision risk** — same-second clicks across the start-session path (`completed: false`) and Story 4.4's session-complete path (`completed: true`) could resurrect a completed session via `upsertProgress`'s unconditional `excluded.completed_at`. Story 4.4's `markCapstoneSessionComplete` route handler addresses this for the complete path; the start-session path remains plain upsert. If the collision becomes observable in practice, bump the compact-UTC format to include milliseconds. Source: blind+edge.
+- [x] [Review][Defer] **`withDb` SQLITE_BUSY race** — the test-side helper opens a fresh better-sqlite3 connection per call; under heavy WAL contention with the dev server, could hit the 5-second busy timeout. Single-user local model + serial-mode tests + small write surface make this very low probability. If observed, set `db.pragma('busy_timeout = 30000')` on the test connection. Source: edge.
+- [x] [Review][Defer] **Cross-file e2e parallelism** — `playwright.config.ts` uses `fullyParallel: true`; capstone-overview uses serial within file, but other specs running in parallel could (in principle) interfere. No other spec writes capstone-session rows today, so theoretical only. Lock the no-write invariant in Story 4.4's e2e if relevant. Source: edge.
+- [x] [Review][Defer] **`CAPSTONE_STEP_ORDER === CAPSTONE_STEP_NAMES`** — alias rather than separate literal. A future reorder of `CAPSTONE_STEP_NAMES` for any reason would silently change resume order. Doc-comment in `steps.ts` notes the load-bearing intent; if the constraint becomes a problem, add a snapshot test. Source: blind.
+- [x] [Review][Defer] **No "all steps complete on in-progress session" recovery affordance** — when `nextIncompleteStep` returns null but the session row is still active, no on-page action is rendered. Story 4.4 owns the recovery flow (final-step session-complete POST that flips the row). If observed in practice, add a "Finalize session" inline action. Source: blind.
+
+**Dismissed:**
+
+- "AbortError check assumes Error shape" — matches Story 3.3 `LessonCompleteButton` precedent; codebase convention.
+- "Status span empty content always rendered" — matches existing UX pattern; cosmetic-only.
+- "Site-header link to current /capstone re-renders" — architectural choice; no test, no harm in local-only context.
+- "POST 200 doesn't check `body.ok` envelope" — the route handler always returns either `{ok:true}` or non-2xx; `res.ok` boolean is the load-bearing check. Acceptable per AC.
 
 ## Dev Notes
 
@@ -210,16 +229,48 @@ _(populated after code review)_
 
 ### Debug Log
 
-_(populated during implementation)_
+- **e2e ambiguity from same string in heading and panel.** First test of the suite ("no prior session → Start your capstone") failed with `getByText(/1 product brief, 1 epic, 2 user stories, and 1 architecture decision record/)` matching two elements (the page header AND the no-session panel). Deduped by removing the panel-level repetition and updating the test to assert only the heading + button.
+- **Parallel-test interference required serial mode.** Playwright's default `fullyParallel: true` ran capstone-overview tests in parallel against a shared e2e SQLite — the "no prior session" test's `deleteAllCapstoneSessions` would race with another test's `INSERT`. Switched the describe block to `mode: "serial"`. The describe ordering now drives test order: no-session → in-progress → complete → 404s → walkability.
+- **Tests 1+4 visible-text mismatch, then strict-mode collision.** Two different bugs surfaced. (1) The test was waiting for "Start your capstone" but Server Component caching/HMR was returning a stale render — actually no, it was the strict-mode duplicate text. Fixed via dedupe. (2) The complete-session test asserted `_bmad-output/capstone/<id>/` was visible — but the implementation had hidden it behind `isComplete ? null : (...)`, the inversion of AC4. Fixed by rendering the path in both branches with branch-specific prefix copy.
+- **URL-pin test strict mode with `getByText`.** `<id>` substring matched both the standalone `<code>` block AND the path `<code>` block. Used `exact: true` to disambiguate.
+- **Site-header walkability link broke a Story 3.3 keyboard-tab-order test.** Adding the "Capstone" header link inserted a focusable element between BMAD Demo and the lesson's top-Previous link. Updated the existing `lessons.spec.ts` keyboard-tab-order test to expect the new tab order.
 
 ### Completion Notes
 
-_(populated during implementation)_
+**ACs satisfied:**
+- AC1: `/capstone` is a Server Component (no `'use client'`); reads `searchParams` via async Promise; regex-gates and `notFound()`s for malformed/missing `?session=`; falls back to `getRecentCapstoneSession()` when no `?session=`.
+- AC2: NoSessionPanel renders when no session is found; `<StartCapstoneButton>` POSTs `{kind:'capstone-session', completed:false}`, navigates on success. Defensible deviation: directory creation deferred to first save (Story 4.2's `mkdir({recursive:true})`).
+- AC3: "Resume your capstone — started <ISO date>" panel with session id, on-disk path, 5-step list, and "Continue with <step>" link via `nextIncompleteStep`. AC3 wording adjusted from "last activity" to "started" (review patch — value derives from creation date, not last activity).
+- AC4: "Your last capstone — <date>" panel + on-disk path code-block (review patch landed) + step list + "Start a new capstone" button.
+- AC5: `CAPSTONE_STEP_ORDER` (canonical 5-step array, alias of `CAPSTONE_STEP_NAMES` per single-source-of-truth principle) + `nextIncompleteStep` walks the order returning first not-in-set or null. `completedStepsForSession` composes `listCompleted` + prefix-filter + canonical-name-filter; returns `ReadonlySet<CapstoneStepName>` truthfully.
+- AC6: `?session=<unknown-well-formed>` → `notFound()` (404). `?session=<malformed>` → `notFound()` upstream of DB (regex gate). E2E covers both.
+- AC7: Primary CTA (`<button>` for start, `<Link>` for continue) keyboard-reachable + Enter-operable by default semantics. Each step `<li>` carries `aria-label="<step>, <state>"`.
+- AC8: `<StartCapstoneButton>` is the second client component in the codebase (after `<LessonCompleteButton>`); co-located per architecture line 381's rule of three. Source-string smoke verifies no `@/lib/db/*`, `@/lib/capstone/*`, `server-only`, `better-sqlite3`, `node:*` imports.
+- AC9: 13 new Vitest cases across `steps.test.ts` (6) + `progress-db.test.ts` (3 for `completedStepsForSession`) + `start-capstone-button.test.ts` (4 source-string smokes).
+- AC10: 8 Playwright cases (was 7 — added URL-pin priority test in review): no-session start, in-progress resume, in-progress with brief+epic saved, complete with 5 ✓ + path block, ?session=unknown 404, ?session=malformed 404, URL-pin priority, site-header walkability.
+
+**Defensible deviations:**
+- AC2(c) "creates `_bmad-output/capstone/<that-timestamp>/`" — directory creation is lazy via Story 4.2's `writeCapstoneArtifact` `mkdir({recursive:true})`. Architecture line 222 forbids a third POST endpoint; conflating progress-row insert with filesystem mkdir would split the API surface.
+- AC3 "last activity" → "started" — the value derives from the session-creation timestamp; renaming is the honest fix without adding a storage helper.
 
 ## File List
 
-_(populated during implementation)_
+**New files:**
+- `src/lib/capstone/steps.ts` — `CAPSTONE_STEP_ORDER`, `nextIncompleteStep`.
+- `src/lib/capstone/steps.test.ts` — 6 Vitest cases.
+- `src/app/capstone/page.tsx` — Server Component with three branches.
+- `src/app/capstone/start-capstone-button.tsx` — Client component (2nd in the codebase).
+- `src/app/capstone/start-capstone-button.test.ts` — 4 source-string smokes.
+- `tests/e2e/capstone-overview.spec.ts` — 8 Playwright cases.
+
+**Modified files:**
+- `src/lib/db/progress-db.ts` — `completedStepsForSession` exported (returns canonical-step-filtered `ReadonlySet<CapstoneStepName>`).
+- `src/lib/db/progress-db.test.ts` — 3 new cases for `completedStepsForSession`.
+- `src/components/site-header.tsx` — "Capstone" nav link added.
+- `tests/e2e/lessons.spec.ts` — keyboard tab-order test extended for the new header link.
 
 ## Change Log
 
 - 2026-05-08 — Story file authored from epics.md §Epic 4 / Story 4.3.
+- 2026-05-08 — Implementation completed; quad gate clean (`test:unit` 177/177, `test:e2e` 27/27, `lint` clean, `lint:links` clean); status `review`.
+- 2026-05-08 — Code review run with three parallel agents (Blind Hunter, Edge Case Hunter, Acceptance Auditor): 0 decision-needed; 8 patches applied (AC4 path-on-complete, "started" label, searchParams array guard, completedStepsForSession canonical filter + type narrow, start-button finally reset, e2e AC4 path assertion, e2e afterEach cleanup, URL-pin priority test); 6 deferred; 4 dismissed (codebase conventions and architectural threat-model). `test:unit` 177/177 (no new cases — review patches strengthened existing logic); `test:e2e` 28/28 (added URL-pin priority test); lint + lint:links clean. Status `done`.

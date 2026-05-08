@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { __resetDbCacheForTests, createDb } from "./connection";
 import { CAPSTONE_STEP_NAMES, ProgressUpsertRequest } from "./schemas";
 import {
+  completedStepsForSession,
   getCapstoneSessionById,
   getProgress,
   getRecentCapstoneSession,
@@ -499,6 +500,56 @@ describe("isCapstoneSessionActive (Story 4.1)", () => {
 
   it("returns false for a non-existent session id", () => {
     expect(isCapstoneSessionActive("20260507T143022Z", db)).toBe(false);
+  });
+});
+
+describe("completedStepsForSession (Story 4.3)", () => {
+  let db: ReturnType<typeof createDb>;
+  beforeEach(() => {
+    db = createDb(":memory:");
+  });
+  afterEach(() => {
+    db.close();
+  });
+
+  it("returns an empty set for a session with no step rows", () => {
+    expect(completedStepsForSession("20260507T143022Z", db).size).toBe(0);
+  });
+
+  it("returns the suffixes of capstone-step rows whose id is prefixed by the session", () => {
+    const sessionA = "20260507T143022Z";
+    const sessionB = "20260508T090000Z";
+    const insert = db.prepare(
+      `INSERT INTO progress (kind, id, completed_at) VALUES (?, ?, ?)`,
+    );
+    insert.run("capstone-step", `${sessionA}/brief`, "2026-05-08T00:00:00Z");
+    insert.run("capstone-step", `${sessionA}/epic`, "2026-05-08T00:00:01Z");
+    insert.run("capstone-step", `${sessionB}/story-1`, "2026-05-08T00:00:02Z");
+    // Lesson row should be ignored (different kind).
+    insert.run("lesson", "lesson-1", "2026-05-08T00:00:03Z");
+
+    const stepsA = completedStepsForSession(sessionA, db);
+    expect(stepsA.has("brief")).toBe(true);
+    expect(stepsA.has("epic")).toBe(true);
+    expect(stepsA.has("story-1")).toBe(false);
+    expect(stepsA.size).toBe(2);
+
+    const stepsB = completedStepsForSession(sessionB, db);
+    expect(stepsB.has("story-1")).toBe(true);
+    expect(stepsB.size).toBe(1);
+  });
+
+  it("excludes capstone-step rows whose completed_at IS NULL", () => {
+    const session = "20260507T143022Z";
+    const insert = db.prepare(
+      `INSERT INTO progress (kind, id, completed_at) VALUES (?, ?, ?)`,
+    );
+    insert.run("capstone-step", `${session}/brief`, "2026-05-08T00:00:00Z");
+    insert.run("capstone-step", `${session}/epic`, null);
+
+    const steps = completedStepsForSession(session, db);
+    expect(steps.has("brief")).toBe(true);
+    expect(steps.has("epic")).toBe(false);
   });
 });
 
