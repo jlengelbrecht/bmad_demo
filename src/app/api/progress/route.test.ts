@@ -6,9 +6,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // but doing it explicitly at the top makes the contract obvious.
 vi.mock("@/lib/db/progress-db", () => ({
   upsertProgress: vi.fn(),
+  markCapstoneSessionComplete: vi.fn(),
+  getCapstoneSessionById: vi.fn(),
 }));
 
-import { upsertProgress } from "@/lib/db/progress-db";
+import {
+  getCapstoneSessionById,
+  markCapstoneSessionComplete,
+  upsertProgress,
+} from "@/lib/db/progress-db";
 import * as routeModule from "./route";
 import { POST } from "./route";
 
@@ -16,6 +22,12 @@ import { POST } from "./route";
 // would fail the type-check rather than silently passing the test.
 const upsertSpy = upsertProgress as unknown as ReturnType<
   typeof vi.fn<(typeof import("@/lib/db/progress-db"))["upsertProgress"]>
+>;
+const markCompleteSpy = markCapstoneSessionComplete as unknown as ReturnType<
+  typeof vi.fn<(typeof import("@/lib/db/progress-db"))["markCapstoneSessionComplete"]>
+>;
+const getByIdSpy = getCapstoneSessionById as unknown as ReturnType<
+  typeof vi.fn<(typeof import("@/lib/db/progress-db"))["getCapstoneSessionById"]>
 >;
 
 function postRequest(body: unknown, opts: { raw?: boolean } = {}): Request {
@@ -36,6 +48,9 @@ function postRequest(body: unknown, opts: { raw?: boolean } = {}): Request {
 describe("POST /api/progress — happy path", () => {
   beforeEach(() => {
     upsertSpy.mockReset();
+    markCompleteSpy.mockReset();
+    getByIdSpy.mockReset();
+    getByIdSpy.mockReturnValue(null);
   });
 
   it("upserts a lesson completion and returns 200 { ok: true }", async () => {
@@ -48,6 +63,10 @@ describe("POST /api/progress — happy path", () => {
       id: "lesson-2",
       completed: true,
     });
+    // Story 4.4 review patch: lesson/lab/start-session should NEVER touch
+    // markCompleteSpy. A future bug routing them through the helper would
+    // be caught here.
+    expect(markCompleteSpy).not.toHaveBeenCalled();
   });
 
   it("upserts a lab mark-incomplete and returns 200", async () => {
@@ -55,9 +74,11 @@ describe("POST /api/progress — happy path", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
     expect(upsertSpy).toHaveBeenCalledWith({ kind: "lab", id: "solo", completed: false });
+    expect(markCompleteSpy).not.toHaveBeenCalled();
   });
 
-  it("upserts an active capstone-session row (Story 4.1 — start a session)", async () => {
+  it("upserts an active capstone-session row (Story 4.1 — start a session, no existing row)", async () => {
+    getByIdSpy.mockReturnValue(null); // no existing row
     const res = await POST(
       postRequest({ kind: "capstone-session", id: "20260507T143022Z", completed: false }),
     );
@@ -68,31 +89,90 @@ describe("POST /api/progress — happy path", () => {
       id: "20260507T143022Z",
       completed: false,
     });
+    expect(markCompleteSpy).not.toHaveBeenCalled();
   });
 
-  it("upserts a complete capstone-session row (Story 4.1 AC6 verbatim — completed:true)", async () => {
-    // Story 4.1 review patch: AC6 specifies `completed: true` for the
-    // capstone-session happy-path case. Story 4.4 will add the route-
-    // handler branch that calls `markCapstoneSessionComplete` for this
-    // shape; until then the route uses plain `upsertProgress` regardless
-    // of `completed`. This test locks AC6's literal contract for the
-    // current wiring and gives Story 4.4 an existing fixture to extend.
+  it("Story 4.4: start-session against an existing ACTIVE row is allowed (idempotent retry)", async () => {
+    // Existing active row (completedAt: null) — re-starting is harmless.
+    getByIdSpy.mockReturnValue({ id: "20260507T143022Z", completedAt: null });
+    const res = await POST(
+      postRequest({ kind: "capstone-session", id: "20260507T143022Z", completed: false }),
+    );
+    expect(res.status).toBe(200);
+    expect(upsertSpy).toHaveBeenCalled();
+  });
+
+  it("Story 4.4: capstone-session + completed:true routes through markCapstoneSessionComplete (active row)", async () => {
+    markCompleteSpy.mockReturnValue({ updated: true });
+
     const res = await POST(
       postRequest({ kind: "capstone-session", id: "20260507T143022Z", completed: true }),
     );
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
-    expect(upsertSpy).toHaveBeenCalledWith({
-      kind: "capstone-session",
-      id: "20260507T143022Z",
-      completed: true,
+    expect(markCompleteSpy).toHaveBeenCalledTimes(1);
+    expect(markCompleteSpy).toHaveBeenCalledWith("20260507T143022Z");
+    // Critical: plain upsert NOT used for this kind+completed combo.
+    expect(upsertSpy).not.toHaveBeenCalled();
+  });
+
+  it("Story 4.4: capstone-session + completed:true on a MISSING row → 400 'Cannot mark...'", async () => {
+    markCompleteSpy.mockReturnValue({ updated: false });
+
+    const res = await POST(
+      postRequest({ kind: "capstone-session", id: "20260507T143022Z", completed: true }),
+    );
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({
+      ok: false,
+      error: "Cannot mark inactive or unknown session complete",
     });
+    expect(markCompleteSpy).toHaveBeenCalledTimes(1);
+    expect(upsertSpy).not.toHaveBeenCalled();
+  });
+
+  it("Story 4.4: capstone-session + completed:true on an ALREADY-COMPLETE row → 400 'Cannot mark...'", async () => {
+    // markCompleteSpy returns {updated:false} for both missing AND
+    // already-complete rows; this test asserts the same response shape
+    // for both paths separately (AC5 enumerated both cases).
+    markCompleteSpy.mockReturnValue({ updated: false });
+
+    const res = await POST(
+      postRequest({ kind: "capstone-session", id: "20260507T143022Z", completed: true }),
+    );
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe(
+      "Cannot mark inactive or unknown session complete",
+    );
+    expect(upsertSpy).not.toHaveBeenCalled();
+  });
+
+  it("Story 4.4: start-session against an ALREADY-COMPLETE row → 400 (resurrection guard)", async () => {
+    // Same-second resurrection edge case: existing row is complete; a
+    // start POST must NOT flip completed_at back to NULL.
+    getByIdSpy.mockReturnValue({
+      id: "20260507T143022Z",
+      completedAt: "2026-05-07T14:30:22Z",
+    });
+
+    const res = await POST(
+      postRequest({ kind: "capstone-session", id: "20260507T143022Z", completed: false }),
+    );
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe(
+      "Session id already complete; please retry to get a fresh id",
+    );
+    expect(upsertSpy).not.toHaveBeenCalled();
+    expect(markCompleteSpy).not.toHaveBeenCalled();
   });
 });
 
 describe("POST /api/progress — validation failures (400)", () => {
   beforeEach(() => {
     upsertSpy.mockReset();
+    markCompleteSpy.mockReset();
+    getByIdSpy.mockReset();
+    getByIdSpy.mockReturnValue(null);
   });
 
   it("rejects malformed JSON with 400 'Invalid request'", async () => {

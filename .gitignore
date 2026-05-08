@@ -26,6 +26,10 @@ data/*.sqlite-shm
 # Capstone outputs (per-trainee runs)
 _bmad-output/capstone/[0-9]*/
 
+# E2E capstone isolation tree (Story 4.4) — Playwright writes here via
+# BMAD_CAPSTONE_DIR; nothing here is trainee work.
+data/e2e-capstone/
+
 # Test output
 coverage/
 *.lcov

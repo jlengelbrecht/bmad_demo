@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   CAPSTONE_STEP_ORDER,
+  CAPSTONE_STEPS,
   type CapstoneStepName,
   nextIncompleteStep,
+  nextStepAfter,
 } from "./steps";
 
 describe("CAPSTONE_STEP_ORDER (Story 4.3)", () => {
@@ -45,5 +47,35 @@ describe("nextIncompleteStep (Story 4.3)", () => {
     // 'epic' is complete but 'brief' is not — the walk still returns
     // 'brief' first because it's the canonical-order next-incomplete.
     expect(nextIncompleteStep(new Set<CapstoneStepName>(["epic"]))).toBe("brief");
+  });
+});
+
+describe("CAPSTONE_STEPS metadata (Story 4.4)", () => {
+  it("has exactly the 5 canonical-step keys", () => {
+    expect(Object.keys(CAPSTONE_STEPS).sort()).toEqual(
+      [...CAPSTONE_STEP_ORDER].sort(),
+    );
+  });
+
+  it("each entry has a non-empty title and promptOutline", () => {
+    for (const step of CAPSTONE_STEP_ORDER) {
+      const meta = CAPSTONE_STEPS[step];
+      expect(meta.title.length).toBeGreaterThan(0);
+      expect(meta.promptOutline.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("nextStepAfter (Story 4.4)", () => {
+  it("returns 'epic' after 'brief'", () => {
+    expect(nextStepAfter("brief")).toBe("epic");
+  });
+
+  it("returns 'story-2' after 'story-1'", () => {
+    expect(nextStepAfter("story-1")).toBe("story-2");
+  });
+
+  it("returns null after the final step ('adr')", () => {
+    expect(nextStepAfter("adr")).toBeNull();
   });
 });

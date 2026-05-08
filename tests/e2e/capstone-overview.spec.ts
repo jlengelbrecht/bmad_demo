@@ -129,7 +129,11 @@ test.describe("/capstone overview (Story 4.3)", () => {
     await expect(page.getByRole("heading", { name: /Your last capstone — 2026-05-10/ })).toBeVisible();
     // AC4: the on-disk path must be visible on the complete branch so the
     // trainee knows where to find their artifacts. (Story 4.3 review patch.)
-    await expect(page.getByText(`_bmad-output/capstone/${sessionId}/`)).toBeVisible();
+    // exact:true so we don't match the per-file paths in the artifact list
+    // added by Story 4.4 (each contains the dir as a substring).
+    await expect(
+      page.getByText(`_bmad-output/capstone/${sessionId}/`, { exact: true }),
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: "Start a new capstone" })).toBeVisible();
     // All 5 steps should show as completed in the step list.
     for (const step of ["brief", "epic", "story-1", "story-2", "adr"]) {

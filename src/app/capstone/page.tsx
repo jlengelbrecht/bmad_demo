@@ -1,7 +1,10 @@
+import { existsSync } from "node:fs";
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { stepFile } from "@/lib/capstone/paths";
 import { CAPSTONE_STEP_ORDER, nextIncompleteStep } from "@/lib/capstone/steps";
 import {
   completedStepsForSession,
@@ -124,8 +127,46 @@ function SessionPanel({ session }: { session: CapstoneSessionRow }) {
         </Link>
       ) : null}
 
-      {isComplete ? <StartCapstoneButton label="Start a new capstone" /> : null}
+      {isComplete ? (
+        <>
+          <ArtifactPathList sessionId={session.id} />
+          <StartCapstoneButton label="Start a new capstone" />
+        </>
+      ) : null}
     </section>
+  );
+}
+
+/**
+ * Story 4.4 AC6: on the complete branch, list the absolute paths of all
+ * 5 produced artifact files. Files that don't exist on disk are rendered
+ * as `(not yet saved)` for resilience against partial-completion (e.g.,
+ * a session marked complete via direct DB edit, or a future migration).
+ */
+function ArtifactPathList({ sessionId }: { sessionId: string }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        Produced artifacts
+      </p>
+      <ul className="flex flex-col gap-1 text-xs">
+        {CAPSTONE_STEP_ORDER.map((step) => {
+          const target = stepFile(sessionId, step);
+          const exists = existsSync(target);
+          return (
+            <li key={step} className="font-mono text-zinc-700 dark:text-zinc-300">
+              {target}
+              {exists ? null : (
+                <span className="text-zinc-500 dark:text-zinc-500"> (not yet saved)</span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        These are absolute paths in your working tree; commit them to your team&apos;s repo.
+      </p>
+    </div>
   );
 }
 
