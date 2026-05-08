@@ -12,7 +12,8 @@
     "lint": "eslint",
     "test:e2e": "playwright test",
     "test:unit": "vitest run",
-    "lint:links": "tsx scripts/check-links.ts"
+    "lint:links": "tsx scripts/check-links.ts",
+    "reset-progress": "tsx scripts/reset-progress.ts"
   },
   "dependencies": {
     "better-sqlite3": "^12.9.0",
