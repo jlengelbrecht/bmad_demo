@@ -56,6 +56,38 @@ describe("POST /api/progress — happy path", () => {
     expect(await res.json()).toEqual({ ok: true });
     expect(upsertSpy).toHaveBeenCalledWith({ kind: "lab", id: "solo", completed: false });
   });
+
+  it("upserts an active capstone-session row (Story 4.1 — start a session)", async () => {
+    const res = await POST(
+      postRequest({ kind: "capstone-session", id: "20260507T143022Z", completed: false }),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+    expect(upsertSpy).toHaveBeenCalledWith({
+      kind: "capstone-session",
+      id: "20260507T143022Z",
+      completed: false,
+    });
+  });
+
+  it("upserts a complete capstone-session row (Story 4.1 AC6 verbatim — completed:true)", async () => {
+    // Story 4.1 review patch: AC6 specifies `completed: true` for the
+    // capstone-session happy-path case. Story 4.4 will add the route-
+    // handler branch that calls `markCapstoneSessionComplete` for this
+    // shape; until then the route uses plain `upsertProgress` regardless
+    // of `completed`. This test locks AC6's literal contract for the
+    // current wiring and gives Story 4.4 an existing fixture to extend.
+    const res = await POST(
+      postRequest({ kind: "capstone-session", id: "20260507T143022Z", completed: true }),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+    expect(upsertSpy).toHaveBeenCalledWith({
+      kind: "capstone-session",
+      id: "20260507T143022Z",
+      completed: true,
+    });
+  });
 });
 
 describe("POST /api/progress — validation failures (400)", () => {
@@ -102,8 +134,28 @@ describe("POST /api/progress — validation failures (400)", () => {
     expect(upsertSpy).not.toHaveBeenCalled();
   });
 
-  it("rejects unknown kind ('capstone-session') — Epic 3 scope gate", async () => {
-    const res = await POST(postRequest({ kind: "capstone-session", id: "x", completed: true }));
+  it("rejects an unknown kind value", async () => {
+    const res = await POST(postRequest({ kind: "bogus", id: "x", completed: true }));
+    expect(res.status).toBe(400);
+    expect(upsertSpy).not.toHaveBeenCalled();
+  });
+
+  it("rejects a malformed capstone-session id (not compact UTC)", async () => {
+    // Story 4.1 widens the kind enum but enforces the compact-UTC format.
+    // A full ISO-8601 string like '2026-05-07T14:30:22Z' fails the regex.
+    const res = await POST(
+      postRequest({ kind: "capstone-session", id: "2026-05-07T14:30:22Z", completed: true }),
+    );
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { ok: boolean; error: string };
+    expect(body.error).toBe("Invalid request");
+    expect(upsertSpy).not.toHaveBeenCalled();
+  });
+
+  it("rejects a malformed capstone-step id (unknown step name)", async () => {
+    const res = await POST(
+      postRequest({ kind: "capstone-step", id: "20260507T143022Z/foo", completed: true }),
+    );
     expect(res.status).toBe(400);
     expect(upsertSpy).not.toHaveBeenCalled();
   });

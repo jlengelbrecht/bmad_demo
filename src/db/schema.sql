@@ -21,8 +21,14 @@ CREATE TABLE IF NOT EXISTS progress (
   id TEXT NOT NULL,
   completed_at TEXT NULL,
   PRIMARY KEY (kind, id),
+  -- Positional smoke for ISO 8601 UTC strings: requires
+  --   YYYY-MM-DDTHH:MM:SS<anything-incl-millis>Z
+  -- Tightened from `____-__-__T%Z` (Story 4.1 review) so values like
+  -- 'XXXX-XX-XXTwhatevsZ' that just happen to fit the dash positions
+  -- are rejected. The producer is always `new Date().toISOString()`,
+  -- so the CHECK is belt-and-suspenders for direct-SQL writers.
   CHECK (
     completed_at IS NULL
-    OR completed_at LIKE '____-__-__T%Z'
+    OR completed_at LIKE '____-__-__T__:__:__%Z'
   )
 );

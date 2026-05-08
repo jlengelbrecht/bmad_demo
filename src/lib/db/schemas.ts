@@ -1,21 +1,87 @@
 import { z } from "zod";
 
 /**
- * Request shape for `POST /api/progress` (Story 3.2).
+ * Compact-UTC capstone-session id format (Story 4.1).
  *
- * `kind` is gated to `lesson` and `lab` at the API boundary. Capstone
- * kinds (`capstone-session`, `capstone-step`) are written by the capstone
- * harness through a different code path (Epic 4), not by the public
- * progress endpoint, so they are intentionally rejected here.
+ * Architecture line 401: "compact UTC (`20260507T143022Z` — no dashes,
+ * no colons). It's both a SQLite `id` value and a directory name; the
+ * format chosen avoids filesystem-unsafe characters across macOS / Linux
+ * / WSL2."
  *
- * `id` is trimmed before length checks so a whitespace-only string fails
- * `.min(1)`. The 200-char ceiling is generous for slug-shaped ids and
- * defensive against accidental DB bloat from misuse.
+ * The regex enforces shape (digit positions + T/Z markers), not
+ * temporal validity — `00000000T253022Z` would parse. Per the
+ * architecture's local-only single-trainee threat model, deeper temporal
+ * validation isn't load-bearing; downstream consumers that touch the
+ * filesystem rely on the path-traversal guard in `write-artifact.ts`,
+ * not the temporal correctness of the id.
  */
-export const ProgressUpsertRequest = z.object({
-  kind: z.enum(["lesson", "lab"]),
+export const CAPSTONE_SESSION_ID = /^\d{8}T\d{6}Z$/;
+
+/**
+ * Canonical capstone step names. Single source of truth: the regex
+ * `CAPSTONE_STEP_ID` and the parametric tests in `progress-db.test.ts`
+ * iterate over this constant rather than re-declaring the literal list.
+ */
+export const CAPSTONE_STEP_NAMES = [
+  "brief",
+  "epic",
+  "story-1",
+  "story-2",
+  "adr",
+] as const;
+
+export type CapstoneStepName = (typeof CAPSTONE_STEP_NAMES)[number];
+
+/**
+ * Capstone-step id format (Story 4.1): `<session-timestamp>/<step-name>`.
+ * Built from `CAPSTONE_STEP_NAMES` so the regex stays in sync with the
+ * canonical list.
+ */
+export const CAPSTONE_STEP_ID = new RegExp(
+  `^\\d{8}T\\d{6}Z\\/(${CAPSTONE_STEP_NAMES.join("|")})$`,
+);
+
+/**
+ * Request shape for `POST /api/progress` (Stories 3.2 + 4.1 + 4.4).
+ *
+ * Discriminated by `kind`. Architecture line 221 specifies the endpoint
+ * accepts all four kinds; per-kind id-format validation happens at this
+ * boundary rather than inside the storage layer.
+ *
+ *  - `lesson` / `lab`        — id is a non-empty trimmed string ≤ 200 chars
+ *                              (Story 3.1 contract; preserved verbatim).
+ *  - `capstone-session`      — id matches CAPSTONE_SESSION_ID.
+ *  - `capstone-step`         — id matches CAPSTONE_STEP_ID.
+ */
+const lessonRequest = z.object({
+  kind: z.literal("lesson"),
   id: z.string().trim().min(1).max(200),
   completed: z.boolean(),
 });
+
+const labRequest = z.object({
+  kind: z.literal("lab"),
+  id: z.string().trim().min(1).max(200),
+  completed: z.boolean(),
+});
+
+const capstoneSessionRequest = z.object({
+  kind: z.literal("capstone-session"),
+  id: z.string().regex(CAPSTONE_SESSION_ID),
+  completed: z.boolean(),
+});
+
+const capstoneStepRequest = z.object({
+  kind: z.literal("capstone-step"),
+  id: z.string().regex(CAPSTONE_STEP_ID),
+  completed: z.boolean(),
+});
+
+export const ProgressUpsertRequest = z.discriminatedUnion("kind", [
+  lessonRequest,
+  labRequest,
+  capstoneSessionRequest,
+  capstoneStepRequest,
+]);
 
 export type ProgressUpsertRequest = z.infer<typeof ProgressUpsertRequest>;
