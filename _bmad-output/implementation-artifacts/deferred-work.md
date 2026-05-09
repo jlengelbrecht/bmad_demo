@@ -9,6 +9,11 @@
 - ✅ **RESOLVED via Playwright walkthrough on 2026-05-09** — Story 9.1 + 9.2 (HANDOFF) verified post-PTY pivot. Drove `/capstone/handoff/<seeded-session>`, clicked "Generate HANDOFF.md", got 2.5 KB output with correct phase artifact statuses, tool name (Codex), BMAD version (6.6.0), push instructions. Endpoint `/api/capstone/handoff/generate` works end-to-end.
 - ✅ **RESOLVED in 7dc0388** — Codex auth probe replaced (the original `codex exec` agent_message probe charged $$$, took 3-15s, and silently failed for subscription auth). Now uses `codex login status` — free, immediate, accurate for both ChatGPT-subscription and OPENAI_API_KEY paths.
 - ✅ **RESOLVED in 7dc0388** — Copilot auth probe replaced (the original `gh api user/copilot_billing` returns 404 regardless of auth state — wrong endpoint). Now reads `~/.copilot/config.json::lastLoggedInUser.login` (JSONC-aware: strips `// ...` line comments before parse). Free, immediate, accurate for both `copilot login` OAuth and gh-token paths.
+- ✅ **RESOLVED via real-install smoke on 2026-05-09** — `npx bmad-method@6.6.0 install --directory <tmp> --tools <codex|github-copilot> --yes` lands 42 skills under `.agents/skills/` per BMAD's tools-reference. Drove each tool from cwd:
+  - **Codex:** `codex exec --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox "/bmad-product-brief"` → agent auto-discovered the skill, read `SKILL.md`, ran `_bmad/scripts/resolve_customization.py`, loaded `_bmad/bmm/config.yaml`, and started the brief workflow with the proper opening question.
+  - **Copilot:** `copilot --allow-all-tools -p "/bmad-product-brief"` → trace shows `skill(bmad-product-brief)` followed by reads of all prompts/ + brief-template.md + the resolver script + BMM config; brief workflow started. (Used `-p` non-interactive for the smoke; production launch uses `-i` inside a PTY — same skill-discovery path.)
+
+  Confirms the only open question from the codex/copilot lift: both tools auto-discover skills under `<projectDir>/.agents/skills/` from cwd. No portal-side wiring needed beyond `cd <chosenDir> && <tool> ... "<bmad-skill>"`.
 
 ## Deferred from: code review of 1-1-scaffold-nextjs-app (2026-05-07)
 
