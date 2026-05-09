@@ -2,7 +2,7 @@
 
 **Epic:** 6 — Setup Wizard + Bootstrap
 **Story Key:** 6-2-multi-step-wizard-page
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 
