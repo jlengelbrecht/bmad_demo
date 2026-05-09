@@ -35,12 +35,10 @@ function insertCapstoneSession(id: string, completedAt: string | null) {
   });
 }
 
-// Story 10.1 interim: the textarea-form per-step routes have been deleted.
-// The /capstone overview shell is preserved; the StartCapstoneButton now
-// links to /capstone/setup-coming-soon while Epics 5-6 build the wizard.
-// These tests assert the interim shape; Story 10.2 / Epic 6 will reauthor
-// them against the final wizard surface.
-test.describe("/capstone overview (Story 10.1 interim)", () => {
+// Story 10.2: the textarea-form per-step routes are gone; the
+// StartCapstoneButton now links to /capstone/setup (Epic 6's tool-
+// selection page).
+test.describe("/capstone overview (Story 10.2)", () => {
   test.describe.configure({ mode: "serial" });
 
   test.beforeEach(() => {
@@ -53,24 +51,18 @@ test.describe("/capstone overview (Story 10.1 interim)", () => {
     deleteAllCapstoneSessions();
   });
 
-  test("no prior session → 'Start your capstone' panel + button links to /capstone/setup-coming-soon", async ({
+  test("no prior session → 'Ready to start?' panel + button links to /capstone/setup", async ({
     page,
   }) => {
     await page.goto("/capstone");
-    await expect(page.getByRole("heading", { name: "Start your capstone" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Ready to start?" })).toBeVisible();
 
-    const startLink = page.getByRole("link", { name: "Start your capstone" });
+    const startLink = page.getByRole("link", { name: "Start the capstone" });
     await expect(startLink).toBeVisible();
-    await expect(startLink).toHaveAttribute("href", "/capstone/setup-coming-soon");
-
-    await startLink.click();
-    await page.waitForURL(/\/capstone\/setup-coming-soon$/);
-    await expect(
-      page.getByRole("heading", { name: "The capstone is being rebuilt" }),
-    ).toBeVisible();
+    await expect(startLink).toHaveAttribute("href", "/capstone/setup");
   });
 
-  test("in-progress session → 'Prior capstone session' panel with try-the-rebuilt-capstone link", async ({
+  test("in-progress session → 'Prior capstone session' panel with start-the-capstone link", async ({
     page,
   }) => {
     const sessionId = "20260507T143022Z";
@@ -80,9 +72,9 @@ test.describe("/capstone overview (Story 10.1 interim)", () => {
     await expect(page.getByRole("heading", { name: /Prior capstone session/ })).toBeVisible();
     await expect(page.getByText(sessionId, { exact: true })).toBeVisible();
 
-    const tryLink = page.getByRole("link", { name: "Try the rebuilt capstone" });
-    await expect(tryLink).toBeVisible();
-    await expect(tryLink).toHaveAttribute("href", "/capstone/setup-coming-soon");
+    const startLink = page.getByRole("link", { name: "Start the capstone" });
+    await expect(startLink).toBeVisible();
+    await expect(startLink).toHaveAttribute("href", "/capstone/setup");
   });
 
   test("complete session → 'Your last capstone' panel + 'Start a new capstone' link", async ({
@@ -98,7 +90,7 @@ test.describe("/capstone overview (Story 10.1 interim)", () => {
 
     const startNewLink = page.getByRole("link", { name: "Start a new capstone" });
     await expect(startNewLink).toBeVisible();
-    await expect(startNewLink).toHaveAttribute("href", "/capstone/setup-coming-soon");
+    await expect(startNewLink).toHaveAttribute("href", "/capstone/setup");
   });
 
   test("?session=<id> overrides getRecentCapstoneSession (URL pin priority)", async ({ page }) => {
