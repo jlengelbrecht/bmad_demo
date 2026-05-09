@@ -40,13 +40,12 @@ describe("getAdapterById", () => {
 });
 
 describe("remaining stub adapters reject every imperative method", () => {
-  // Story 5.3 promoted claude-code from stub to real; codex (5.4) and
-  // github-copilot (5.5) remain stubs until their respective stories.
+  // Stories 5.3 + 5.4 promoted claude-code + codex from stubs to real;
+  // github-copilot (5.5) remains a stub until its story lands.
   function eachStub(
     cb: (adapter: ToolAdapter, expectedStoryRef: string) => void | Promise<void>,
   ) {
     const cases: { id: ToolId; story: string }[] = [
-      { id: "codex", story: "Story 5.4" },
       { id: "github-copilot", story: "Story 5.5" },
     ];
     return Promise.all(
