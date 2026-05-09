@@ -2,7 +2,7 @@
 
 **Epic:** 5 — Capstone Runtime Foundation
 **Story Key:** 5-5-github-copilot-adapter
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 

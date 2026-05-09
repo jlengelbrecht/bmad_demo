@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { getAdapterById, getAdapterRegistry } from "./index";
-import type { ToolAdapter, ToolId } from "./types";
+import type { ToolId } from "./types";
 
 describe("getAdapterRegistry", () => {
   it("returns a Map with exactly three entries keyed by ToolId", () => {
@@ -39,63 +39,7 @@ describe("getAdapterById", () => {
   });
 });
 
-describe("remaining stub adapters reject every imperative method", () => {
-  // Stories 5.3 + 5.4 promoted claude-code + codex from stubs to real;
-  // github-copilot (5.5) remains a stub until its story lands.
-  function eachStub(
-    cb: (adapter: ToolAdapter, expectedStoryRef: string) => void | Promise<void>,
-  ) {
-    const cases: { id: ToolId; story: string }[] = [
-      { id: "github-copilot", story: "Story 5.5" },
-    ];
-    return Promise.all(
-      cases.map(async ({ id, story }) => {
-        const adapter = getAdapterById(id);
-        await cb(adapter, story);
-      }),
-    );
-  }
-
-  it("detectInstalled throws stub-error", async () => {
-    await eachStub(async (adapter, story) => {
-      await expect(adapter.detectInstalled()).rejects.toThrow(
-        new RegExp(`not yet implemented — see ${story.replace(".", "\\.")}`),
-      );
-    });
-  });
-
-  it("detectAuthenticated throws stub-error", async () => {
-    await eachStub(async (adapter, story) => {
-      await expect(adapter.detectAuthenticated()).rejects.toThrow(
-        new RegExp(`not yet implemented — see ${story.replace(".", "\\.")}`),
-      );
-    });
-  });
-
-  it("buildSpawnArgs throws stub-error", async () => {
-    await eachStub((adapter, story) => {
-      expect(() =>
-        adapter.buildSpawnArgs({
-          chosenDir: "/tmp/x",
-          sessionId: "",
-          primerPath: "/tmp/p",
-          userMessage: "hi",
-          phase: "brief",
-        }),
-      ).toThrow(
-        new RegExp(`not yet implemented — see ${story.replace(".", "\\.")}`),
-      );
-    });
-  });
-
-  it("parseStreamChunk / formatUserMessage / buildPrimer all throw stub-error", async () => {
-    await eachStub((adapter, story) => {
-      const re = new RegExp(
-        `not yet implemented — see ${story.replace(".", "\\.")}`,
-      );
-      expect(() => adapter.parseStreamChunk("anything")).toThrow(re);
-      expect(() => adapter.formatUserMessage("anything")).toThrow(re);
-      expect(() => adapter.buildPrimer("brief")).toThrow(re);
-    });
-  });
-});
+// Stories 5.3 / 5.4 / 5.5 promoted all three adapters from Story-5.2
+// stubs to real implementations. The "stub adapters reject" describe
+// block was deliberately deleted; see per-adapter unit specs in
+// claude-code.test.ts, codex.test.ts, and github-copilot.test.ts.
