@@ -7,7 +7,12 @@ const SOURCE = readFileSync(COMPONENT_PATH, "utf8");
 
 // Source-string smoke per architecture's "no React-component-level tests at
 // v1" rule. Mirrors Story 3.3's lesson-complete-button.test.ts.
-describe("<StartCapstoneButton> source-string smoke (Story 4.3)", () => {
+//
+// Story 10.1 interim: the button is a `next/link` to the placeholder page
+// while Epics 5-6 build the real setup wizard. The fetch('/api/progress')
+// session-create POST returns when Story 10.2 / Epic 6 repoints the button
+// at the wizard and the wizard owns session creation.
+describe("<StartCapstoneButton> source-string smoke (Story 10.1 interim)", () => {
   it("declares the 'use client' directive", () => {
     expect(SOURCE).toMatch(/^["']use client["'];?$/m);
   });
@@ -20,13 +25,13 @@ describe("<StartCapstoneButton> source-string smoke (Story 4.3)", () => {
     expect(SOURCE).not.toMatch(/from ["']node:[a-z]+["']/);
   });
 
-  it("references fetch('/api/progress') and useRouter", () => {
-    expect(SOURCE).toMatch(/fetch\(["']\/api\/progress["']/);
-    expect(SOURCE).toMatch(/useRouter/);
+  it("renders a Link to the setup-coming-soon placeholder by default", () => {
+    expect(SOURCE).toMatch(/from ["']next\/link["']/);
+    expect(SOURCE).toMatch(/\/capstone\/setup-coming-soon/);
   });
 
-  it("posts the kind=capstone-session shape with completed:false (start-session)", () => {
-    expect(SOURCE).toMatch(/kind:\s*["']capstone-session["']/);
-    expect(SOURCE).toMatch(/completed:\s*false/);
+  it("does not call /api/progress (session creation moves to the wizard)", () => {
+    expect(SOURCE).not.toMatch(/fetch\(["']\/api\/progress["']/);
+    expect(SOURCE).not.toMatch(/kind:\s*["']capstone-session["']/);
   });
 });

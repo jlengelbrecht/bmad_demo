@@ -175,8 +175,9 @@ export function getCapstoneSessionById(
 /**
  * `true` iff a capstone-session row exists for `sessionId` AND its
  * `completed_at IS NULL` (i.e., the session is currently in progress).
- * Returns `false` for missing or already-complete sessions. Used as the
- * gate in `POST /api/capstone/save` (Story 4.2).
+ * Returns `false` for missing or already-complete sessions. Originally
+ * a gate for the Epic-4 `POST /api/capstone/save` route handler;
+ * preserved for the rebuilt capstone's phase-done / chat-stream gates.
  *
  * The SQL filters by `completed_at IS NULL` upstream, so any row hit
  * means active — the existence check is the contract.

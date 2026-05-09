@@ -242,7 +242,7 @@ npx create-next-app@latest bmad-portal-scaffold \
 | **Markdown pipeline** | **`remark` + `remark-rehype` + `rehype` plugins in a Server Component** (no MDX). Plugins: `remark-gfm` (tables, footnotes), `rehype-slug` + `rehype-autolink-headings` (deep links per FR-1.3), `rehype-pretty-code` or `rehype-shiki` (accessible syntax highlighting), a custom plugin to verify relative links resolve to existing files at request time (dev-only warning). | Plain markdown stays plain markdown — preserves the brief's "readable in editor when portal is broken" property and keeps NFR-M1 (any teammate can author content) honest. MDX is rejected explicitly: it would let an author embed JSX and break the resilience claim. |
 | **Stale-date banner** | A small Server Component (`<StalenessBanner reviewedAt={…} />`) that renders inline above content with a `Last reviewed YYYY-MM-DD; flagged as stale` warning if `now - reviewedAt >= 120 days` (i.e., the 120-day boundary itself counts as stale, matching `epics.md` Story 2.5 AC3 wording "120 or more days"). Reads the date from frontmatter on each tool-notes section file. | NFR-M4 verbatim; no hidden mechanism — frontmatter, banner, done. |
 | **State management** | **React local state + Server Components**; no Redux/Zustand/Jotai | Smallest interactive surface. Server Components handle reads from SQLite directly; mutations go through Route Handlers; the only client state is "is the sidebar open" and "is this button disabled while saving." |
-| **Routing topology** | App Router routes:<br>`/` (home: three audience-entry cards)<br>`/start-here` → renders `training/00-start-here.md`<br>`/stakeholder` → renders `training/stakeholder-demo-script.md`<br>`/facilitator` → renders `training/facilitator-guide.md`<br>`/lessons/[slug]` → renders `training/lessons/<slug>.md`<br>`/labs/[slug]` → renders `training/labs/<slug>.md`<br>`/capstone` (overview + resume/start)<br>`/capstone/[step]` (each capstone step) | Direct mapping `URL → markdown file` keeps the codebase legible (cross-cutting concern §Pedagogical legibility); deep-linkable per FR-1.3; matches the markdown source layout one-to-one. |
+| **Routing topology** | App Router routes:<br>`/` (home: three audience-entry cards)<br>`/start-here` → renders `training/00-start-here.md`<br>`/stakeholder` → renders `training/stakeholder-demo-script.md`<br>`/facilitator` → renders `training/facilitator-guide.md`<br>`/lessons/[slug]` → renders `training/lessons/<slug>.md`<br>`/labs/[slug]` → renders `training/labs/<slug>.md`<br>`/capstone` (overview + resume/start)<br>`/capstone/setup`, `/capstone/setup/wizard`, `/capstone/setup/bootstrap` (Epic 6 wizard)<br>`/capstone/chat/[sessionId]/[phase]` (Epic 7+ chat surface)<br>`/capstone/handoff/[sessionId]` (Epic 9 handoff page) | Direct mapping `URL → markdown file` (or `URL → wizard step / chat phase`) keeps the codebase legible (cross-cutting concern §Pedagogical legibility); deep-linkable per FR-1.3. The Epic 4 `/capstone/[step]` per-step textarea routes were retired in the Epic 10 migration. |
 | **Capstone resume mechanism (FR-3 / FR-2.4)** | On a visit to `/capstone`:<br>1. Query the most recent `capstone-session` row by `id DESC`.<br>2. If it exists and `completed_at IS NULL` → **resume** it; route to the next incomplete phase. Re-spawn the AI tool subprocess cold with `--resume <session-id>`; the agent loads prior phase artifacts from CHOSEN_DIR as primer context. Cross-phase context is artifact-driven, not chat-history-driven (FR-3.16, FR-3.30).<br>3. If it exists and `completed_at IS NOT NULL`, **or** no session exists → **offer to start a new session**, which routes the trainee through the setup wizard (Phases 0/0.5/1/2) ending in a fresh `capstone-session` row + a CHOSEN_DIR populated with `npx bmad-method install` output.<br>4. Multiple historical sessions persist in the DB; the trainee can re-enter an older session by URL (`/capstone?session=<id>`) but the home `/capstone` always offers the most-recent-or-new path. The trainee-chosen target dirs (CHOSEN_DIRs) are entirely under the trainee's control and may be cleaned up, moved, or pushed-and-deleted at any time without the portal noticing. | The resume model deliberately re-spawns the AI tool process cold rather than replaying chat history into it: chat is for the trainee, files are the contract. This is testable (the agent reads `brief.md` from CHOSEN_DIR at PRD-phase start) and avoids the "officially-undocumented stdin NDJSON schema" trap flagged in Q-Tech research. See §"Capstone Runtime" below for the full state model. |
 | **UI primitives** | Tailwind utility classes + a small set of accessible Radix primitives (`@radix-ui/react-*`) for any non-trivial interactive widget (dialogs, popovers, disclosure). No design-system library. | Radix gives us WCAG AA-grade keyboard/aria semantics for free; Tailwind handles styling. Avoids hand-rolling accessibility for the few interactive bits we have. |
 | **Fonts and assets** | All fonts and assets **vendored locally** (no Google Fonts CDN, no external image hosts) | NFR-S1 — no egress at runtime. Easier to verify in the network-interception test. |
@@ -377,7 +377,6 @@ bmad_demo/
       capstone/handoff/[sessionId]/page.tsx       # Phase 9 (Epic 9)
       api/
         progress/route.ts        # POST /api/progress (Epic 3 surface, stable)
-        capstone/save/route.ts   # POST /api/capstone/save (Epic 4 — to be removed in migration story per Epic 10)
         capstone/setup/preflight/route.ts        # Epic 6
         capstone/setup/tool-check/route.ts       # Epic 6
         capstone/setup/bootstrap/route.ts        # Epic 6 (POST + paired GET stream)
@@ -471,7 +470,7 @@ Most "naming and structure" conflict points are pre-resolved by Next.js App Rout
 
 **API & URLs:**
 
-- Routes: **kebab-case path segments** (`/start-here`, `/api/capstone/save`). Matches Next.js convention and reads naturally as URLs.
+- Routes: **kebab-case path segments** (`/start-here`, `/api/capstone/setup/preflight`). Matches Next.js convention and reads naturally as URLs.
 - HTTP methods: only `GET` (Server Components handle reads — no API GETs) and `POST` (mutations). No `PUT`/`PATCH`/`DELETE` in v1; if a future need surfaces, the *delete* primitive lives in a script (`reset-progress`), not an endpoint.
 - Route Handler files: always `route.ts` per App Router; one handler per file.
 - Request bodies and JSON responses: **camelCase keys** (`{ kind, id, completedAt }`). TypeScript-ecosystem default; matches in-memory variable names so there's no transformation layer.
@@ -484,7 +483,7 @@ Most "naming and structure" conflict points are pre-resolved by Next.js App Rout
 - App Router page/layout/route files: keep their Next-mandated names exactly (`page.tsx`, `layout.tsx`, `route.ts`, `not-found.tsx`).
 - React components: **PascalCase** (`LessonNav`, `StalenessBanner`).
 - Functions and variables: **camelCase** (`getRecentCapstoneSession`).
-- Constants exported from a module: **UPPER_SNAKE_CASE** (`PROGRESS_DB_PATH`, `CAPSTONE_DIR`).
+- Constants exported from a module: **UPPER_SNAKE_CASE** (`PROGRESS_DB_PATH`, `CAPSTONE_STEP_NAMES`).
 - Types and interfaces: **PascalCase**, no `I`-prefix or `T`-suffix (`ProgressEntry`, not `IProgressEntry`).
 
 ### Structure Patterns
@@ -508,7 +507,7 @@ Most "naming and structure" conflict points are pre-resolved by Next.js App Rout
 **Request/response shapes:**
 
 - Request body for `POST /api/progress`: `{ kind: 'lesson' | 'lab' | 'capstone-session' | 'capstone-step', id: string, completed: boolean }`. Validated by a Zod schema named `ProgressUpsertRequest` exported from `src/lib/db/schemas.ts`.
-- Request body for `POST /api/capstone/save`: `{ session: string, step: 'brief' | 'epic' | 'story-1' | 'story-2' | 'adr', content: string }`. Validated by `CapstoneSaveRequest`.
+- Request bodies for the Epic 5-9 capstone-runtime endpoints are documented per-route in their owning stories (preflight, tool-check, bootstrap, abort, phase-done, handoff/generate). Each is validated by a Zod schema co-located with its route handler.
 - Successful response shape: `{ ok: true, ...resourceData }` — top-level `ok: true` so the client can branch on a single field, not on HTTP status alone.
 - Error response shape: `{ ok: false, error: string, details?: unknown }`. `details` is set only for Zod validation errors; never includes server-side stack traces.
 - Date format in JSON: **ISO 8601 strings** (`'2026-05-07T14:30:22Z'`). The `completed_at` column stores ISO strings (TEXT); never Unix timestamps.
@@ -649,16 +648,15 @@ bmad_demo/
 │   │   │   └── [slug]/
 │   │   │       └── page.tsx        # FR-4 lab rendering
 │   │   ├── capstone/
-│   │   │   ├── page.tsx            # FR-3.1/3.7 — resume-or-start
-│   │   │   └── [step]/
-│   │   │       ├── page.tsx        # FR-3.2-3.5 — one of brief/epic/story-1/story-2/adr
-│   │   │       └── capstone-step-form.tsx  # client component (co-located)
+│   │   │   ├── page.tsx            # FR-3.1/3.7 — resume-or-start (overview shell)
+│   │   │   ├── start-capstone-button.tsx  # client component (co-located)
+│   │   │   ├── setup/              # Epic 6 — Phase 0/0.5/1/2 wizard
+│   │   │   ├── chat/[sessionId]/[phase]/  # Epic 7+ — chat surface
+│   │   │   └── handoff/[sessionId]/        # Epic 9 — HANDOFF.md page
 │   │   └── api/
 │   │       ├── progress/
 │   │       │   └── route.ts        # POST — upsert progress (FR-2.1/2.2/2.3)
-│   │       └── capstone/
-│   │           └── save/
-│   │               └── route.ts    # POST — write capstone artifact to working tree (FR-3.6)
+│   │       └── capstone/           # Epic 5-9 — preflight, tool-check, bootstrap, abort, chat-stream, phase-done, handoff/generate
 │   ├── components/                 # promoted (rule-of-three) shared components
 │   │   ├── lesson-nav.tsx          # used in /lessons + /labs + /capstone
 │   │   ├── audience-card.tsx       # 3x on home page — promoted
@@ -673,12 +671,10 @@ bmad_demo/
 │       │   ├── connection.ts       # better-sqlite3 singleton; loads schema.sql on first connect
 │       │   ├── progress-db.ts      # upsertProgress, getProgress, getRecentCapstoneSession
 │       │   ├── progress-db.test.ts
-│       │   ├── schemas.ts          # Zod: ProgressUpsertRequest, CapstoneSaveRequest
+│       │   ├── schemas.ts          # Zod: ProgressUpsertRequest
 │       │   └── schema.sql          # CREATE TABLE IF NOT EXISTS progress (...)
-│       └── capstone/
-│           ├── paths.ts            # CAPSTONE_DIR, sessionDir(timestamp), stepFile(...)
-│           ├── write-artifact.ts   # working-tree FS write
-│           └── write-artifact.test.ts
+│       └── capstone/               # Epic 5+ — adapters/, subprocess/, sessions/, bootstrap/, primers/, handoff/
+│           └── steps.ts            # CAPSTONE_STEP_ORDER + per-step display metadata
 ├── data/
 │   └── .gitkeep                    # progress.sqlite created here at runtime; gitignored
 ├── training/                       # all curriculum content (plain markdown — FR-5.1)
@@ -748,7 +744,7 @@ test-results/
 **API boundaries (the entire surface):**
 
 - `POST /api/progress` — request body validated by `ProgressUpsertRequest`; idempotent upsert into the `progress` table. Returns `{ ok: true }` on success, `{ ok: false, error, details? }` otherwise.
-- `POST /api/capstone/save` — request body validated by `CapstoneSaveRequest`; writes `_bmad-output/capstone/<session>/<step>.md` and upserts the corresponding `capstone-step` row. Returns `{ ok: true, path }` on success.
+- The capstone-runtime endpoints (preflight, tool-check, bootstrap, abort, chat-stream, phase-done, handoff/generate) are enumerated in §"API & Communication Patterns → Endpoints (v1)" and documented in their owning Epic-5/6/7/8/9 stories.
 - **No other endpoints.** Reads are Server Components calling `src/lib/db/progress-db.ts` directly.
 
 **Component boundaries:**
@@ -801,10 +797,10 @@ The architecture **does not pick** between these. It requires only that the chos
 
 | FR | Lives in |
 |---|---|
-| FR-3.1 capstone start | `src/app/capstone/page.tsx` (resume-or-start logic) |
-| FR-3.2/3.3/3.4/3.5 produce brief/epic/stories/ADR | `src/app/capstone/[step]/page.tsx` + `capstone-step-form.tsx` |
-| FR-3.6 artifacts saved to working tree | `src/app/api/capstone/save/route.ts` → `src/lib/capstone/write-artifact.ts` |
-| FR-3.7 resume from last completed step | `src/lib/db/progress-db.ts:getRecentCapstoneSession` + `src/app/capstone/page.tsx` (schema shape per the open design point above) |
+| FR-3.1 capstone start | `src/app/capstone/page.tsx` (resume-or-start) → `src/app/capstone/setup/` wizard (Epic 6) |
+| FR-3.2/3.3/3.4/3.5 chat-driven artifact production | `src/app/capstone/chat/[sessionId]/[phase]/page.tsx` (Epic 7+) → `src/lib/capstone/adapters/` (Epic 5) → trainee's local AI tool |
+| FR-3.6 artifacts saved to trainee's working tree | The trainee's AI tool writes directly into CHOSEN_DIR; `POST /api/capstone/phase-done` (Epic 7+) verifies file existence before advancing the phase pointer. |
+| FR-3.7 resume from last completed phase | `src/lib/db/progress-db.ts:getRecentCapstoneSession` + cold subprocess re-spawn with `--resume <session-id>` (see §"Capstone Runtime → Session model"). |
 
 **FR-4 Lab Facilitation → `training/labs/` + `src/app/labs/`:**
 
@@ -863,9 +859,18 @@ Browser (Server Component HTML) ──── fetch ────► /api/progress
         │
         └── reads markdown ──► training/**/*.md ── via remark/rehype pipeline
 
-Capstone form ──── fetch ────► /api/capstone/save ── writes ──► _bmad-output/capstone/<session>/<step>.md
-                                       │
-                                       └── upserts progress row ──► better-sqlite3
+Capstone chat (Epic 7+) ─── EventSource ──► /api/capstone/chat/[sessionId]/stream
+        ▲                                            │
+        │ SSE events                                 ▼
+   Browser UI ◄── chat tokens ─── runStreaming ─── child_process.spawn
+                                                     │
+                                                     ▼
+                                          Trainee's AI tool subprocess
+                                                     │
+                                                     └── writes CHOSEN_DIR/<phase artifacts>
+                                                          (outside this repo)
+
+POST /api/capstone/phase-done ── reads CHOSEN_DIR ── upserts progress row ──► better-sqlite3
 ```
 
 **External integrations:** **None** at runtime. No third-party services, no APIs, no CDNs. Trainees may click out-links to external docs (e.g., Next.js docs, BMAD reference) — those are user-initiated and not part of the runtime integration surface.
@@ -966,7 +971,7 @@ Every FR is mapped to a file or directory in the §Requirements-to-Structure Map
 
 - ✅ FR-1.5 (lesson prose links to relative repo paths) → `src/lib/markdown/pipeline.ts` rehype plugins + dual-layer link-integrity test (Risk #3 mitigation).
 - ✅ FR-2.6 (no auth, non-capability) → enforced *by absence*: no users table in `schema.sql`, no auth code anywhere; reviewer-enforced going forward.
-- ✅ FR-3.6 (capstone artifacts to working tree) → `src/lib/capstone/write-artifact.ts` + the explicit reset-progress non-overlap guarantee.
+- ✅ FR-3.6 (capstone artifacts to trainee's working tree) → trainee's local AI tool (claude-code/codex/copilot) writes into CHOSEN_DIR; `POST /api/capstone/phase-done` verifies file existence; reset-progress NEVER touches CHOSEN_DIR (NFR-R3).
 - ✅ FR-3.7 (resume) → architecturally placed; schema-shape design point explicitly flagged for the implementation story.
 - ✅ FR-5.1 (plain markdown only) → MDX deliberately rejected; `remark`/`rehype` pipeline preserves plain-text legibility.
 - ✅ FR-5.11 / FR-5.12 (`AGENTS.md`, `copilot-instructions.md`) → both in tree, dual-role files acknowledged in §Cross-Cutting (now alongside the two CI pipeline files).

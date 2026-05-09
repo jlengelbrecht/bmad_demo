@@ -1,11 +1,7 @@
-import { existsSync } from "node:fs";
-
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { stepFile } from "@/lib/capstone/paths";
-import { CAPSTONE_STEP_ORDER, nextIncompleteStep } from "@/lib/capstone/steps";
+import { CAPSTONE_STEP_ORDER } from "@/lib/capstone/steps";
 import {
   completedStepsForSession,
   getCapstoneSessionById,
@@ -69,7 +65,7 @@ function NoSessionPanel() {
         Start your capstone
       </h2>
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        Each artifact lands as a file under <code className="font-mono text-xs">_bmad-output/capstone/&lt;session&gt;/</code> in your working tree — yours to commit to your team&apos;s repo.
+        The rebuilt capstone walks you through the BMAD artifact chain by chatting with your local AI tool and scaffolds a fresh repo at a path you choose.
       </p>
       <StartCapstoneButton />
     </section>
@@ -79,7 +75,6 @@ function NoSessionPanel() {
 function SessionPanel({ session }: { session: CapstoneSessionRow }) {
   const completedSteps = completedStepsForSession(session.id);
   const isComplete = session.completedAt !== null;
-  const nextStep = isComplete ? null : nextIncompleteStep(completedSteps);
 
   return (
     <section
@@ -89,15 +84,10 @@ function SessionPanel({ session }: { session: CapstoneSessionRow }) {
       <h2 id="capstone-session-heading" className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
         {isComplete
           ? `Your last capstone — ${formatIsoDate(session.completedAt!)}`
-          : `Resume your capstone — started ${formatIsoDate(idToIsoDate(session.id))}`}
+          : `Prior capstone session — started ${formatIsoDate(idToIsoDate(session.id))}`}
       </h2>
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
         Session id: <code className="font-mono text-xs">{session.id}</code>
-      </p>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        {isComplete ? "Find your artifacts at " : "Artifacts land at "}
-        <code className="font-mono text-xs">_bmad-output/capstone/{session.id}/</code>
-        {isComplete ? " — commit them to your team's repo." : null}
       </p>
 
       <ol aria-label="Capstone steps" className="flex flex-col gap-1.5 text-sm">
@@ -118,55 +108,12 @@ function SessionPanel({ session }: { session: CapstoneSessionRow }) {
         })}
       </ol>
 
-      {nextStep ? (
-        <Link
-          href={`/capstone/${nextStep}?session=${session.id}`}
-          className="inline-flex w-fit rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
-        >
-          Continue with {nextStep} →
-        </Link>
-      ) : null}
+      <p className="text-xs text-zinc-600 dark:text-zinc-400">
+        The textarea-based capstone has been retired. The rebuilt capstone is in active development; your prior session row is preserved for history.
+      </p>
 
-      {isComplete ? (
-        <>
-          <ArtifactPathList sessionId={session.id} />
-          <StartCapstoneButton label="Start a new capstone" />
-        </>
-      ) : null}
+      <StartCapstoneButton label={isComplete ? "Start a new capstone" : "Try the rebuilt capstone"} />
     </section>
-  );
-}
-
-/**
- * Story 4.4 AC6: on the complete branch, list the absolute paths of all
- * 5 produced artifact files. Files that don't exist on disk are rendered
- * as `(not yet saved)` for resilience against partial-completion (e.g.,
- * a session marked complete via direct DB edit, or a future migration).
- */
-function ArtifactPathList({ sessionId }: { sessionId: string }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-        Produced artifacts
-      </p>
-      <ul className="flex flex-col gap-1 text-xs">
-        {CAPSTONE_STEP_ORDER.map((step) => {
-          const target = stepFile(sessionId, step);
-          const exists = existsSync(target);
-          return (
-            <li key={step} className="font-mono text-zinc-700 dark:text-zinc-300">
-              {target}
-              {exists ? null : (
-                <span className="text-zinc-500 dark:text-zinc-500"> (not yet saved)</span>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        These are absolute paths in your working tree; commit them to your team&apos;s repo.
-      </p>
-    </div>
   );
 }
 

@@ -2,7 +2,7 @@
 
 **Epic:** 10 — Migration (Delete Current Epic 4)
 **Story Key:** 10-1-delete-epic-4-textarea-surface
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 
@@ -67,13 +67,15 @@ The following files are removed in this story's commit:
 
 ## Tasks/Subtasks
 
-- [ ] **Task 1 — Audit before deletion** — `grep -r 'CapstoneStepForm\|writeCapstoneArtifact\|capstone/save\|capstone/\[step\]'` to enumerate all references. Confirm each is local to Epic 4 OR is in a test that exercises Epic 4. Document findings as a comment in the commit message.
-- [ ] **Task 2 — Verify `/capstone/page.tsx` post-deletion imports** — read the file; identify any imports from deleted modules; replace with a simple placeholder ("No capstone sessions yet — start one!") that doesn't depend on Epic-4 code paths.
-- [ ] **Task 3 — Delete files (AC1)** — single commit deleting all enumerated files.
-- [ ] **Task 4 — `<StartCapstoneButton>` interim onClick (AC3)** — repoint to `/capstone/setup-coming-soon` placeholder. Create the placeholder page at `src/app/capstone/setup-coming-soon/page.tsx` with a one-paragraph explanation.
-- [ ] **Task 5 — Update `_bmad-output/capstone/README.md` (AC4)** — single rewrite.
-- [ ] **Task 6 — Update architecture doc (AC7)** — strike the relevant lines; commit in same change.
-- [ ] **Task 7 — Final quad gate (AC8)**.
+- [x] **Task 1 — Audit before deletion** — `grep -r 'CapstoneStepForm\|writeCapstoneArtifact\|capstone/save\|capstone/\[step\]'` to enumerate all references. Confirmed all hits local to Epic 4 surface. `paths.ts` had two consumers (`/capstone/page.tsx` ArtifactPathList + `read-artifact.ts`); after deleting `read-artifact.ts` and rewriting `page.tsx`, paths.ts had zero remaining consumers and was deleted.
+- [x] **Task 2 — Verify `/capstone/page.tsx` post-deletion imports** — Stripped imports of `stepFile`, `nextIncompleteStep`. Removed the `ArtifactPathList` function and the resume Continue link (target route deleted). Kept the historical step-list display so trainees with prior sessions still see them; added an interim "rebuild in progress" notice with the StartCapstoneButton repurposed to point at the placeholder.
+- [x] **Task 3 — Delete files (AC1)** — Removed `[step]/`, `api/capstone/save/`, `lib/capstone/{write-artifact,read-artifact,paths}.ts` + tests, `tests/e2e/capstone-flow.spec.ts`. Also stripped the now-unused `CapstoneSaveRequest` Zod schema from `src/lib/db/schemas.ts`.
+- [x] **Task 4 — `<StartCapstoneButton>` interim onClick (AC3)** — Reduced to a `next/link` pointing at `/capstone/setup-coming-soon`. Created the placeholder page that explains the rebuild + names the in-progress phases + reset-progress hint. Updated source-string smoke test accordingly.
+- [x] **Task 5 — Update `_bmad-output/capstone/README.md` (AC4)** — Rewrote to mark the dir historical (Epic-4 sessions preserved; rebuilt capstone writes to CHOSEN_DIR outside the repo).
+- [x] **Task 6 — Update architecture doc (AC7)** — Struck Epic 4 references at lines 245 (routing topology), ~378 (folder layout `capstone/save/route.ts` line), 474 (kebab-case route example), 487 (`CAPSTONE_DIR` constant example), 510-511 (request body for save), 750-751 (architectural-boundaries endpoints), 800-807 (FR-3 mapping table), ~865 (data-flow diagram). Replaced obsolete refs with the rebuilt-flow language (capstone runtime, CHOSEN_DIR, phase-done verification).
+- [x] **Task 7 — Final quad gate (AC8)** — `npm run lint` clean · `npm run test:unit` 165/165 (down from 195: 30 tests deleted with the Epic 4 surface) · `npm run test:e2e` 27/27 (down from 35: 8 textarea-flow tests deleted; capstone-overview rewrote against the interim placeholder shape) · `npm run lint:links` clean (12 markdown files / 0 broken targets).
+
+Also removed `BMAD_CAPSTONE_DIR` from `playwright.config.ts` (paths.ts deleted; no consumer remains).
 
 ## Dev Notes
 
@@ -105,41 +107,57 @@ The button's identity (a single CTA in the `/capstone` overview) is right; only 
 
 ### Implementation Plan
 
-_To be filled in by the dev agent at implementation time._
+1. Audit: grep for all references to the to-be-deleted symbols; classify each as Epic-4-only or shared.
+2. Delete the [step] page + form, the save route + handler, the write-artifact + read-artifact modules, paths.ts, the e2e textarea-flow spec, and the playwright.config BMAD_CAPSTONE_DIR env var.
+3. Rewrite `/capstone/page.tsx` to drop the now-broken ArtifactPathList + Continue link. Keep the historical step list. Add interim "rebuild in progress" copy that points at the placeholder.
+4. Repoint `<StartCapstoneButton>` at `/capstone/setup-coming-soon` (a Next.js `Link`; no DB write). Update its source-string smoke.
+5. Author the placeholder page that names the rebuild phases + the reset-progress hint.
+6. Rewrite the e2e overview spec against the interim placeholder shape.
+7. Update `_bmad-output/capstone/README.md` to mark the dir historical.
+8. Strike Epic 4 references in `architecture.md` (routing topology, folder layout, route examples, request-body docs, architectural-boundaries endpoint list, FR-3 mapping, data-flow diagram).
+9. Quad gate: lint, unit, e2e, lint:links.
 
 ### Debug Log
 
-_To be filled in by the dev agent during implementation._
+- Initial `tsc --noEmit` after deletion surfaced stale `.next/dev/types/validator.ts` references — cleared with `rm -rf .next`. Remaining tsc errors (better-sqlite3 type missing, NODE_ENV reassignment in pipeline.test.ts) are pre-existing, not from this story.
+- Prior `e2e-progress.sqlite` + `e2e-capstone/` test data cleared before the e2e run so the rewrite saw a clean slate.
 
 ### Completion Notes
 
-_To be filled in by the dev agent after the quad gate is clean._
+Quad gate clean post-deletion: lint OK, 165/165 unit, 27/27 e2e, link-integrity OK. The interim `/capstone` shell renders without errors against both an empty DB and a seeded prior-session DB. Story 10.2's job is to repurpose the overview prose for the new wizard CTA + restore the resume affordance once the wizard exists.
 
 ## File List
 
 **Files DELETED:**
 - `src/app/capstone/[step]/page.tsx`
-- `src/app/capstone/[step]/capstone-step-form.tsx`
 - `src/app/capstone/[step]/page.test.ts`
-- `src/app/capstone/[step]/capstone-step-form.test.tsx`
+- `src/app/capstone/[step]/capstone-step-form.tsx`
+- `src/app/capstone/[step]/capstone-step-form.test.ts`
 - `src/app/api/capstone/save/route.ts`
 - `src/app/api/capstone/save/route.test.ts`
 - `src/lib/capstone/write-artifact.ts`
 - `src/lib/capstone/write-artifact.test.ts`
-- `src/lib/capstone/paths.ts` (if Task 1 confirms unused)
-- `tests/e2e/capstone-flow.spec.ts` (if Task 1 classifies as Epic-4-only; otherwise updated)
+- `src/lib/capstone/read-artifact.ts`
+- `src/lib/capstone/read-artifact.test.ts`
+- `src/lib/capstone/paths.ts`
+- `src/lib/capstone/paths.test.ts`
+- `tests/e2e/capstone-flow.spec.ts`
 
 **Files MODIFIED:**
-- `src/app/capstone/page.tsx` (remove imports of deleted code; render simple empty state)
-- `src/app/capstone/start-capstone-button.tsx` (interim onClick repoint)
-- `_bmad-output/capstone/README.md` (rewrite per AC4)
-- `_bmad-output/planning-artifacts/architecture.md` (strike lines per AC7)
-- Lesson markdown files (if any reference the deleted paths — Task 1's audit catches)
+- `src/app/capstone/page.tsx` — stripped ArtifactPathList + Continue link; kept historical step list; added interim "rebuild in progress" notice.
+- `src/app/capstone/start-capstone-button.tsx` — reduced to a `next/link` to the placeholder; no `/api/progress` POST.
+- `src/app/capstone/start-capstone-button.test.ts` — updated source-string smoke for the new shape.
+- `src/lib/db/schemas.ts` — removed unused `CapstoneSaveRequest` Zod schema.
+- `src/lib/db/progress-db.ts` — updated `isCapstoneSessionActive` doc comment to drop the `/api/capstone/save` reference.
+- `tests/e2e/capstone-overview.spec.ts` — rewrote against the interim placeholder shape.
+- `playwright.config.ts` — removed `BMAD_CAPSTONE_DIR` env var (paths.ts deleted; no consumer).
+- `_bmad-output/capstone/README.md` — marked the dir historical (Epic-4 sessions preserved; rebuilt capstone writes to CHOSEN_DIR outside the repo).
+- `_bmad-output/planning-artifacts/architecture.md` — struck Epic 4 references throughout (routing topology, folder layout, route examples, request-body docs, architectural-boundaries endpoint list, FR-3 mapping, data-flow diagram).
 
 **Files NEW:**
-- `src/app/capstone/setup-coming-soon/page.tsx` (interim placeholder; Story 10.2 + Epic 6 remove)
-- `_bmad-output/implementation-artifacts/10-1-delete-epic-4-textarea-surface.md` (this file)
+- `src/app/capstone/setup-coming-soon/page.tsx` — interim placeholder explaining the rebuild + the in-progress phases.
 
 ## Change Log
 
 - 2026-05-08 — Story file authored from session-state-2026-05-08-rebuild-planning.md §"Epic structure to author" + §"Suggested first move" line 156 (DEV order: Epic 10 first).
+- 2026-05-08 — Story executed: deletions + interim placeholder + architecture-doc reconciliation + quad gate clean.
