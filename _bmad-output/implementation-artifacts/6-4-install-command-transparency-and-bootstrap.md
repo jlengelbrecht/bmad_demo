@@ -2,7 +2,7 @@
 
 **Epic:** 6 — Setup Wizard + Bootstrap
 **Story Key:** 6-4-install-command-transparency-and-bootstrap
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 
