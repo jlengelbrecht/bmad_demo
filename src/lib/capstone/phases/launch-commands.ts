@@ -6,11 +6,10 @@ import type { CapstonePhase, ToolId } from "../adapters/types";
  * the bootstrap-style preview before clicking "Open terminal" — same
  * teaching shape as Phase 2's `npx bmad-method install`.
  *
- * For Claude Code we pass `--dangerously-skip-permissions` so the
- * trainee isn't prompted for every file write during the BMAD-driven
- * artifact generation. For codex / github-copilot the launch shape
- * is best-effort pending hands-on validation; the preview text below
- * makes that explicit so the trainee isn't surprised.
+ * Each adapter has been validated empirically (2026-05-09 dev box) for
+ * (a) what positional/flag shape feeds an initial prompt, and
+ * (b) what flag bypasses approval prompts so a trainee following the
+ *     happy path isn't interrupted on every file write.
  */
 export interface LaunchCommand {
   /** The argv-style command shown in the preview AND spawned by the PTY. */
@@ -29,10 +28,11 @@ export interface LaunchCommand {
    */
   bmadInvocation: string | null;
   /**
-   * When `true`, the BMAD invocation is appended as a positional argv
-   * so the tool auto-executes it on launch — trainee lands directly
-   * in the workflow, no typing required. When `false`, the trainee
-   * sees a "type this" hint and runs the command manually.
+   * When `true`, the BMAD invocation is appended to argv (as positional
+   * for claude/codex, or behind `-i` for copilot) so the tool
+   * auto-executes it on launch — trainee lands directly in the workflow,
+   * no typing required. When `false`, the trainee sees a "type this"
+   * hint and runs the command manually.
    */
   autoRun: boolean;
 }
@@ -57,23 +57,32 @@ const BMAD_SKILLS: Record<CapstonePhase, string | null> = {
 };
 
 /**
- * Whether a tool's CLI accepts a slash-command as a positional argv
- * that gets executed on launch. When true, the launch command appends
- * the BMAD invocation to argv and the trainee lands directly in the
- * BMAD workflow — no extra typing.
+ * Whether a tool's CLI accepts a slash-command at session start that
+ * gets executed before handing the prompt to the trainee.
  *
- * Validated for Claude Code 2.1.x: the positional `prompt` argument
- * IS routed through the slash-command parser at session start.
+ * Validated empirically (codex 0.130.0 / copilot 1.0.44 / claude 2.1.x):
  *
- * TODO(codex / github-copilot): the equivalent flag/positional shape
- * has NOT been validated against a real install. Until then we launch
- * those tools bare and the trainee types the BMAD invocation by hand
- * (the chat-phase page surfaces it as a "type this" hint).
+ * - **claude-code:** positional `prompt` is parsed by the CLI's slash
+ *   command router at session start (e.g., `claude "/foo"` invokes the
+ *   `foo` skill). ✅
+ *
+ * - **codex:** `[PROMPT]` positional is forwarded to the agent as the
+ *   first user message. The agent independently routes slash commands
+ *   to its skills layer (verified via `codex exec --skip-git-repo-check
+ *   "/skills"` — the agent listed installed skills rather than treating
+ *   `/skills` as natural-language). For trainees this means a BMAD
+ *   skill installed under `~/.codex/skills/<skill>/` will be invoked
+ *   from the initial prompt. ✅
+ *
+ * - **github-copilot:** `-i "PROMPT"` ("Start interactive mode and
+ *   automatically execute a prompt") feeds the prompt into the chat
+ *   input verbatim, the same routing path as if the trainee typed the
+ *   slash command at the keyboard. ✅
  */
 const SUPPORTS_INITIAL_PROMPT_ARGV: Record<ToolId, boolean> = {
   "claude-code": true,
-  codex: false,
-  "github-copilot": false,
+  codex: true,
+  "github-copilot": true,
 };
 
 /** Resolve the launch command for a given (tool, phase) pair. */
@@ -99,22 +108,35 @@ export function getLaunchCommand(
   }
 
   if (tool === "codex") {
+    // `--dangerously-bypass-approvals-and-sandbox` is codex's parallel
+    // to claude's `--dangerously-skip-permissions`: same teaching shape
+    // (long, named, scary), same effect (no per-action approval prompt).
+    // The positional `[PROMPT]` rides along as the agent's first message.
+    const args: string[] = ["--dangerously-bypass-approvals-and-sandbox"];
+    if (autoRun && bmadInvocation) args.push(bmadInvocation);
     return {
       cmd: "codex",
-      args: [],
-      preview: (cd) => `cd ${cd}\ncodex`,
+      args,
+      preview: (cd) =>
+        `cd ${cd}\ncodex --dangerously-bypass-approvals-and-sandbox${autoRun ? ` "${bmadInvocation!}"` : ""}`,
       bmadInvocation,
-      autoRun: false,
+      autoRun,
     };
   }
 
   // github-copilot
+  // `--allow-all-tools` skips per-tool confirmation. `-i "<prompt>"` is
+  // documented as "Start interactive mode and automatically execute a
+  // prompt" — exactly what we want for the BMAD launch.
+  const args: string[] = ["--allow-all-tools"];
+  if (autoRun && bmadInvocation) args.push("-i", bmadInvocation);
   return {
     cmd: "copilot",
-    args: [],
-    preview: (cd) => `cd ${cd}\ncopilot`,
+    args,
+    preview: (cd) =>
+      `cd ${cd}\ncopilot --allow-all-tools${autoRun ? ` -i "${bmadInvocation!}"` : ""}`,
     bmadInvocation,
-    autoRun: false,
+    autoRun,
   };
 }
 

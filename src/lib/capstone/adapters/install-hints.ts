@@ -29,5 +29,5 @@ export const AUTH_HINTS: Record<ToolId, string> = {
   codex:
     "Run 'codex login' (ChatGPT Plus/Pro/Team subscription) or set OPENAI_API_KEY in your shell, then re-check.",
   "github-copilot":
-    "Run 'gh auth login' (with the 'copilot' scope), then re-check. Requires an active GitHub Copilot subscription.",
+    "Run 'copilot login' (or 'gh auth login' to reuse a GitHub CLI token), then re-check. Requires an active GitHub Copilot subscription.",
 };

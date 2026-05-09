@@ -95,23 +95,40 @@ describe("codex.detectInstalled", () => {
 });
 
 describe("codex.detectAuthenticated", () => {
-  it("returns true when an agent_message event is observed", async () => {
+  it("returns true when `codex login status` exits 0 with a 'Logged in' line (ChatGPT subscription)", async () => {
     runStreamingMock.mockReturnValue(
       fakeStream([
-        {
-          kind: "stdout-line",
-          text: JSON.stringify({ type: "agent_message" }),
-        },
+        { kind: "stdout-line", text: "Logged in using ChatGPT" },
         { kind: "exit", code: 0, signal: null },
       ]),
     );
     expect(await codex.detectAuthenticated()).toBe(true);
   });
 
-  it("returns false when no agent_message is observed", async () => {
+  it("returns true for the API-key auth path (different stdout phrasing, same shape)", async () => {
     runStreamingMock.mockReturnValue(
       fakeStream([
-        { kind: "stdout-line", text: JSON.stringify({ type: "task_started" }) },
+        { kind: "stdout-line", text: "Logged in with API key" },
+        { kind: "exit", code: 0, signal: null },
+      ]),
+    );
+    expect(await codex.detectAuthenticated()).toBe(true);
+  });
+
+  it("returns false when exit is non-zero (probe didn't run)", async () => {
+    runStreamingMock.mockReturnValue(
+      fakeStream([
+        { kind: "stderr-line", text: "codex: command not found" },
+        { kind: "exit", code: 127, signal: null },
+      ]),
+    );
+    expect(await codex.detectAuthenticated()).toBe(false);
+  });
+
+  it("returns false when exit is 0 but no 'Logged in' line is observed", async () => {
+    runStreamingMock.mockReturnValue(
+      fakeStream([
+        { kind: "stdout-line", text: "Not logged in. Run 'codex login'." },
         { kind: "exit", code: 0, signal: null },
       ]),
     );

@@ -22,12 +22,21 @@ import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 const chosenDirArg = process.argv[2];
+const toolArg = process.argv[3] ?? "claude-code";
+const VALID_TOOLS = ["claude-code", "codex", "github-copilot"] as const;
+type SeedToolId = (typeof VALID_TOOLS)[number];
 if (!chosenDirArg) {
   console.error(
-    "Usage: npm run seed-chat-test-session -- <absolute-chosen-dir>",
+    "Usage: npm run seed-chat-test-session -- <absolute-chosen-dir> [tool]",
   );
+  console.error(`  tool: one of ${VALID_TOOLS.join(", ")} (default: claude-code)`);
   process.exit(1);
 }
+if (!(VALID_TOOLS as readonly string[]).includes(toolArg)) {
+  console.error(`Invalid tool '${toolArg}'. Must be one of: ${VALID_TOOLS.join(", ")}`);
+  process.exit(1);
+}
+const tool = toolArg as SeedToolId;
 const chosenDir = path.resolve(chosenDirArg);
 if (!existsSync(chosenDir)) {
   console.error(`Directory does not exist: ${chosenDir}`);
@@ -61,10 +70,9 @@ const upsert = db.prepare(
 );
 upsert.run("capstone-session", sessionId, null);
 upsert.run("capstone-target", sessionId, chosenDir);
-upsert.run("capstone-tool", sessionId, "claude-code");
+upsert.run("capstone-tool", sessionId, tool);
 db.close();
 
-const tool = "claude-code";
 console.log(`Seeded session in ${dbPath}`);
 console.log(`  sessionId=${sessionId}`);
 console.log(`  chosenDir=${chosenDir}`);

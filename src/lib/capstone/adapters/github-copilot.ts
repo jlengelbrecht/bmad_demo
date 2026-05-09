@@ -1,4 +1,6 @@
+import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
+import { join } from "node:path";
 
 import { runStreaming } from "../subprocess/run-streaming";
 import type { ToolAdapter } from "./types";
@@ -7,8 +9,6 @@ import type { ToolAdapter } from "./types";
 // any semver in the first stdout line rather than a binary-name-prefixed
 // shape. Real `copilot --version` output format varies by CLI version.
 const VERSION_BANNER_RE = /(\d+)\.(\d+)\.(\d+)/;
-const AUTH_PROBE_TIMEOUT_MS = 15_000;
-const AUTH_LOGGED_IN_RE = /Logged in to github\.com/i;
 
 function compareSemverAtLeast(observed: string, range: string): boolean {
   const m = /^>=\s*(\d+)\.(\d+)\.(\d+)/.exec(range.trim());
@@ -24,13 +24,15 @@ function compareSemverAtLeast(observed: string, range: string): boolean {
   return true;
 }
 
-function jsonHasCopilotKey(value: unknown): boolean {
-  if (value === null || typeof value !== "object") return false;
-  for (const key of Object.keys(value as Record<string, unknown>)) {
-    if (/copilot/i.test(key)) return true;
-    if (jsonHasCopilotKey((value as Record<string, unknown>)[key])) return true;
-  }
-  return false;
+/**
+ * Path to copilot's local config — written on first successful login,
+ * carries `lastLoggedInUser.login`. Used as a free, accurate signal of
+ * whether `copilot login` (or one of the supported env-var/gh-token
+ * paths) has produced a working credential. Overridable via env for
+ * tests.
+ */
+function copilotConfigPath(): string {
+  return process.env.COPILOT_CONFIG_PATH ?? join(homedir(), ".copilot", "config.json");
 }
 
 const githubCopilotAdapter: ToolAdapter = {
@@ -80,58 +82,30 @@ const githubCopilotAdapter: ToolAdapter = {
   },
 
   async detectAuthenticated(): Promise<boolean> {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), AUTH_PROBE_TIMEOUT_MS);
+    // The original probe paired `gh auth status` with `gh api user/copilot_billing`.
+    // The latter endpoint returns 404 ("Not Found") regardless of auth state —
+    // it's not a valid REST endpoint for this purpose — so the probe rendered
+    // ✗ for every healthy install. Replaced with a presence check on
+    // `~/.copilot/config.json::lastLoggedInUser.login`, which copilot writes
+    // on first successful auth (any of the supported paths: `copilot login`
+    // OAuth flow, COPILOT_GITHUB_TOKEN, GH_TOKEN, GITHUB_TOKEN, or an
+    // OAuth token from the `gh` CLI app). Free, immediate, accurate.
+    const path = copilotConfigPath();
+    if (!existsSync(path)) return false;
     try {
-      // Probe 1: gh auth status
-      let authed = false;
-      let authExit: number | null = null;
-      try {
-        for await (const ev of runStreaming({
-          cmd: "gh",
-          args: ["auth", "status", "--hostname", "github.com"],
-          cwd: homedir(),
-          signal: ctrl.signal,
-        })) {
-          if (ev.kind === "stdout-line" || ev.kind === "stderr-line") {
-            if (AUTH_LOGGED_IN_RE.test(ev.text)) authed = true;
-          } else if (ev.kind === "exit") {
-            authExit = ev.code;
-          }
-        }
-      } catch {
-        return false;
-      }
-      if (authExit !== 0 || !authed) return false;
-
-      // Probe 2: gh api user/copilot_billing
-      let billingExit: number | null = null;
-      let billingBuffer = "";
-      try {
-        for await (const ev of runStreaming({
-          cmd: "gh",
-          args: ["api", "user/copilot_billing"],
-          cwd: homedir(),
-          signal: ctrl.signal,
-        })) {
-          if (ev.kind === "stdout-line") {
-            billingBuffer += ev.text;
-          } else if (ev.kind === "exit") {
-            billingExit = ev.code;
-          }
-        }
-      } catch {
-        return false;
-      }
-      if (billingExit !== 0) return false;
-      try {
-        const parsed = JSON.parse(billingBuffer);
-        return jsonHasCopilotKey(parsed);
-      } catch {
-        return false;
-      }
-    } finally {
-      clearTimeout(timer);
+      const raw = readFileSync(path, "utf8");
+      // copilot writes JSONC (JSON with `//` line comments) — strip them
+      // before parse. Block-comment / trailing-comma support not needed
+      // for the shapes copilot emits today.
+      const stripped = raw.replace(/^\s*\/\/.*$/gm, "");
+      const parsed = JSON.parse(stripped) as {
+        lastLoggedInUser?: { login?: unknown };
+      };
+      const login = parsed?.lastLoggedInUser?.login;
+      return typeof login === "string" && login.length > 0;
+    } catch (err) {
+      console.error("[github-copilot adapter] auth-probe parse error:", err);
+      return false;
     }
   },
 };

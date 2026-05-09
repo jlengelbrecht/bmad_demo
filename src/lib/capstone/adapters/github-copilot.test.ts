@@ -92,86 +92,86 @@ describe("github-copilot.detectInstalled", () => {
 });
 
 describe("github-copilot.detectAuthenticated", () => {
-  it("returns true when both probes succeed and billing JSON contains a copilot key", async () => {
-    // Probe 1: gh auth status
-    runStreamingMock.mockReturnValueOnce(
-      fakeStream([
-        { kind: "stdout-line", text: "Logged in to github.com as devbox" },
-        { kind: "exit", code: 0, signal: null },
-      ]),
-    );
-    // Probe 2: gh api user/copilot_billing
-    runStreamingMock.mockReturnValueOnce(
-      fakeStream([
-        {
-          kind: "stdout-line",
-          text: JSON.stringify({ copilot_billing: { plan: "pro" } }),
-        },
-        { kind: "exit", code: 0, signal: null },
-      ]),
+  // Probe is now a presence check on ~/.copilot/config.json::lastLoggedInUser.login.
+  // We point COPILOT_CONFIG_PATH at a tmp file per test for hermetic coverage.
+  let tmpDir: string;
+  let originalEnv: string | undefined;
+
+  beforeEach(async () => {
+    const { mkdtempSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    tmpDir = mkdtempSync(join(tmpdir(), "copilot-auth-"));
+    originalEnv = process.env.COPILOT_CONFIG_PATH;
+  });
+
+  afterEach(async () => {
+    const { rmSync } = await import("node:fs");
+    rmSync(tmpDir, { recursive: true, force: true });
+    if (originalEnv === undefined) delete process.env.COPILOT_CONFIG_PATH;
+    else process.env.COPILOT_CONFIG_PATH = originalEnv;
+  });
+
+  async function writeConfig(content: string): Promise<string> {
+    const { writeFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const path = join(tmpDir, "config.json");
+    writeFileSync(path, content);
+    process.env.COPILOT_CONFIG_PATH = path;
+    return path;
+  }
+
+  it("returns true when ~/.copilot/config.json has lastLoggedInUser.login", async () => {
+    await writeConfig(
+      JSON.stringify({
+        firstLaunchAt: "2026-05-09T19:33:38.343Z",
+        lastLoggedInUser: { host: "https://github.com", login: "jlengelbrecht" },
+      }),
     );
     expect(await copilot.detectAuthenticated()).toBe(true);
   });
 
-  it("returns false when gh auth status is not authed (probe 2 not invoked)", async () => {
-    runStreamingMock.mockReturnValueOnce(
-      fakeStream([
-        { kind: "stdout-line", text: "You are not logged in" },
-        { kind: "exit", code: 1, signal: null },
-      ]),
+  it("returns true when the config file is JSONC (real-world: copilot writes // line comments)", async () => {
+    // Real-world example from copilot 1.0.44: file starts with two
+    // comment lines explaining settings.json is the user-editable file.
+    await writeConfig(
+      [
+        "// User settings belong in settings.json.",
+        "// This file is managed automatically.",
+        JSON.stringify({
+          firstLaunchAt: "2026-05-09T19:33:38.343Z",
+          lastLoggedInUser: { login: "jlengelbrecht" },
+        }),
+      ].join("\n"),
     );
-    expect(await copilot.detectAuthenticated()).toBe(false);
-    expect(runStreamingMock).toHaveBeenCalledTimes(1);
+    expect(await copilot.detectAuthenticated()).toBe(true);
   });
 
-  it("returns false when copilot_billing returns non-200", async () => {
-    runStreamingMock.mockReturnValueOnce(
-      fakeStream([
-        { kind: "stdout-line", text: "Logged in to github.com as devbox" },
-        { kind: "exit", code: 0, signal: null },
-      ]),
-    );
-    runStreamingMock.mockReturnValueOnce(
-      fakeStream([
-        { kind: "stderr-line", text: "HTTP 404" },
-        { kind: "exit", code: 1, signal: null },
-      ]),
-    );
+  it("returns false when the config file does not exist", async () => {
+    const { join } = await import("node:path");
+    process.env.COPILOT_CONFIG_PATH = join(tmpDir, "missing.json");
     expect(await copilot.detectAuthenticated()).toBe(false);
   });
 
-  it("returns false when billing JSON is unparseable", async () => {
-    runStreamingMock.mockReturnValueOnce(
-      fakeStream([
-        { kind: "stdout-line", text: "Logged in to github.com as devbox" },
-        { kind: "exit", code: 0, signal: null },
-      ]),
-    );
-    runStreamingMock.mockReturnValueOnce(
-      fakeStream([
-        { kind: "stdout-line", text: "not json {" },
-        { kind: "exit", code: 0, signal: null },
-      ]),
-    );
+  it("returns false when lastLoggedInUser is absent", async () => {
+    await writeConfig(JSON.stringify({ firstLaunchAt: "now" }));
     expect(await copilot.detectAuthenticated()).toBe(false);
   });
 
-  it("returns false when billing JSON parses but has no copilot-related key", async () => {
-    runStreamingMock.mockReturnValueOnce(
-      fakeStream([
-        { kind: "stdout-line", text: "Logged in to github.com as devbox" },
-        { kind: "exit", code: 0, signal: null },
-      ]),
-    );
-    runStreamingMock.mockReturnValueOnce(
-      fakeStream([
-        {
-          kind: "stdout-line",
-          text: JSON.stringify({ login: "x", id: 1, name: "x" }),
-        },
-        { kind: "exit", code: 0, signal: null },
-      ]),
-    );
+  it("returns false when lastLoggedInUser.login is empty", async () => {
+    await writeConfig(JSON.stringify({ lastLoggedInUser: { login: "" } }));
     expect(await copilot.detectAuthenticated()).toBe(false);
+  });
+
+  it("returns false when lastLoggedInUser.login is not a string", async () => {
+    await writeConfig(JSON.stringify({ lastLoggedInUser: { login: 12345 } }));
+    expect(await copilot.detectAuthenticated()).toBe(false);
+  });
+
+  it("returns false on unparseable JSON", async () => {
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    await writeConfig("{ not valid json");
+    expect(await copilot.detectAuthenticated()).toBe(false);
+    errSpy.mockRestore();
   });
 });

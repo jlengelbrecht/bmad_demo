@@ -79,8 +79,8 @@ export function ChatPhasePane({
             <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
               ✨ The portal passes{" "}
               <code className="font-mono">{launch.bmadInvocation}</code> as the
-              initial prompt — {TOOL_DISPLAY_NAMES[tool]} will execute
-              BMAD&apos;s{" "}
+              initial prompt — {TOOL_DISPLAY_NAMES[tool]}{" "}
+              will execute BMAD&apos;s{" "}
               <code className="font-mono">
                 {launch.bmadInvocation.replace(/^\//, "")}
               </code>{" "}

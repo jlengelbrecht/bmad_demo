@@ -69,36 +69,27 @@ const codexAdapter: ToolAdapter = {
   },
 
   async detectAuthenticated(): Promise<boolean> {
+    // The original probe spawned `codex exec --json "reply with OK"`,
+    // which (a) cost a real LLM request every page load, (b) took 3-15s,
+    // and (c) silently failed when subscription auth was healthy because
+    // the agent_message event-type vocabulary wasn't matched. Replaced
+    // with `codex login status` — exits 0 with "Logged in using ..." for
+    // both ChatGPT-subscription AND OPENAI_API_KEY auth paths. Free,
+    // immediate, and accurate.
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), AUTH_PROBE_TIMEOUT_MS);
-    let sawAgentMessage = false;
     let exitCode: number | null = null;
+    let sawLoggedIn = false;
     try {
       for await (const ev of runStreaming({
         cmd: this.manifest.cliBinary,
-        args: [
-          "exec",
-          "--json",
-          "--skip-git-repo-check",
-          "reply with the single word OK",
-        ],
+        args: ["login", "status"],
         cwd: homedir(),
         signal: ctrl.signal,
       })) {
-        if (ev.kind === "stdout-line") {
-          try {
-            const parsed = JSON.parse(ev.text) as { type?: string };
-            if (
-              parsed.type === "agent_message" ||
-              parsed.type === "assistant_message"
-            ) {
-              sawAgentMessage = true;
-              ctrl.abort();
-              break;
-            }
-          } catch {
-            // ignore
-          }
+        if (ev.kind === "stdout-line" || ev.kind === "stderr-line") {
+          // Anchor at start so "Not logged in" / "You are not logged in" don't match
+          if (/^\s*Logged in\b/i.test(ev.text)) sawLoggedIn = true;
         } else if (ev.kind === "exit") {
           exitCode = ev.code;
         }
@@ -108,8 +99,7 @@ const codexAdapter: ToolAdapter = {
     } finally {
       clearTimeout(timer);
     }
-    if (sawAgentMessage) return true;
-    return exitCode === 0 && sawAgentMessage;
+    return exitCode === 0 && sawLoggedIn;
   },
 };
 
