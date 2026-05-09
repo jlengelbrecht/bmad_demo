@@ -39,6 +39,12 @@ export default defineConfig({
       // without invoking real npm I/O. Resolved absolute so the dev
       // server can spawn it regardless of cwd.
       CAPSTONE_PTY_FIXTURE_SCRIPT: `${process.cwd()}/tests/fixtures/pty-fake-bmad-install.mjs`,
+      // Substitute the real per-tool AI CLI (claude / codex / copilot)
+      // with a banner-and-exit fixture. Used by the
+      // capstone-chat-phase-pty.spec.ts e2e to verify the chat-phase
+      // PTY spawn route routes the right inputs without invoking real
+      // LLM CLIs (which would consume credits and need real auth).
+      CAPSTONE_CHAT_PTY_FIXTURE_SCRIPT: `${process.cwd()}/tests/fixtures/pty-fake-chat-phase.mjs`,
     },
   },
 });

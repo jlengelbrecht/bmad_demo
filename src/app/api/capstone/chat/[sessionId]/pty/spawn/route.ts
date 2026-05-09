@@ -105,10 +105,20 @@ export async function POST(
     });
   }
 
+  // Test override: if CAPSTONE_CHAT_PTY_FIXTURE_SCRIPT is set, spawn that
+  // script instead of the real per-tool CLI. The fixture receives
+  // [chosenDir, tool, phase] as argv so the e2e can verify the route
+  // routes the right inputs without invoking real claude / codex / copilot.
+  // Mirrors the bootstrap-PTY route's CAPSTONE_PTY_FIXTURE_SCRIPT pattern.
   const launch = getLaunchCommand(tool, phase);
+  const fixturePath = process.env.CAPSTONE_CHAT_PTY_FIXTURE_SCRIPT;
+  const cmd = fixturePath ?? launch.cmd;
+  const args = fixturePath
+    ? [allow.resolved, tool, phase]
+    : [...launch.args];
   let pty;
   try {
-    pty = spawnPty(launch.cmd, [...launch.args], {
+    pty = spawnPty(cmd, args, {
       name: "xterm-256color",
       cols: 100,
       rows: 30,
