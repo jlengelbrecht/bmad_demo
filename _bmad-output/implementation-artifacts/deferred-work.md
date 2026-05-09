@@ -1,5 +1,13 @@
 # Deferred Work
 
+## Deferred from: 2026-05-09 PTY pivot (commit `d677123`)
+
+- **Codex positional-argv passthrough validation.** Verify whether `codex "/bmad-product-brief"` (and equivalent for other phases) routes the slash command through Codex's own command parser at session start the way Claude Code's positional `prompt` does. If yes, lift `SUPPORTS_INITIAL_PROMPT_ARGV.codex` to `true` in `src/lib/capstone/phases/launch-commands.ts` so codex trainees get the same zero-typing autoRun experience. Until then codex launches bare with an amber "type this once it loads" banner.
+- **GitHub Copilot positional-argv passthrough validation.** Same shape as the Codex item above for `copilot`. Probably needs a hands-on session with the GitHub Copilot CLI.
+- **PTY route + chat-phase spawn route e2e specs.** The bootstrap-PTY e2e (`tests/e2e/capstone-bootstrap-pty.spec.ts`) covers the generic /pty/[ptyId] routes transitively, but a dedicated chat-phase PTY spawn e2e (mocked via `CAPSTONE_PTY_FIXTURE_SCRIPT` pointing at a dummy script that just exits 0) would catch regressions in the `/api/capstone/chat/[sessionId]/pty/spawn` route earlier than visual walkthroughs do.
+- **Stories 7a.2, 7b.1, 7b.2, 7b.3, 8.1 (primer files) — decide whether to delete `src/lib/capstone/primers/*.md`.** The PTY pivot removed the chat-stream that loaded these primers as system context. They're now dead weight. Delete the directory + the primer files unless someone wants them as reference material. Defer the decision.
+- **Story 9.1 + 9.2 (HANDOFF).** The handoff page + generator are unchanged — verify they still work end-to-end after the PTY pivot. Light test, but worth a real-flow drive-through to confirm.
+
 ## Deferred from: code review of 1-1-scaffold-nextjs-app (2026-05-07)
 
 - **Default home page boilerplate** (`src/app/page.tsx`, `src/app/layout.tsx`, `src/app/globals.css` Geist-vs-Arial mismatch, `metadata.title = "Create Next App"`) — Story 1.2 replaces the home page with three audience-entry cards.

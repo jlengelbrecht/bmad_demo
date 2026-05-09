@@ -1,0 +1,281 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { Terminal } from "xterm";
+import { FitAddon } from "@xterm/addon-fit";
+import { Unicode11Addon } from "@xterm/addon-unicode11";
+import "xterm/css/xterm.css";
+
+type Status =
+  | { kind: "spawning" }
+  | { kind: "running" }
+  | { kind: "exited"; exitCode: number; signal: number | null }
+  | { kind: "error"; message: string };
+
+export function TerminalPane({
+  ptyId,
+  spawnUrl,
+  spawnBody,
+  onComplete,
+}: {
+  /**
+   * Stable id for the PTY in the registry. Bootstrap uses the bare
+   * capstone-session id; chat phases use `<sessionId>.<phase>` so
+   * multiple phase PTYs can coexist for the same session.
+   */
+  ptyId: string;
+  /** POST endpoint that spawns the PTY (idempotent). */
+  spawnUrl: string;
+  /** JSON body forwarded to the spawn POST. */
+  spawnBody: Record<string, unknown>;
+  /** Fired when the PTY exits with code 0. */
+  onComplete?: () => void;
+}) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const termRef = useRef<Terminal | null>(null);
+  const fitRef = useRef<FitAddon | null>(null);
+  const sseRef = useRef<EventSource | null>(null);
+  const [status, setStatus] = useState<Status>({ kind: "spawning" });
+
+  useEffect(() => {
+    let cancelled = false;
+    const term = new Terminal({
+      convertEol: true,
+      cursorBlink: true,
+      // Required for the Unicode11 addon below — xterm gates the
+      // unicode-version setter behind a "proposed API" opt-in.
+      allowProposedApi: true,
+      fontFamily:
+        '"Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace',
+      fontSize: 13,
+      theme: {
+        background: "#0a0a0a",
+        foreground: "#e4e4e7",
+        cursor: "#e4e4e7",
+      },
+    });
+    const fit = new FitAddon();
+    term.loadAddon(fit);
+    // Unicode 11 width tables — without this, modern emoji (🌟 🌐 ⭐
+    // and the entire 🇽 family) measure as 1 cell when they should
+    // be 2, so xterm writes the next char on top of the right half
+    // of the glyph and BMAD's banner emoji get clipped.
+    const unicode11 = new Unicode11Addon();
+    term.loadAddon(unicode11);
+    term.unicode.activeVersion = "11";
+    if (containerRef.current) term.open(containerRef.current);
+    // xterm's renderer initializes asynchronously inside term.open();
+    // calling fit() in the same tick throws "this._renderer.value is
+    // undefined" and aborts the rest of useEffect (spawn POST never
+    // fires). Defer the initial fit one animation frame.
+    requestAnimationFrame(() => {
+      try {
+        fit.fit();
+      } catch {
+        // renderer still warming up; the resize listener below will
+        // catch up on the next user resize.
+      }
+    });
+    termRef.current = term;
+    fitRef.current = fit;
+    // Test escape hatch: the bootstrap-pty e2e reads the terminal
+    // buffer via this handle. xterm renders to canvas, so .xterm-rows
+    // is an a11y-only mirror that lags — Playwright assertions on
+    // visible text need the live buffer instead.
+    if (typeof window !== "undefined") {
+      (window as unknown as { __bmadTerm__?: Terminal }).__bmadTerm__ = term;
+    }
+
+    const onResize = () => {
+      try {
+        fit.fit();
+      } catch {
+        // ignore — happens during unmount
+      }
+    };
+    window.addEventListener("resize", onResize);
+
+    // Forward keystrokes to the PTY. xterm's onData fires once per
+    // keystroke including arrow-key escape sequences (e.g. \x1b[A).
+    const dataDispose = term.onData((data) => {
+      // fire-and-forget; ordering preserved by the one-PTY-per-session
+      // serialization on the server.
+      void fetch(`/api/capstone/pty/${ptyId}/keystroke`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ keystroke: data }),
+      }).catch((err) => {
+        console.error("keystroke POST failed", err);
+      });
+    });
+
+    // Push xterm's dimensions to the server PTY whenever the renderer
+    // recalculates them. Without this AI-tool TUIs use cursor-
+    // positioning sequences that land in the wrong rows and the
+    // menu draws as a "blended" overlay. Fire-and-forget.
+    let lastResizePosted: { cols: number; rows: number } | null = null;
+    const resizeDispose = term.onResize(({ cols, rows }) => {
+      if (
+        lastResizePosted &&
+        lastResizePosted.cols === cols &&
+        lastResizePosted.rows === rows
+      ) {
+        return;
+      }
+      lastResizePosted = { cols, rows };
+      void fetch(`/api/capstone/pty/${ptyId}/resize`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ cols, rows }),
+      }).catch((err) => {
+        console.error("resize POST failed", err);
+      });
+    });
+
+    // Spawn (idempotent), then open SSE for output.
+    (async () => {
+      try {
+        const spawnRes = await fetch(spawnUrl, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(spawnBody),
+        });
+        if (!spawnRes.ok) {
+          const body = (await spawnRes.json().catch(() => ({}))) as {
+            error?: string;
+          };
+          if (cancelled) return;
+          setStatus({
+            kind: "error",
+            message: body.error ?? `spawn failed: HTTP ${spawnRes.status}`,
+          });
+          return;
+        }
+        if (cancelled) return;
+        setStatus({ kind: "running" });
+
+        const es = new EventSource(`/api/capstone/pty/${ptyId}/output`);
+        sseRef.current = es;
+
+        es.addEventListener("data", (e) => {
+          try {
+            const { b64 } = JSON.parse((e as MessageEvent).data) as {
+              b64: string;
+            };
+            // base64 → raw bytes → xterm.write. The Uint8Array path
+            // is required: passing the binary string from atob()
+            // directly to term.write() would have xterm interpret
+            // each char as a UTF-16 codepoint (so 0xE2 0x96 0xA3
+            // would become 3 standalone codepoints instead of one
+            // ▣). Bytes route preserves the UTF-8 sequence intact;
+            // xterm decodes it correctly.
+            const binary = atob(b64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+              bytes[i] = binary.charCodeAt(i);
+            }
+            term.write(bytes);
+          } catch (err) {
+            console.error("decode SSE data failed", err);
+          }
+        });
+        es.addEventListener("exit", (e) => {
+          try {
+            const { exitCode, signal } = JSON.parse(
+              (e as MessageEvent).data,
+            ) as { exitCode: number; signal: number | null };
+            setStatus({ kind: "exited", exitCode, signal });
+            if (exitCode === 0) onComplete?.();
+          } catch (err) {
+            console.error("decode SSE exit failed", err);
+          } finally {
+            es.close();
+            sseRef.current = null;
+          }
+        });
+        es.addEventListener("error", () => {
+          // Browser-level error; if PTY exited cleanly the `exit` event
+          // already fired and we already closed. Ignore otherwise — we
+          // don't want spurious errors on tab focus changes.
+        });
+      } catch (err) {
+        if (cancelled) return;
+        setStatus({
+          kind: "error",
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      dataDispose.dispose();
+      resizeDispose.dispose();
+      sseRef.current?.close();
+      sseRef.current = null;
+      window.removeEventListener("resize", onResize);
+      if (
+        typeof window !== "undefined" &&
+        (window as unknown as { __bmadTerm__?: Terminal }).__bmadTerm__ ===
+          term
+      ) {
+        (window as unknown as { __bmadTerm__?: Terminal }).__bmadTerm__ =
+          undefined;
+      }
+      term.dispose();
+      termRef.current = null;
+    };
+    // The deps list intentionally omits spawnBody (object identity
+    // would force re-spawn on every render even if values match).
+    // Callers should keep ptyId+spawnUrl stable for a given mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ptyId, spawnUrl, onComplete]);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div
+        ref={containerRef}
+        className="h-[560px] overflow-hidden rounded-md border border-zinc-300 bg-[#0a0a0a] p-2 dark:border-zinc-700"
+      />
+      <StatusLine status={status} />
+    </div>
+  );
+}
+
+function StatusLine({ status }: { status: Status }) {
+  if (status.kind === "spawning") {
+    return (
+      <p className="text-xs text-zinc-600 dark:text-zinc-400">
+        ▶ spawning bootstrap process…
+      </p>
+    );
+  }
+  if (status.kind === "running") {
+    return (
+      <p className="text-xs text-zinc-600 dark:text-zinc-400">
+        ▶ bootstrap is running. Use arrow keys + Enter to answer BMAD&apos;s
+        prompts.
+      </p>
+    );
+  }
+  if (status.kind === "exited") {
+    if (status.exitCode === 0) {
+      return (
+        <p className="text-xs text-emerald-700 dark:text-emerald-400">
+          ✓ bootstrap complete (exit 0).
+        </p>
+      );
+    }
+    return (
+      <p className="text-xs text-rose-700 dark:text-rose-400">
+        ✗ bootstrap exited with code {status.exitCode}
+        {status.signal !== null ? ` (signal ${status.signal})` : ""}.
+      </p>
+    );
+  }
+  return (
+    <p className="text-xs text-rose-700 dark:text-rose-400">
+      ⚠ {status.message}
+    </p>
+  );
+}

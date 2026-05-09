@@ -8,6 +8,7 @@ import { notFound, redirect } from "next/navigation";
 import { readBootstrappedTree, formatSize, type TreeNode } from "@/lib/capstone/bootstrap/file-tree";
 import { getCapstoneTargetDir } from "@/lib/db/progress-db";
 import { CAPSTONE_SESSION_ID } from "@/lib/db/schemas";
+import { Markdown } from "@/lib/markdown/render";
 
 export const metadata: Metadata = {
   title: "Capstone setup — bootstrap complete · BMAD Demo",
@@ -33,10 +34,15 @@ export default async function BootstrapCompletePage({
   if (!existsSync(chosenDir)) notFound();
 
   const tree = readBootstrappedTree(chosenDir, 3);
-  const explainer = readFileSync(
-    path.join(process.cwd(), "src", "lib", "capstone", "bootstrap", "explainer.md"),
-    "utf8",
+  const explainerPath = path.join(
+    process.cwd(),
+    "src",
+    "lib",
+    "capstone",
+    "bootstrap",
+    "explainer.md",
   );
+  const explainer = readFileSync(explainerPath, "utf8");
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-12">
@@ -64,15 +70,7 @@ export default async function BootstrapCompletePage({
         aria-labelledby="explainer-heading"
         className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
       >
-        <h2
-          id="explainer-heading"
-          className="text-lg font-medium text-zinc-900 dark:text-zinc-100"
-        >
-          What BMAD just did
-        </h2>
-        <pre className="whitespace-pre-wrap font-sans text-sm text-zinc-700 dark:text-zinc-300">
-{explainer}
-        </pre>
+        <Markdown source={explainer} sourcePath={explainerPath} />
       </section>
 
       <Link

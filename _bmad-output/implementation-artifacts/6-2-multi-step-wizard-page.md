@@ -2,7 +2,9 @@
 
 **Epic:** 6 — Setup Wizard + Bootstrap
 **Story Key:** 6-2-multi-step-wizard-page
-**Status:** done
+**Status:** SUPERSEDED (2026-05-09)
+
+> **⚠ Superseded by the PTY pivot (commit `d677123`).** The six-step wizard this story shipped (`/capstone/setup/wizard`) has been deleted. The bootstrap surface now collects only the CHOSEN_DIR (single field with allowlist validation) and lets BMAD's own interactive `npx bmad-method install` ask every other question (project name, languages, skill level, output folder, module selection, ...) inside an xterm.js PTY pane — the trainee experiences exactly what they'd see at their own terminal. The portal stops trying to mirror BMAD's prompts (a maintenance treadmill that broke every time BMAD added a question) and instead positions itself as the *guided runtime*. See architecture.md editHistory `2026-05-09 — PTY pivot` for the full rationale.
 
 ## Story
 

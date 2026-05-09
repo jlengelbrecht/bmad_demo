@@ -3,20 +3,14 @@
  *
  * This file has zero runtime exports — `import * as Types from './types'`
  * yields an empty object. Pulled into adapter implementations and
- * consumers (registry, chat-stream Route Handler, setup wizard).
+ * consumers (registry, tool-pick page, chat-phase pages).
  *
- * Defensible deviation from architecture's interface:
- *   `buildSpawnArgs` returns `{ cmd, args, env? }` rather than `string[]`.
- *   Adapters need to control both the binary path AND tool-specific env
- *   (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GH_TOKEN`); returning argv
- *   only would force `process.env` mutation (purity violation, test-
- *   isolation breakage). Documented in architecture §"Capstone Runtime
- *   → AI Tool Abstraction Layer" via Story 10.1b's drift fix.
- *
- * `ChatStreamEvent` is a discriminated union mapped to FR-3.17 (anti-
- * magic chat — tool calls visible). Tool-agnostic; tools that lack a
- * native tool-call surface (e.g., Copilot CLI plain-text streams) emit
- * only `message-delta` + `message-end`.
+ * v2 (post-PTY rewrite): the adapter surface is intentionally narrow —
+ * just static manifest + install / auth detection. Per-turn argv
+ * construction, stdout parsing, and stdin formatting are gone because
+ * the chat-phase page now spawns the AI tool interactively in a PTY
+ * (see `src/lib/capstone/phases/launch-commands.ts` for launch shape)
+ * rather than driving it as a non-interactive `--print` subprocess.
  */
 
 /** Three v1 tool ids. Widened in v1.1 if/when OpenCode or Gemini land. */
@@ -47,32 +41,6 @@ export type CapstonePhase =
   | "adr"
   | "dev-story-1.1";
 
-/** Inputs to a per-turn chat-subprocess spawn. */
-export interface ChatSpawnOpts {
-  /** Trainee's chosen target directory (CHOSEN_DIR). */
-  chosenDir: string;
-  /** Tool-native session id captured from the first turn (or `''` on the first turn). */
-  sessionId: string;
-  /** Absolute path to the per-phase primer markdown file. */
-  primerPath: string;
-  /** The trainee's typed message for this turn. */
-  userMessage: string;
-  /** The phase the chat subprocess runs in. */
-  phase: CapstonePhase;
-}
-
-/**
- * Tool-agnostic stream events parsed by the adapter from the
- * subprocess's stdout. The chat-stream Route Handler forwards these
- * verbatim to the browser as SSE.
- */
-export type ChatStreamEvent =
-  | { kind: "session-init"; sessionId: string }
-  | { kind: "message-delta"; text: string }
-  | { kind: "tool-call"; description: string }
-  | { kind: "message-end" }
-  | { kind: "error"; message: string };
-
 /** The contract every adapter implements. */
 export interface ToolAdapter {
   /** Static manifest. */
@@ -81,16 +49,4 @@ export interface ToolAdapter {
   detectInstalled(): Promise<boolean>;
   /** Tool-specific authenticated-status probe. */
   detectAuthenticated(): Promise<boolean>;
-  /** Build the spawn argv + env for one chat turn. */
-  buildSpawnArgs(opts: ChatSpawnOpts): {
-    cmd: string;
-    args: string[];
-    env?: NodeJS.ProcessEnv;
-  };
-  /** Parse one raw stdout chunk into zero-or-more {@link ChatStreamEvent}s. */
-  parseStreamChunk(raw: string): ChatStreamEvent[];
-  /** Format a user message into the tool's stdin shape. */
-  formatUserMessage(text: string): string;
-  /** Build the BMAD primer text for a phase (sent via `--system-prompt-file` or as leading user message). */
-  buildPrimer(phase: CapstonePhase): string;
 }

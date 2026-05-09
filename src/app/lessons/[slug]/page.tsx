@@ -12,7 +12,15 @@ import {
 import { getProgress, listCompleted } from "@/lib/db/progress-db";
 import { Markdown } from "@/lib/markdown/render";
 
+import { StartCapstoneButton } from "@/app/capstone/start-capstone-button";
+
 import { LessonCompleteButton } from "./lesson-complete-button";
+
+// Lesson 6 is the capstone hand-off — its prose ends with "click
+// 'Start the capstone' below", so we embed the StartCapstoneButton
+// inline at the end of that lesson. Other lessons rely on Next-link
+// navigation only.
+const CAPSTONE_HANDOFF_SLUG = "6-from-lessons-to-capstone";
 
 type LessonPageParams = { slug: string };
 
@@ -71,12 +79,19 @@ export default async function LessonPage({
         ariaLabel="Lesson navigation (top)"
       />
       <Markdown source={source} sourcePath={lesson.filePath} />
-      <LessonCompleteButton
-        key={`lesson:${slug}:${!!progress?.completedAt}`}
-        kind="lesson"
-        id={slug}
-        initialCompleted={!!progress?.completedAt}
-      />
+      {slug === CAPSTONE_HANDOFF_SLUG ? (
+        // Lesson 6 is the capstone hand-off — clicking through to the
+        // capstone IS the completion signal, so we hide the separate
+        // Mark-complete button and auto-mark inside StartCapstoneButton.
+        <StartCapstoneButton markCompleteSlug={slug} />
+      ) : (
+        <LessonCompleteButton
+          key={`lesson:${slug}:${!!progress?.completedAt}`}
+          kind="lesson"
+          id={slug}
+          initialCompleted={!!progress?.completedAt}
+        />
+      )}
       <LessonNav
         current={lesson}
         prev={prev}

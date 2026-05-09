@@ -7,7 +7,7 @@ vi.mock("../subprocess/run-streaming", () => ({
 
 import { runStreaming } from "../subprocess/run-streaming";
 import copilot from "./github-copilot";
-import type { ChatSpawnOpts, ChatStreamEvent } from "./types";
+
 
 const runStreamingMock = vi.mocked(runStreaming);
 
@@ -173,107 +173,5 @@ describe("github-copilot.detectAuthenticated", () => {
       ]),
     );
     expect(await copilot.detectAuthenticated()).toBe(false);
-  });
-});
-
-describe("github-copilot.buildSpawnArgs", () => {
-  const baseOpts: ChatSpawnOpts = {
-    chosenDir: "/tmp/chosen",
-    sessionId: "",
-    primerPath: "/tmp/primer.md",
-    userMessage: "say hi",
-    phase: "brief",
-  };
-
-  it("produces argv with --prompt <msg> and -C chosenDir on first turn", () => {
-    const out = copilot.buildSpawnArgs(baseOpts);
-    expect(out.cmd).toBe("copilot");
-    expect(out.args).toEqual([
-      "--prompt",
-      "say hi",
-      "-C",
-      "/tmp/chosen",
-    ]);
-  });
-
-  it("appends --resume <id> on resume turns", () => {
-    const out = copilot.buildSpawnArgs({ ...baseOpts, sessionId: "sess-3" });
-    expect(out.args).toEqual([
-      "--prompt",
-      "say hi",
-      "-C",
-      "/tmp/chosen",
-      "--resume",
-      "sess-3",
-    ]);
-  });
-
-  it("env spreads process.env without synthesizing new keys", () => {
-    const out = copilot.buildSpawnArgs(baseOpts);
-    expect(out.env).toBeDefined();
-    for (const k of Object.keys(process.env)) {
-      expect(out.env).toHaveProperty(k);
-    }
-  });
-});
-
-describe("github-copilot.parseStreamChunk", () => {
-  it("plain line → single message-delta with text + '\\n'", () => {
-    expect(copilot.parseStreamChunk("hello world")).toEqual<ChatStreamEvent[]>([
-      { kind: "message-delta", text: "hello world\n" },
-    ]);
-  });
-
-  it("tool-call-prefixed line → single tool-call event", () => {
-    expect(copilot.parseStreamChunk("▶ reading brief.md")).toEqual<
-      ChatStreamEvent[]
-    >([{ kind: "tool-call", description: "▶ reading brief.md" }]);
-    expect(copilot.parseStreamChunk("[tool] runner")).toEqual<
-      ChatStreamEvent[]
-    >([{ kind: "tool-call", description: "[tool] runner" }]);
-  });
-
-  it("session-marker line → BOTH session-init and message-delta", () => {
-    expect(
-      copilot.parseStreamChunk("Session: my-capstone-12345"),
-    ).toEqual<ChatStreamEvent[]>([
-      { kind: "session-init", sessionId: "my-capstone-12345" },
-      { kind: "message-delta", text: "Session: my-capstone-12345\n" },
-    ]);
-  });
-
-  it("empty line → []", () => {
-    expect(copilot.parseStreamChunk("")).toEqual([]);
-  });
-});
-
-describe("github-copilot.formatUserMessage", () => {
-  it("returns '' regardless of input — message is in argv (--prompt)", () => {
-    expect(copilot.formatUserMessage("anything")).toBe("");
-    expect(copilot.formatUserMessage("with newlines\nand quotes \"x\"")).toBe("");
-  });
-});
-
-describe("github-copilot.buildPrimer", () => {
-  it("returns the placeholder primer for each phase", () => {
-    const phases = [
-      "brief",
-      "prd",
-      "architecture",
-      "epics-and-stories",
-      "adr",
-      "dev-story-1.1",
-    ] as const;
-    for (const phase of phases) {
-      const out = copilot.buildPrimer(phase);
-      expect(out.length).toBeGreaterThan(50);
-      expect(out).toMatch(/^# /);
-    }
-  });
-
-  it("throws on missing primer", () => {
-    expect(() => copilot.buildPrimer("missing-phase" as never)).toThrow(
-      /Primer not found/,
-    );
   });
 });

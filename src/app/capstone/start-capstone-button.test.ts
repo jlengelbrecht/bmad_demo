@@ -30,8 +30,16 @@ describe("<StartCapstoneButton> source-string smoke (Story 10.2)", () => {
     expect(SOURCE).not.toMatch(/setup-coming-soon/);
   });
 
-  it("does not call /api/progress (session creation lives in /capstone/setup)", () => {
-    expect(SOURCE).not.toMatch(/fetch\(["']\/api\/progress["']/);
+  it("does not create a capstone-session row from the button (that lives in /capstone/setup)", () => {
     expect(SOURCE).not.toMatch(/kind:\s*["']capstone-session["']/);
+  });
+
+  it("calls /api/progress to mark the lesson complete when invoked from a lesson page", () => {
+    // Lesson 6 (capstone hand-off) passes markCompleteSlug="6-…" so
+    // clicking Start the capstone IS the completion signal — no
+    // separate Mark-complete button on that lesson.
+    expect(SOURCE).toMatch(/markCompleteSlug/);
+    expect(SOURCE).toMatch(/fetch\(["']\/api\/progress["']/);
+    expect(SOURCE).toMatch(/kind:\s*["']lesson["']/);
   });
 });

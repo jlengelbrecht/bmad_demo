@@ -2,7 +2,9 @@
 
 **Epic:** 6 — Setup Wizard + Bootstrap
 **Story Key:** 6-4-install-command-transparency-and-bootstrap
-**Status:** done
+**Status:** done — PARTIALLY SUPERSEDED (2026-05-09)
+
+> **⚠ Adapter / bootstrap reshape from the PTY pivot (commit `d677123`).** The 2026-05-09 PTY pivot reshaped the surfaces this story shipped — the chat phases and the bootstrap now drive the AI tool / bmad-method install via an interactive xterm.js PTY rather than a non-interactive subprocess + parsed event stream + portal-mirrored wizard. Manifest + install/auth detection from this story remain load-bearing for the tool-pick page. See architecture.md editHistory `2026-05-09 — PTY pivot` for the full rationale.
 
 ## Story
 

@@ -1,28 +1,7 @@
-import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import path from "node:path";
 
 import { runStreaming } from "../subprocess/run-streaming";
-import type {
-  CapstonePhase,
-  ChatSpawnOpts,
-  ChatStreamEvent,
-  ToolAdapter,
-} from "./types";
-
-/**
- * Copilot CLI consumes the user message via `--prompt <msg>` (argv),
- * not stdin. The Route Handler's contract: when `formatUserMessage`
- * returns an empty string, skip the stdin write. This is the FIRST
- * adapter where the abstraction's "stdin-driven" assumption needs an
- * opt-out; the empty-string convention is the documented branch.
- *
- * Primer mechanism is file-based: Copilot reads
- * `<CHOSEN_DIR>/.github/copilot-instructions.md` at session start.
- * The Route Handler writes `buildPrimer(phase)`'s content there on
- * first turn; on resume turns the file already exists from the prior
- * turn so no re-write happens.
- */
+import type { ToolAdapter } from "./types";
 
 // See claude-code.ts VERSION_BANNER_RE for the rationale on matching
 // any semver in the first stdout line rather than a binary-name-prefixed
@@ -30,13 +9,6 @@ import type {
 const VERSION_BANNER_RE = /(\d+)\.(\d+)\.(\d+)/;
 const AUTH_PROBE_TIMEOUT_MS = 15_000;
 const AUTH_LOGGED_IN_RE = /Logged in to github\.com/i;
-const TOOL_CALL_PREFIX_RE = /^\s*(?:▶|→|>>|\[tool\]|\[exec\])/i;
-const SESSION_LINE_RE = /Session:\s*(\S+)/i;
-
-// See claude-code.ts PRIMERS_DIR for the Turbopack fallback rationale.
-const PRIMERS_DIR = import.meta.dirname
-  ? path.resolve(import.meta.dirname, "..", "primers")
-  : path.resolve(process.cwd(), "src", "lib", "capstone", "primers");
 
 function compareSemverAtLeast(observed: string, range: string): boolean {
   const m = /^>=\s*(\d+)\.(\d+)\.(\d+)/.exec(range.trim());
@@ -160,57 +132,6 @@ const githubCopilotAdapter: ToolAdapter = {
       }
     } finally {
       clearTimeout(timer);
-    }
-  },
-
-  buildSpawnArgs(opts: ChatSpawnOpts): {
-    cmd: string;
-    args: string[];
-    env?: NodeJS.ProcessEnv;
-  } {
-    return {
-      cmd: this.manifest.cliBinary,
-      args: [
-        "--prompt",
-        opts.userMessage,
-        "-C",
-        opts.chosenDir,
-        ...(opts.sessionId ? ["--resume", opts.sessionId] : []),
-      ],
-      env: { ...process.env },
-    };
-  },
-
-  parseStreamChunk(raw: string): ChatStreamEvent[] {
-    if (raw === "") return [];
-    const sessionMatch = SESSION_LINE_RE.exec(raw);
-    if (sessionMatch) {
-      return [
-        { kind: "session-init", sessionId: sessionMatch[1] },
-        { kind: "message-delta", text: raw + "\n" },
-      ];
-    }
-    if (TOOL_CALL_PREFIX_RE.test(raw)) {
-      return [{ kind: "tool-call", description: raw.trim() }];
-    }
-    return [{ kind: "message-delta", text: raw + "\n" }];
-  },
-
-  formatUserMessage(): string {
-    // Empty-string contract: the user message is in argv (--prompt);
-    // the Route Handler must skip the stdin write for this adapter.
-    return "";
-  },
-
-  buildPrimer(phase: CapstonePhase): string {
-    const file = path.join(PRIMERS_DIR, `${phase}.md`);
-    try {
-      return readFileSync(file, "utf8");
-    } catch (err) {
-      throw new Error(
-        `Primer not found for phase ${phase}: ${file}` +
-          ((err as Error).message ? ` (${(err as Error).message})` : ""),
-      );
     }
   },
 };
