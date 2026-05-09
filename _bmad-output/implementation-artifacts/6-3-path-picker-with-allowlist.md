@@ -2,7 +2,7 @@
 
 **Epic:** 6 — Setup Wizard + Bootstrap
 **Story Key:** 6-3-path-picker-with-allowlist
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 
