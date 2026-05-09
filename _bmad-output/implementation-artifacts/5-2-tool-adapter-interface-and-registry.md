@@ -2,7 +2,7 @@
 
 **Epic:** 5 — Capstone Runtime Foundation
 **Story Key:** 5-2-tool-adapter-interface-and-registry
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 
@@ -188,15 +188,19 @@ Two reasons. (1) Runtime defense — if someone passes a string parsed from a UR
 
 ### Implementation Plan
 
-_To be filled in by the dev agent at implementation time._
+1. Land `types.ts` (zero runtime exports): `ToolId`, `ToolManifest`, `CapstonePhase`, `ChatSpawnOpts`, `ChatStreamEvent`, `ToolAdapter` — all with one-sentence JSDoc.
+2. Stub each per-tool adapter (`claude-code.ts`, `codex.ts`, `github-copilot.ts`) with a populated manifest + every imperative method throwing `'Adapter <id> not yet implemented — see Story 5.<N>'`.
+3. Registry `index.ts` with memoized `getAdapterRegistry()` + defensive `getAdapterById(id)`.
+4. Vitest cases: registry shape + memoization + per-id lookup + invalid-id throw + every stub method rejects.
+5. Module-surface smoke: import-discipline grep for next/react/app routes + `Object.keys` exact-set checks on `index.ts` and `types.ts`.
 
 ### Debug Log
 
-_To be filled in by the dev agent during implementation._
+- First adapter loop test triggered Vite's dynamic-import-vars warning because `await import(`./${name}`)` lacks a static file extension. Replaced with explicit per-name imports — warning gone.
 
 ### Completion Notes
 
-_To be filled in by the dev agent after the quad gate is clean._
+Contract is real, registry is reachable, stubs throw with story refs so a developer who hits one knows where the implementation lives. Lint clean, 203/203 unit. Stories 5.3/5.4/5.5 fill in the imperative surfaces; Story 5.7 wires the registry into the chat-stream Route Handler; Epic 6's wizard reads the manifest layer to render the tool-pick step.
 
 ## File List
 
@@ -217,3 +221,4 @@ _To be filled in by the dev agent after the quad gate is clean._
 ## Change Log
 
 - 2026-05-08 — Story file authored from session-state-2026-05-08-rebuild-planning.md §"Epic structure to author" + architecture §"Capstone Runtime → AI Tool Abstraction Layer" + research Q-Tech-8.
+- 2026-05-08 — Story executed: 18 adapter tests added; 203/203 unit total; lint clean.
