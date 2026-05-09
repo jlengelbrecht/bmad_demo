@@ -2,7 +2,7 @@
 
 **Epic:** 7a — WHY Phases (Brief + PRD)
 **Story Key:** 7a-1-chat-page-shell
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 
