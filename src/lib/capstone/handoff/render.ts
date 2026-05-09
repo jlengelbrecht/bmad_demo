@@ -11,13 +11,20 @@ export interface HandoffData {
   date: string;
 }
 
-export function renderHandoff(data: HandoffData, templatePath?: string): string {
-  const tplPath =
-    templatePath ??
-    path.join(
-      import.meta.dirname,
+// See src/lib/db/connection.ts for the Turbopack fallback rationale.
+const DEFAULT_TEMPLATE_PATH = import.meta.dirname
+  ? path.join(import.meta.dirname, "HANDOFF.template.md")
+  : path.resolve(
+      process.cwd(),
+      "src",
+      "lib",
+      "capstone",
+      "handoff",
       "HANDOFF.template.md",
     );
+
+export function renderHandoff(data: HandoffData, templatePath?: string): string {
+  const tplPath = templatePath ?? DEFAULT_TEMPLATE_PATH;
   const template = readFileSync(tplPath, "utf8");
   const map: Record<string, string> = {
     "project-name": data.projectName || "<unknown>",

@@ -87,8 +87,9 @@ export async function POST(req: Request): Promise<Response> {
       { status: 500 },
     );
   }
-  const tool = getCapstoneTool(sessionId) ?? "claude-code";
-  const toolDisplayName = TOOL_DISPLAY_NAMES[tool] ?? tool;
+  const tool = getCapstoneTool(sessionId);
+  const toolDisplayName =
+    tool === null ? "<unknown>" : (TOOL_DISPLAY_NAMES[tool] ?? tool);
 
   const artifactLines: string[] = [];
   for (const { phase, rel } of ARTIFACT_PATHS) {

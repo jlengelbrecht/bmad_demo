@@ -14,7 +14,13 @@ const STORY_REF = "Story 5.3";
 const VERSION_BANNER_RE = /claude\s+(\d+)\.(\d+)\.(\d+)/i;
 const AUTH_PROBE_TIMEOUT_MS = 15_000;
 
-const PRIMERS_DIR = path.resolve(import.meta.dirname, "..", "primers");
+// Same fallback pattern as src/lib/db/connection.ts: Turbopack (Next.js 16
+// dev/build runtime) does not populate `import.meta.dirname` for App-Router
+// server modules, so we fall back to a cwd-relative resolve. Production is
+// local-only per architecture, so process.cwd() === repo root.
+const PRIMERS_DIR = import.meta.dirname
+  ? path.resolve(import.meta.dirname, "..", "primers")
+  : path.resolve(process.cwd(), "src", "lib", "capstone", "primers");
 
 function compareSemverAtLeast(observed: string, range: string): boolean {
   const m = /^>=\s*(\d+)\.(\d+)\.(\d+)/.exec(range.trim());

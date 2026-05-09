@@ -40,9 +40,13 @@ const QuerySchema = z.object({
   ),
 });
 
+// Either the literal "new" (first turn before the wizard hands off a
+// real id) or the canonical CAPSTONE_SESSION_ID format used everywhere
+// else. Keeping this consistent with phase-done/handoff prevents the
+// route from minting `data/capstone-sessions/<arbitrary>` directories.
 const SessionIdSchema = z
   .string()
-  .regex(/^(new|[a-zA-Z0-9_-]+)$/);
+  .regex(/^(new|\d{8}T\d{6}Z)$/);
 
 function jsonError(status: number, error: string, details?: unknown): Response {
   return Response.json({ ok: false, error, details }, { status });

@@ -199,6 +199,7 @@ async function* runStreamingImpl(opts: RunOptions): AsyncIterable<ProcEvent> {
   // yield the terminal `exit` event. Spec at AC line 99 / Dev Notes
   // "Why 'close' not 'exit'".
   child.on("close", (code, signal) => {
+    if (done) return;
     if (killTimer) {
       clearTimeout(killTimer);
       killTimer = null;
@@ -213,6 +214,7 @@ async function* runStreamingImpl(opts: RunOptions): AsyncIterable<ProcEvent> {
   });
 
   child.on("error", (err) => {
+    if (done) return;
     enqueue({ kind: "stderr-line", text: `spawn error: ${err.message}` });
     enqueue({ kind: "exit", code: null, signal: null });
     done = true;
@@ -273,20 +275,24 @@ function reapHandler() {
 }
 
 const PRIOR_KEY = "__bmad_runStreaming_signalHandlers__";
+type RegisteredHandler =
+  | { signal: NodeJS.Signals; handler: NodeJS.SignalsListener }
+  | { signal: "exit"; handler: NodeJS.ExitListener };
 type GlobalWithKey = typeof globalThis & {
-  [PRIOR_KEY]?: { signal: NodeJS.Signals; handler: NodeJS.SignalsListener }[];
+  [PRIOR_KEY]?: RegisteredHandler[];
 };
 
 const g = globalThis as GlobalWithKey;
 if (g[PRIOR_KEY]) {
-  for (const { signal, handler } of g[PRIOR_KEY]) {
-    process.removeListener(signal, handler);
+  for (const entry of g[PRIOR_KEY]) {
+    process.removeListener(entry.signal, entry.handler);
   }
 }
-const registered: { signal: NodeJS.Signals; handler: NodeJS.SignalsListener }[] = [];
+const registered: RegisteredHandler[] = [];
 for (const signal of SIGNALS) {
   process.on(signal, reapHandler);
   registered.push({ signal, handler: reapHandler });
 }
 process.on("exit", reapHandler);
+registered.push({ signal: "exit", handler: reapHandler });
 g[PRIOR_KEY] = registered;

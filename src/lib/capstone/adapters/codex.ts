@@ -12,7 +12,10 @@ import type {
 
 const VERSION_BANNER_RE = /codex(?:-cli)?\s+(\d+)\.(\d+)\.(\d+)/i;
 const AUTH_PROBE_TIMEOUT_MS = 15_000;
-const PRIMERS_DIR = path.resolve(import.meta.dirname, "..", "primers");
+// See claude-code.ts PRIMERS_DIR for the Turbopack fallback rationale.
+const PRIMERS_DIR = import.meta.dirname
+  ? path.resolve(import.meta.dirname, "..", "primers")
+  : path.resolve(process.cwd(), "src", "lib", "capstone", "primers");
 
 function compareSemverAtLeast(observed: string, range: string): boolean {
   const m = /^>=\s*(\d+)\.(\d+)\.(\d+)/.exec(range.trim());
