@@ -2,7 +2,7 @@
 
 **Epic:** 6 — Setup Wizard + Bootstrap
 **Story Key:** 6-6-post-bootstrap-explainer
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 
