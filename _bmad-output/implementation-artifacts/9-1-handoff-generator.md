@@ -2,7 +2,7 @@
 
 **Epic:** 9 — Handoff
 **Story Key:** 9-1-handoff-generator
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 
