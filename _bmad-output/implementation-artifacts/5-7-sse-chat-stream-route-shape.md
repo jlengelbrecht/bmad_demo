@@ -2,7 +2,7 @@
 
 **Epic:** 5 — Capstone Runtime Foundation
 **Story Key:** 5-7-sse-chat-stream-route-shape
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 

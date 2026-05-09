@@ -248,6 +248,36 @@ describe("runStreaming — invariants", () => {
   });
 });
 
+describe("runStreaming — onSpawn callback (Story 5.7 AC11)", () => {
+  it("invokes onSpawn exactly once with the child handle", async () => {
+    const cb = vi.fn();
+    await collect(
+      runStreaming({
+        cmd: process.execPath,
+        args: ["-e", "process.stdout.write('hi\\n')"],
+        cwd: CWD,
+        onSpawn: cb,
+      }),
+    );
+    expect(cb).toHaveBeenCalledTimes(1);
+    const child = cb.mock.calls[0][0] as { pid?: number };
+    expect(child).toBeDefined();
+    expect(typeof child.pid).toBe("number");
+  });
+
+  it("absence of onSpawn does not regress existing behavior", async () => {
+    const events = await collect(
+      runStreaming({
+        cmd: process.execPath,
+        args: ["-e", "process.stdout.write('a\\nb\\n')"],
+        cwd: CWD,
+      }),
+    );
+    expect(events).toHaveLength(3);
+    expect(events[2]).toMatchObject({ kind: "exit", code: 0 });
+  });
+});
+
 describe("runStreaming — module surface", () => {
   it("does not import next/react/react-dom or app-routing modules", async () => {
     const src = readFileSync(

@@ -35,6 +35,13 @@ export interface RunOptions {
    * `console.error` but do not throw — the log is a debug aid.
    */
   sessionLogPath?: string;
+  /**
+   * Optional callback invoked synchronously immediately after `spawn()`
+   * returns the child handle, before any data events are emitted. Lets
+   * spawn-per-message consumers (chat-stream Route Handler) capture
+   * the child for stdin writes. Per Story 5.7 AC11.
+   */
+  onSpawn?: (child: import("node:child_process").ChildProcess) => void;
 }
 
 /** Cooperative-shutdown grace before SIGKILL escalation (NFR-S4 invariant 3). */
@@ -71,6 +78,9 @@ async function* runStreamingImpl(opts: RunOptions): AsyncIterable<ProcEvent> {
     stdio: ["pipe", "pipe", "pipe"],
   });
   track(child);
+  // Story 5.7 AC11: invoke onSpawn synchronously so the consumer can
+  // capture the handle (e.g., for stdin writes) before any data events.
+  opts.onSpawn?.(child);
 
   // Invariant 7 — open subprocess.log if requested. Open failure logs
   // and proceeds; the log is a debug aid, not a blocker.
