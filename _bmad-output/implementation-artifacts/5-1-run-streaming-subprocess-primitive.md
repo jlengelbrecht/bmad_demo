@@ -2,7 +2,7 @@
 
 **Epic:** 5 — Capstone Runtime Foundation
 **Story Key:** 5-1-run-streaming-subprocess-primitive
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 
@@ -173,15 +173,22 @@ Node's `child_process` `exit` event fires when the child process terminates but 
 
 ### Implementation Plan
 
-_To be filled in by the dev agent at implementation time._
+1. Scaffold `src/lib/capstone/subprocess/`: `tracked-children.ts` first (depended-on by run-streaming), `run-streaming.ts`, READMEs, colocated `*.test.ts`.
+2. tracked-children: Set-backed registry with `track`/`untrack`/`getAll`/`__resetForTests` + module-surface assertion test.
+3. run-streaming core: spawn with argv-style + no-detached + explicit cwd; line-buffer stdout/stderr through `stripVTControlCharacters`; bridge events into a hand-rolled async-iterable queue + waiter pattern; close (not exit) yields the terminal exit event so stdio fully flushes first.
+4. AbortSignal handling: SIGTERM on abort, escalate to SIGKILL after `SIGKILL_GRACE_MS = 5000` if `child.exitCode === null`.
+5. subprocess.log: `createWriteStream(path, { flags: 'a' })`; spawn header + stderr-line entries; open failure logs via `console.error` and proceeds.
+6. Module-load global SIGINT/SIGTERM handlers that reap the registry; HMR-safe via a globalThis-stored prior-listener list.
+7. Vitest 13 cases (11 functional + 2 surface) using `node -e` inline scripts as fixtures.
 
 ### Debug Log
 
-_To be filled in by the dev agent during implementation._
+- First SIGKILL-escalation test attempt timed out: my `if (!child.killed && exitCode === null)` gate failed because `child.killed` flips true after the first `kill()` regardless of the child's actual state. Fix: drop the `child.killed` check, gate on `exitCode === null` alone (the manual repro confirmed `signalCode` stays null too while a SIGTERM-trapped child is still alive).
+- Lint warned on `// eslint-disable-next-line no-console` directives (the project's flat config doesn't enable `no-console`); removed them.
 
 ### Completion Notes
 
-_To be filled in by the dev agent after the quad gate is clean._
+Core primitive lands cleanly. 13 subprocess tests green; 185/185 unit total; lint clean. The module surface stays narrow: `runStreaming`, `SIGKILL_GRACE_MS`, and the test-only `__reapAllForTests` (the named-export contract the AC asserted on). Stories 5.2–5.7 + Epic 6's bootstrap consumer build on this without re-implementing pipe-draining or signal handling.
 
 ## File List
 
@@ -199,3 +206,4 @@ _To be filled in by the dev agent after the quad gate is clean._
 ## Change Log
 
 - 2026-05-08 — Story file authored from session-state-2026-05-08-rebuild-planning.md §"Epic structure to author" + architecture §"Capstone Runtime → Subprocess Discipline" + research Q-Tech-Plus-1.
+- 2026-05-08 — Story executed: 13 subprocess tests + module-surface smokes; quad gate clean (185/185 unit, lint clean).
