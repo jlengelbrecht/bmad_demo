@@ -2,7 +2,7 @@
 
 **Epic:** 8 — Phase 8 Dev Story 1.1 with Green-Tests Gate
 **Story Key:** 8-2-green-tests-gate
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 
