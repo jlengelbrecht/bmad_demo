@@ -2,7 +2,9 @@
 
 **Epic:** 5 — Capstone Runtime Foundation
 **Story Key:** 5-7-sse-chat-stream-route-shape
-**Status:** done
+**Status:** SUPERSEDED (2026-05-09)
+
+> **⚠ Superseded by the PTY pivot (commit `d677123`).** The SSE chat-stream Route Handler this story shipped (`/api/capstone/chat/[sessionId]/stream/`) and the chat-thread bubble UI it fed have been deleted. The chat phases now spawn the AI tool interactively in a server-side PTY (`node-pty`) rendered via xterm.js — the trainee drives the tool the same way they would at their own terminal. New shape: `/api/capstone/chat/[sessionId]/pty/spawn` POST registers a PTY under `<sessionId>.<phase>` in the shared registry and the generic `/api/capstone/pty/[ptyId]/{output,keystroke,resize}` routes serve it. Driven by trainee feedback that the chat-bubble UI was less educational than seeing the tool's native UX. See architecture.md editHistory `2026-05-09 — PTY pivot` for the full rationale.
 
 ## Story
 

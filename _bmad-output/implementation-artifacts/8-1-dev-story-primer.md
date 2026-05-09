@@ -2,7 +2,9 @@
 
 **Epic:** 8 — Phase 8 Dev Story 1.1 with Green-Tests Gate
 **Story Key:** 8-1-dev-story-primer
-**Status:** done
+**Status:** done — SUPERSEDED (2026-05-09)
+
+> **⚠ Superseded by the PTY pivot (commit `d677123`).** The chat surface this story produced primer content for has been replaced with an interactive PTY where the trainee invokes BMAD's own `/bmad-product-brief` / `/bmad-create-prd` / `/bmad-create-architecture` / etc. skills directly inside the launched AI tool. Phase-specific primer content lives in BMAD's skills now (`.claude/skills/bmad-*/` after install) — the portal no longer injects portal-side primers. See architecture.md editHistory `2026-05-09 — PTY pivot`.
 
 ## Story
 

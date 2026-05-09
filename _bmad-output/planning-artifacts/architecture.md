@@ -19,12 +19,14 @@ workflowType: 'architecture'
 project_name: 'bmad_demo'
 user_name: 'Devbox'
 date: '2026-05-07'
-lastEdited: '2026-05-08'
+lastEdited: '2026-05-09'
 editHistory:
   - date: '2026-05-08'
     changes: 'Story 10.1 — strike Epic 4 textarea references (routing topology, folder layout, route examples, request-body docs, architectural-boundaries endpoint list, FR-3 mapping, data-flow diagram); replace with rebuilt-flow language (CHOSEN_DIR + chat surface + phase-done verification).'
   - date: '2026-05-08'
     changes: 'Story 10.1b — bundled architecture-doc drift fixes flagged inline by Stories 5.1, 5.2, 5.7, 6.1, 6.5 during rebuild story authoring. RunOptions interface extended (sessionLogPath, metadata, onSpawn). ToolAdapter.buildSpawnArgs return shape corrected to {cmd, args, env?}. ChatStreamEvent + ChatSpawnOpts + CapstonePhase types pinned. progress.kind enum extended with capstone-tool-session, capstone-session-lock; aborted-<ISO> sentinel pattern documented for capstone-session.completed_at. CHECK constraint relax noted.'
+  - date: '2026-05-09'
+    changes: 'PTY pivot — driven by 2026-05-09 visual walkthrough findings. The capstone now spawns the AI tool interactively in a server-side PTY (node-pty) and renders it via xterm.js in the browser; the trainee drives the tool the same way they would on their own machine. Replaces (a) the Story 6.2 six-step setup wizard with a single CHOSEN_DIR field + interactive `npx bmad-method install`, and (b) the Story 5.7 SSE chat-stream Route Handler + chat-thread bubble UI with an interactive `claude --dangerously-skip-permissions "/bmad-product-brief"` (positional argv routes the BMAD slash command through the tool''s own slash-command parser at session start — autoRun behavior). Adapter contract slimmed: ToolAdapter is now just {manifest, detectInstalled, detectAuthenticated} — buildSpawnArgs / parseStreamChunk / formatUserMessage / buildPrimer all removed (the tool drives its own conversation now). progress.kind capstone-tool-session removed (no longer needed; chat surface is interactive). Codex / GitHub Copilot positional-argv passthrough is unverified at this writing — they launch bare with a "type this" hint to the trainee until validated. See drift-fix entries inline for affected sections.'
 ---
 
 # Architecture Decision Document
