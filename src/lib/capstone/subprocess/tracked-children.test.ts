@@ -56,10 +56,16 @@ describe("tracked-children registry", () => {
     expect(getAll().size).toBe(0);
   });
 
-  it("module surface is exactly { track, untrack, getAll, __resetForTests }", async () => {
+  it("module surface includes track, untrack, getAll, findChildren, __resetForTests", async () => {
     const mod = await import("./tracked-children");
     expect(Object.keys(mod).sort()).toEqual(
-      ["__resetForTests", "getAll", "track", "untrack"].sort(),
+      [
+        "__resetForTests",
+        "findChildren",
+        "getAll",
+        "track",
+        "untrack",
+      ].sort(),
     );
   });
 });

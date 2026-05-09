@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { createWriteStream, type WriteStream } from "node:fs";
 import { stripVTControlCharacters } from "node:util";
 
-import { getAll, track, untrack } from "./tracked-children";
+import { type ChildMetadata, getAll, track, untrack } from "./tracked-children";
 
 /**
  * Stream events yielded by `runStreaming`. Exactly one terminal `exit`
@@ -42,6 +42,12 @@ export interface RunOptions {
    * the child for stdin writes. Per Story 5.7 AC11.
    */
   onSpawn?: (child: import("node:child_process").ChildProcess) => void;
+  /**
+   * Optional metadata tag stored alongside the child in the
+   * tracked-children registry, so the abort Route Handler (Story 6.5)
+   * can find this child by `(kind, sessionId)`.
+   */
+  metadata?: ChildMetadata;
 }
 
 /** Cooperative-shutdown grace before SIGKILL escalation (NFR-S4 invariant 3). */
@@ -77,7 +83,7 @@ async function* runStreamingImpl(opts: RunOptions): AsyncIterable<ProcEvent> {
     env: opts.env,
     stdio: ["pipe", "pipe", "pipe"],
   });
-  track(child);
+  track(child, opts.metadata);
   // Story 5.7 AC11: invoke onSpawn synchronously so the consumer can
   // capture the handle (e.g., for stdin writes) before any data events.
   opts.onSpawn?.(child);

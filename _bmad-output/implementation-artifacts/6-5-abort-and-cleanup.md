@@ -2,7 +2,7 @@
 
 **Epic:** 6 — Setup Wizard + Bootstrap
 **Story Key:** 6-5-abort-and-cleanup
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 

@@ -3,18 +3,19 @@ import type { ChildProcess } from "node:child_process";
 /**
  * Registry of all live subprocesses spawned through `runStreaming`.
  *
- * The Set is module-level (singleton per process) so the global signal
- * handler in `run-streaming.ts` can SIGTERM every tracked child before
- * the parent exits — NFR-S4 invariant 4 ("global process.on(...) handler").
- *
- * Per session-state F-CRIT-5: subprocess lifecycle ownership is the
- * load-bearing v1 invariant; the registry is the cheapest way to
- * guarantee no abandoned children survive a parent exit.
+ * Per Story 6.5 AC3, each tracked child carries optional metadata so
+ * the abort Route Handler can find children by tag (kind + sessionId)
+ * rather than argv-grep.
  */
-const children = new Set<ChildProcess>();
+export interface ChildMetadata {
+  kind: "bootstrap" | "chat" | "preflight" | "tool-check";
+  sessionId?: string;
+}
 
-export function track(child: ChildProcess): void {
-  children.add(child);
+const children = new Map<ChildProcess, ChildMetadata | undefined>();
+
+export function track(child: ChildProcess, metadata?: ChildMetadata): void {
+  children.set(child, metadata);
 }
 
 export function untrack(child: ChildProcess): void {
@@ -22,10 +23,19 @@ export function untrack(child: ChildProcess): void {
 }
 
 export function getAll(): ReadonlySet<ChildProcess> {
-  return children;
+  return new Set(children.keys());
 }
 
-/** Test-only — clears the registry between cases so cross-test leaks don't shift state. */
+export function findChildren(
+  predicate: (meta: ChildMetadata | undefined) => boolean,
+): ChildProcess[] {
+  const out: ChildProcess[] = [];
+  for (const [child, meta] of children) {
+    if (predicate(meta)) out.push(child);
+  }
+  return out;
+}
+
 export function __resetForTests(): void {
   children.clear();
 }

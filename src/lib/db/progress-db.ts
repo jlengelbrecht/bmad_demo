@@ -259,6 +259,56 @@ export function markCapstoneSessionComplete(
   return { updated: result.changes === 1 };
 }
 
+export type CapstoneSessionStatus = "in-progress" | "completed" | "aborted";
+
+/**
+ * Read the lifecycle status of a capstone-session row by id. Maps the
+ * `completed_at` column overload (Story 6.5):
+ *  - NULL → in-progress
+ *  - 'aborted-<ISO>' sentinel → aborted
+ *  - clean ISO timestamp → completed
+ *  - missing row → null
+ */
+export function getCapstoneSessionStatus(
+  sessionId: string,
+  db: Database = getDb(),
+): CapstoneSessionStatus | null {
+  const row = statements(db).getCapstoneById.get(sessionId) as
+    | { id: string; completedAt: string | null }
+    | undefined;
+  if (!row) return null;
+  if (row.completedAt === null) return "in-progress";
+  if (row.completedAt.startsWith("aborted-")) return "aborted";
+  return "completed";
+}
+
+/**
+ * Mark a capstone-session row as aborted via the 'aborted-<ISO>' sentinel
+ * (Story 6.5). UPSERT semantics — if no row exists, one is inserted with
+ * the sentinel; if an in-progress row exists, it transitions to aborted;
+ * if already aborted, the sentinel timestamp updates to the latest abort.
+ */
+export function markCapstoneSessionAborted(
+  sessionId: string,
+  db: Database = getDb(),
+): { updated: boolean } {
+  const sentinel = `aborted-${new Date().toISOString()}`;
+  const existing = statements(db).getCapstoneById.get(sessionId) as
+    | { id: string; completedAt: string | null }
+    | undefined;
+  // Don't transition already-completed sessions to aborted — abort is a
+  // mid-flight recovery, not a post-hoc relabel.
+  if (
+    existing &&
+    existing.completedAt !== null &&
+    !existing.completedAt.startsWith("aborted-")
+  ) {
+    return { updated: false };
+  }
+  statements(db).upsert.run("capstone-session", sessionId, sentinel);
+  return { updated: true };
+}
+
 /**
  * Persist the tool-native session id captured from the first SSE
  * `system/init` event (Story 5.7 AC10). Row key is
@@ -293,5 +343,52 @@ export function getCapstoneToolSessionId(
     "capstone-tool-session",
     `${capstoneSessionId}/${phase}`,
   ) as ProgressRecord | undefined;
+  return row?.completedAt ?? null;
+}
+
+/**
+ * Persist the trainee's chosen target dir (CHOSEN_DIR) for a capstone
+ * session. Uses the kind=`capstone-target` column-overload pattern per
+ * architecture line 210.
+ */
+export function recordCapstoneTargetDir(
+  sessionId: string,
+  chosenDir: string,
+  db: Database = getDb(),
+): void {
+  statements(db).upsert.run("capstone-target", sessionId, chosenDir);
+}
+
+/**
+ * Read the persisted CHOSEN_DIR for a session, or `null` if missing.
+ */
+export function getCapstoneTargetDir(
+  sessionId: string,
+  db: Database = getDb(),
+): string | null {
+  const row = statements(db).get.get("capstone-target", sessionId) as
+    | ProgressRecord
+    | undefined;
+  return row?.completedAt ?? null;
+}
+
+/**
+ * Persist the trainee's chosen tool id for a capstone session.
+ */
+export function recordCapstoneTool(
+  sessionId: string,
+  toolId: string,
+  db: Database = getDb(),
+): void {
+  statements(db).upsert.run("capstone-tool", sessionId, toolId);
+}
+
+export function getCapstoneTool(
+  sessionId: string,
+  db: Database = getDb(),
+): string | null {
+  const row = statements(db).get.get("capstone-tool", sessionId) as
+    | ProgressRecord
+    | undefined;
   return row?.completedAt ?? null;
 }
