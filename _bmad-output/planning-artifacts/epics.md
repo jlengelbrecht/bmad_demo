@@ -1636,3 +1636,42 @@ So that voice + framing stay coherent across the curriculum and no broken links 
 **Given** all changes
 **When** the quad gate is run
 **Then** `npm run test:unit`, `npm run test:e2e`, `npm run lint`, `npm run lint:links` are all green
+
+### Story 12.11: Decision-authority extension to Lesson 5 + team-rituals-checklist
+
+As a trainee finishing the lesson sequence,
+I want Lesson 5 to address the upstream question of *who has authority to make a given change* — not just *what to do when something breaks* — and I want the team-rituals-checklist artifact to carry the corresponding gradient as a one-page reference,
+So that my team has explicit guidance on which BMAD changes (PRD, architecture, story, code, AGENTS.md, CODEOWNERS, etc.) require team consensus vs. lead-approval vs. individual authoring, before encountering recovery situations that assume the answer.
+
+**Background:** Stories 12.1–12.10 left the decision-authority question implicit. Trainees feedback (2026-05-09): "we did not cover what parts of bmad should be gated. We need to think about what things require the team to meet and discuss vs. what things a single engineer on the team can decide." The recovery loops are concrete procedures, but they assume the team has resolved who-decides-what — and that's a load-bearing assumption the curriculum should make explicit.
+
+**Acceptance Criteria:**
+
+**Given** `training/lessons/5-working-as-a-team.md`
+**When** I read it
+**Then** the lesson now opens (after "What you'll learn") with a major section titled **"Decision authority — who decides what"** that lands *before* the recovery loops
+**And** the section contains a prescriptive table mapping each artifact-level decision (picking AI tool / implementing a story / Dev Agent Record updates / drive-by typo fix / story split / AC clarification / adding a story to an epic / PR merge / architecture change / PRD change / new epic / brief change / `AGENTS.md`-`copilot-instructions.md` change / CODEOWNERS+branch-protection change) to a level of authority (Individual / Lead-approval / Multi-owner / Team consensus / Leads-only-plus-leadership)
+**And** the section names the underlying principle — **"blast radius and reversibility"** — so teams can extend the gradient to artifacts the table doesn't anticipate
+**And** the section explains that "team consensus" has three mechanisms scaling to the change cost: async PR with multi-CODEOWNERS sign-off, RFC/proposal doc with comment-based discussion, synchronous meeting — pick the lightest viable mechanism
+**And** the section names team-size effects — small teams compress the formality, large teams expand it; the gradient itself doesn't shift
+**And** the section explicitly disclaims that role-to-artifact mapping (PM owns PRD, architect owns architecture, etc.) lives in CODEOWNERS, not in the gradient
+**And** the section connects to the existing recovery loops by naming the authority level for each one — *"Recover at the level of the artifact that's moving"* — Loop #3 is called out as the only loop whose recovery routinely escalates to team-level authority
+
+**Given** `training/team-rituals-checklist.md`
+**When** I read it
+**Then** the artifact has a new "Decision authority — who decides what" section between the recovery loops and the per-repo context discipline section
+**And** the section carries a condensed version of the Lesson 5 gradient table (same artifact-decision rows, same authority levels)
+**And** the section names the three team-consensus mechanisms (async PR / RFC / sync meeting)
+**And** the section restates the principle "Recover at the level of the artifact that's moving" plus the per-loop authority-level mapping
+
+**Given** `training/lessons/4-codeowners-and-the-gate.md`
+**When** I read the closing six-item checklist
+**Then** items #5 (CODEOWNERS routing sanity) and #6 (Day-2 governance) carry forward-references to Lesson 5's decision-authority section so the lead at the gate can resolve "what authority level is needed to approve this?" by jumping to Lesson 5
+
+**Given** all changes
+**When** I run `npm run lint:links`
+**Then** every relative link resolves (CI gate)
+
+**Given** all changes
+**When** the quad gate is run
+**Then** `npm run test:unit`, `npm run test:e2e`, `npm run lint`, `npm run lint:links` are all green

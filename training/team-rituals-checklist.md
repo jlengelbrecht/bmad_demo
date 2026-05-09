@@ -100,6 +100,43 @@ When you can't tell which loop you're in, ask:
 
 ---
 
+## Decision authority — who decides what
+
+Before invoking a loop, name the level of authority required for the change. The principle is **blast radius and reversibility** — the further upstream in the artifact chain, the more the team must be aligned. See [Lesson 5's full decision-authority section](lessons/5-working-as-a-team.md) for the rationale.
+
+| Decision | Authority |
+|---|---|
+| Picking your AI tool / implementing a story / Dev Agent Record updates | **Individual** |
+| Drive-by typo fix | **Individual** + lead at PR |
+| Splitting a story (Loop #4) | **Lead-approval** |
+| Clarifying an AC (Loop #2) | **Lead-approval** |
+| Adding a story to an existing epic | **Lead-approval** |
+| PR merge | **Lead-approval (CODEOWNERS-routed)** |
+| Architecture change (component, route, data shape) | **Multi-owner / team consensus** |
+| PRD change (FR/NFR add, modify, remove) | **Team consensus** + PM |
+| New epic creation | **Team consensus** + PM |
+| Brief change | **Team consensus** + leadership |
+| `AGENTS.md` / `.github/copilot-instructions.md` change | **Team consensus** |
+| `CODEOWNERS` / branch protection change | **Leads-only** |
+
+**Mechanisms scale to the change:**
+
+- **Individual / Lead-approval:** normal PR flow, CODEOWNERS auto-routes.
+- **Multi-owner:** the affected `CODEOWNERS` line lists multiple groups; PR needs all of them.
+- **Team consensus:** async PR with multi-CODEOWNERS sign-off (cheapest), RFC doc with comment-discussion (24–72 hour window), or sync meeting (reserve for highest-stakes changes).
+
+**Recover at the level of the artifact that's moving.** Not above (over-formalizing minor changes); not below (under-authorizing major changes). Loop #5 above re-applies this rule to each recovery: *the artifact that was wrong is the level of authority to fix it.*
+
+For each recovery loop above, the authority level is:
+
+- **Loop #1 (drift):** lead-approval if the spec is a story; team consensus if the spec is the architecture or PRD.
+- **Loop #2 (unclear stories):** lead-approval. Almost always.
+- **Loop #3 (mixed-tooling conflicts):** **team consensus** — the convention update lives in `AGENTS.md` / `.github/copilot-instructions.md`, which affects everyone.
+- **Loop #4 (story too big):** lead-approval.
+- **Loop #5 (spec wrong):** match the level of the artifact that's wrong (story → lead; architecture → team; PRD → team + PM).
+
+---
+
 ## Per-repo context discipline (Loop #3 prerequisite)
 
 `AGENTS.md` and `.github/copilot-instructions.md` carry repo-wide conventions. Loop #3's recovery procedure depends on these files being maintained:

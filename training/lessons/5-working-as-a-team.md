@@ -8,8 +8,9 @@ title: Working as a team
 
 ## What you'll learn
 
-- Why a mixed-tool team needs **named recovery loops** to handle the moments when the contract bites — and how this turns AI-assisted development from "vibe coding" into a repeatable practice.
-- The **five recovery loops** every team running BMAD will hit. Each one has a name, a failure signal, a recovery procedure, and a clear boundary with its neighbors.
+- **Decision authority** — for each artifact in the BMAD chain, who has the right to make the change: an individual, a lead, the whole team, or leadership? This is the upstream question Lessons 1–4 left silent.
+- The **principle** behind the gradient — *blast radius and reversibility* — so your team can extend it to artifacts and decisions this curriculum doesn't anticipate.
+- The **five recovery loops** every team running BMAD will hit when the contract bites. Each one has a name, a failure signal, a recovery procedure, a clear boundary with its neighbors, and a decision-authority dimension.
 - The single hardest distinction in this lesson: **Loop #1 vs Loop #5** — and why conflating them is the most common gate-time failure.
 - The **dual-role `AGENTS.md` + `.github/copilot-instructions.md`** pattern that makes per-repo conventions hold across multiple AI tools.
 
@@ -17,9 +18,84 @@ This lesson produces the curriculum's second pinnable artifact: [`training/team-
 
 ---
 
+## Decision authority — who decides what
+
+Lessons 2 and 3 walked the artifact chain. Lesson 4 made the gate enforceable. But neither lesson answered a question that comes up the moment a team starts running BMAD for real:
+
+> *Can I change the PRD myself, or do we need to discuss it as a team?*
+>
+> *Who's allowed to add a story to an existing epic — me, or my lead?*
+>
+> *If I notice the architecture is wrong, do I just fix it, or does that need a meeting?*
+
+These are governance questions. The recovery loops below are useless without an answer to them — *who* recovers and *with what authority* depends entirely on what level of artifact is moving.
+
+### The gradient
+
+The further upstream in the artifact chain a change lives, the more the team must be aligned on it. The further downstream, the more an individual can act alone. The principle is **blast radius + reversibility**: how much downstream work must move if this change is wrong, and how easy is it to undo?
+
+| Decision | Authority | Why |
+|---|---|---|
+| Picking your AI tool for a session | **Individual** | Your tool, your terminal. The story-as-contract pattern (Lesson 3) holds across tools; the team doesn't need to know which one you used. |
+| Implementing a story (the code itself) | **Individual + AI tool** | The story file already specifies the contract. The implementer's job is to satisfy it. |
+| Filling in the Dev Agent Record / ticking tasks | **Individual** | The agent's own audit trail. The dev-story skill is explicitly allowed to update these (Lesson 3). |
+| Drive-by typo fix in adjacent code | **Individual** + lead at PR | Below the noise floor; absorbed in the normal review. |
+| **Splitting a story into smaller stories (Loop #4)** | **Lead-approval (one human)** | An organizational change, but contained — no upstream artifacts move. The lead reviews the split for AC coverage and merges the new story files. |
+| **Clarifying an AC before implementation (Loop #2)** | **Lead-approval** | The story changes, but bounded. Lead reads the amended AC, signs off async, work proceeds. |
+| **Adding a story to an existing epic** | **Lead-approval** | Stays within previously-agreed scope. PM may want a heads-up; lead is the decision-maker. |
+| **PR merge** | **Lead-approval (CODEOWNERS-routed)** | The gate Lesson 4 teaches. CODEOWNERS picked the right human; their approval is the decision. |
+| **Architecture change (component, route, data shape)** | **Multi-owner / team consensus** | Other artifacts depend on architecture. One engineer cannot quietly redirect the whole team's downstream work. Architecture changes route to multiple CODEOWNERS or surface as an RFC. |
+| **PRD change (FR/NFR addition, modification, removal)** | **Team consensus** + PM | The PRD is the contract for *every* downstream artifact. A new FR creates work; a removed FR strands work. The team needs to absorb the cost together. |
+| **New epic creation** | **Team consensus** + PM | Defines a body of work the team will pick up from. Stories within an existing epic are lead-approved; *creating* the epic itself is upstream of that. |
+| **Brief change** | **Team consensus** + leadership | The whole chain rebases on the brief. Brief changes are rare in a healthy team; when they happen, they're a rebase event, not a quiet edit. |
+| **`AGENTS.md` / `.github/copilot-instructions.md`** | **Team consensus** | Affects every teammate's AI tool behavior. Drift between the two files is itself a defect (see end of this lesson). One engineer's "convention update" can break another engineer's tool subtly. |
+| **CODEOWNERS / branch protection** | **Leads-only** + audit trail | Changes the *rules of the game.* Lesson 4 names this as a Day-2 governance change; PRs touching these paths route to leads + security. |
+
+### What "team consensus" actually means
+
+Consensus is not always a meeting. The team has three mechanisms, scaled to the cost of the change:
+
+- **Async PR with multi-CODEOWNERS sign-off.** Two or more named owners must approve before merge. Works for architecture changes that affect a known set of teammates. Cheapest mechanism that's still load-bearing.
+- **RFC / proposal doc with comment-based discussion.** A short markdown doc proposing the change, opened as a PR, comments allowed for some bounded period (24–72 hours typical). Good for PRD changes where the right reviewers aren't all on CODEOWNERS for the affected paths.
+- **Synchronous meeting.** A 30-minute call with the right humans in the room. Reserve for changes where async would lose context faster than the change is worth — usually brief changes or epic restructuring.
+
+Pick the lightest mechanism the change can survive. A PRD typo fix doesn't need an RFC; a major NFR change doesn't survive a single async PR.
+
+### Team size scales the formality
+
+The gradient above is for a small-to-medium team (5–15 people). Two adjustments:
+
+- **Smaller teams (≤4)** can compress: a "team consensus" for a small-PRD change might be a 5-minute Slack thread with the lead and PM. The principle holds; the formality drops.
+- **Larger teams or multiple teams** need to expand: a "team consensus" for an architecture change might be a written RFC routed to multiple CODEOWNERS groups. The principle holds; the formality increases.
+
+The wrong move is to reverse the gradient — letting individuals change PRDs because the team is small, or requiring sync meetings for code-level decisions because the team is large. **The gradient is about blast radius, not about team size.** Team size shifts the *mechanism*, not the level of authority.
+
+### Role differentiation lives in CODEOWNERS, not in this gradient
+
+This lesson's table doesn't say "the PM owns the PRD" or "the architect owns the architecture." Those role-to-artifact mappings live in your `CODEOWNERS` file — that's the whole point of CODEOWNERS as the enforcement layer (Lesson 4). The gradient names *level of authority required*; CODEOWNERS names *which humans hold that authority*.
+
+Two consequences worth naming:
+
+- **A PRD change requires team consensus** — but if your team's PM is the only CODEOWNERS reviewer for `_bmad-output/planning-artifacts/prd.md`, then "team consensus" in practice means "the PM signs off." The gradient still holds; CODEOWNERS resolves to the smallest viable group.
+- **Multi-owner CODEOWNERS rules are how you scale up authority.** When an architecture decision needs more than one perspective, the corresponding `CODEOWNERS` line lists more than one team. Lesson 4's worked example shows this for `/web/app/api/` (frontend + backend co-owned).
+
+### The decision-authority dimension of each recovery loop
+
+Each recovery loop below has a decision-authority answer baked in. As you read the loops, notice:
+
+- **Loop #1 (drift)** — the *direction* of correction (revise code or revise spec) is a lead-approval call when the spec is a story; a team-consensus call when the spec is the architecture or PRD. The rule of thumb is: *"recover at the level of the artifact that's moving."*
+- **Loop #2 (unclear stories)** — story clarification is lead-approval. Almost always.
+- **Loop #3 (mixed-tooling conflicts)** — the convention update lives in `AGENTS.md` / `.github/copilot-instructions.md`, which is **team consensus.** Loop #3 is the only loop whose recovery routinely escalates to team-level authority.
+- **Loop #4 (story too big)** — splitting is lead-approval; the new story files just need their normal AC review.
+- **Loop #5 (spec wrong)** — *exactly* the level of artifact that was wrong is the level of authority to fix it. If the story was wrong, lead-approval. If the architecture was wrong, team consensus. If the PRD was wrong, team-consensus + PM.
+
+The principle: **recover at the level of the artifact that's moving.** Not above (over-formalizing minor changes); not below (under-authorizing major changes).
+
+---
+
 ## Why "named loops"
 
-A team running BMAD will hit a small number of recurring failure modes. The point of giving them names is **so the team can talk about them in real time without re-deriving what to do**. "We're in Loop #1" is a complete recovery instruction; "I think we have a kind of issue where the code doesn't match the spec, but maybe the spec was the wrong one, or maybe..." is the absence of one.
+With the decision-authority gradient set, the loops below become concrete procedures for *each level of authority.* A team running BMAD will hit a small number of recurring failure modes. The point of giving them names is **so the team can talk about them in real time without re-deriving what to do**. "We're in Loop #1, story-level" is a complete recovery instruction; "I think we have a kind of issue where the code doesn't match the spec, but maybe the spec was the wrong one, or maybe..." is the absence of one.
 
 The five loops below are opinionated. They don't cover every possible failure (a CI outage, a tool's auth breaking, a teammate on PTO). They cover the failure modes that come from running the artifact chain itself — and they cover them rigorously enough that a team can recognize each loop in the moment and act on it.
 
