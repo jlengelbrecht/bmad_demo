@@ -28,6 +28,7 @@ export const CAPSTONE_STEP_NAMES = [
   "story-1",
   "story-2",
   "adr",
+  "dev-story-1.1",
 ] as const;
 
 export type CapstoneStepName = (typeof CAPSTONE_STEP_NAMES)[number];
@@ -35,10 +36,14 @@ export type CapstoneStepName = (typeof CAPSTONE_STEP_NAMES)[number];
 /**
  * Capstone-step id format (Story 4.1): `<session-timestamp>/<step-name>`.
  * Built from `CAPSTONE_STEP_NAMES` so the regex stays in sync with the
- * canonical list.
+ * canonical list. Step names are regex-escaped to keep dotted names
+ * (`dev-story-1.1`) literal rather than wildcard.
  */
+const STEP_NAMES_RE = CAPSTONE_STEP_NAMES.map((n) =>
+  n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+).join("|");
 export const CAPSTONE_STEP_ID = new RegExp(
-  `^\\d{8}T\\d{6}Z\\/(${CAPSTONE_STEP_NAMES.join("|")})$`,
+  `^\\d{8}T\\d{6}Z\\/(${STEP_NAMES_RE})$`,
 );
 
 /**

@@ -58,7 +58,17 @@ async function runTestGate(chosenDir: string): Promise<TestGateResult> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TEST_GATE_TIMEOUT_MS);
   const start = Date.now();
+  // Bounded sliding window — verbose suites can emit megabytes; we only
+  // ever return TEST_OUTPUT_TAIL_BYTES, so trim during collection rather
+  // than letting the buffer grow unbounded.
+  const BUFFER_CAP = TEST_OUTPUT_TAIL_BYTES * 2;
   let collected = "";
+  const append = (line: string) => {
+    collected += line + "\n";
+    if (collected.length > BUFFER_CAP) {
+      collected = collected.slice(-TEST_OUTPUT_TAIL_BYTES);
+    }
+  };
   let exitCode: number | null = null;
   let timedOut = false;
   try {
@@ -69,8 +79,8 @@ async function runTestGate(chosenDir: string): Promise<TestGateResult> {
       signal: ctrl.signal,
       metadata: { kind: "tool-check" },
     })) {
-      if (ev.kind === "stdout-line") collected += ev.text + "\n";
-      else if (ev.kind === "stderr-line") collected += ev.text + "\n";
+      if (ev.kind === "stdout-line") append(ev.text);
+      else if (ev.kind === "stderr-line") append(ev.text);
       else if (ev.kind === "exit") {
         exitCode = ev.code;
         if (ev.signal === "SIGTERM" || ev.signal === "SIGKILL") timedOut = true;
@@ -139,13 +149,24 @@ export async function POST(req: Request): Promise<Response> {
       { status: 404 },
     );
   }
-  const validation = validatePhaseShape(phase, chosenDir, outputFolder, {
-    existsSync,
-    readFileSync,
-    statSync,
-  });
+  // dev-story-1.1's gate is the test suite, not a shape check — there's
+  // no planning artifact for "tests pass." Synthesize a passthrough
+  // validation so the response shape stays consistent for all phases.
+  const validation =
+    phase === "dev-story-1.1"
+      ? {
+          artifactExists: true,
+          artifactPath: "(test-gate phase — no artifact)",
+          shapeValid: true,
+          missingSections: [],
+        }
+      : validatePhaseShape(phase, chosenDir, outputFolder, {
+          existsSync,
+          readFileSync,
+          statSync,
+        });
   let testGate: TestGateResult | undefined;
-  if (phase === "dev-story-1.1" && validation.shapeValid) {
+  if (phase === "dev-story-1.1") {
     testGate = await runTestGate(chosenDir);
   }
   const valid =
@@ -172,20 +193,20 @@ export async function POST(req: Request): Promise<Response> {
 }
 
 /**
- * The capstone-step row's legacy id format uses the Story-4.1 step
- * names (brief, epic, story-1, story-2, adr). For Story 7a.3 we map
- * the rebuilt CapstonePhase enum onto a flattened slug that fits the
- * existing CAPSTONE_STEP_ID regex; if/when CAPSTONE_STEP_ID is widened
- * to include the new phase names, this mapping collapses.
+ * The capstone-step row's id format uses the Story-4.1 step names. The
+ * rebuild's `CapstonePhase` enum is wider; we map onto unique step slots
+ * so completion of each phase writes a distinct row. `dev-story-1.1` was
+ * added to `CAPSTONE_STEP_NAMES` (Story 7a.3 fix) so it no longer
+ * collides with `adr`.
  */
 function legacyStepName(phase: CapstonePhase): string {
   const map: Record<CapstonePhase, string> = {
     brief: "brief",
-    prd: "epic", // closest legacy slot
+    prd: "epic",
     architecture: "story-1",
     "epics-and-stories": "story-2",
     adr: "adr",
-    "dev-story-1.1": "adr", // legacy set has no slot — collapse onto adr
+    "dev-story-1.1": "dev-story-1.1",
   };
   return map[phase];
 }

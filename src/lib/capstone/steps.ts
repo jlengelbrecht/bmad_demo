@@ -1,15 +1,27 @@
-import { CAPSTONE_STEP_NAMES, type CapstoneStepName } from "@/lib/db/schemas";
+import type { CapstoneStepName } from "@/lib/db/schemas";
 
 /**
- * Canonical capstone step order (Story 4.3).
- *
- * Architecture line 234: the resume mechanism walks this sequence to
- * pick "next incomplete step." Same array as `CAPSTONE_STEP_NAMES`
- * (from `schemas.ts`); re-exported here under the order-specific name
- * so consumers can self-document intent: regex consumers reach for
- * `CAPSTONE_STEP_NAMES`; sequence consumers reach for `CAPSTONE_STEP_ORDER`.
+ * Step ids used by the retired Epic-4 textarea capstone surface (Story
+ * 4.3). Distinct from the wider `CAPSTONE_STEP_NAMES` schema list,
+ * which also accepts the rebuild's `dev-story-1.1` row id (Story 7a.3
+ * fix). Sequence consumers — the legacy resume walk and the per-step
+ * wizard pages — reach for `CAPSTONE_STEP_ORDER`; regex consumers reach
+ * for `CAPSTONE_STEP_NAMES`.
  */
-export const CAPSTONE_STEP_ORDER = CAPSTONE_STEP_NAMES;
+export type LegacyCapstoneStepName =
+  | "brief"
+  | "epic"
+  | "story-1"
+  | "story-2"
+  | "adr";
+
+export const CAPSTONE_STEP_ORDER: readonly LegacyCapstoneStepName[] = [
+  "brief",
+  "epic",
+  "story-1",
+  "story-2",
+  "adr",
+] as const;
 
 export type { CapstoneStepName };
 
@@ -24,7 +36,7 @@ export type StepMetadata = {
   promptOutline: string;
 };
 
-export const CAPSTONE_STEPS: Record<CapstoneStepName, StepMetadata> = {
+export const CAPSTONE_STEPS: Record<LegacyCapstoneStepName, StepMetadata> = {
   brief: {
     title: "Product Brief",
     promptOutline:
@@ -59,8 +71,8 @@ export const CAPSTONE_STEPS: Record<CapstoneStepName, StepMetadata> = {
  * but `brief` incomplete still routes to `brief` first.
  */
 export function nextIncompleteStep(
-  completedSteps: ReadonlySet<CapstoneStepName>,
-): CapstoneStepName | null {
+  completedSteps: ReadonlySet<LegacyCapstoneStepName>,
+): LegacyCapstoneStepName | null {
   for (const step of CAPSTONE_STEP_ORDER) {
     if (!completedSteps.has(step)) return step;
   }
@@ -72,7 +84,9 @@ export function nextIncompleteStep(
  * `null` if `step` is the final step. Used by Story 4.4's per-step page
  * to compute `nextStepHref`.
  */
-export function nextStepAfter(step: CapstoneStepName): CapstoneStepName | null {
+export function nextStepAfter(
+  step: LegacyCapstoneStepName,
+): LegacyCapstoneStepName | null {
   const index = CAPSTONE_STEP_ORDER.indexOf(step);
   if (index === -1 || index === CAPSTONE_STEP_ORDER.length - 1) return null;
   return CAPSTONE_STEP_ORDER[index + 1];

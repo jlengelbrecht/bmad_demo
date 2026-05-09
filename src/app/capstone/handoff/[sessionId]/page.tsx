@@ -8,6 +8,8 @@ import { notFound } from "next/navigation";
 import { getCapstoneTargetDir } from "@/lib/db/progress-db";
 import { CAPSTONE_SESSION_ID } from "@/lib/db/schemas";
 
+import { GenerateHandoffButton } from "./generate-handoff-button";
+
 export const metadata: Metadata = {
   title: "Capstone handoff · BMAD Demo",
 };
@@ -89,26 +91,3 @@ export default async function HandoffPage({ params }: { params: Params }) {
   );
 }
 
-function GenerateHandoffButton({
-  sessionId,
-  regenerate = false,
-}: {
-  sessionId: string;
-  regenerate?: boolean;
-}) {
-  return (
-    <form
-      action={`/api/capstone/handoff/generate`}
-      method="post"
-      encType="application/json"
-    >
-      <input type="hidden" name="sessionId" value={sessionId} />
-      <button
-        type="submit"
-        className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
-      >
-        {regenerate ? "Regenerate HANDOFF.md" : "Generate HANDOFF.md"}
-      </button>
-    </form>
-  );
-}

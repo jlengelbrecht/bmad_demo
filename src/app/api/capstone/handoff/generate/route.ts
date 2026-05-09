@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, renameSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { z } from "zod";
@@ -151,5 +151,3 @@ export async function POST(req: Request): Promise<Response> {
 
   return Response.json({ ok: true, path: targetPath, sizeBytes });
 }
-
-void readFileSync; // re-exported just to satisfy a future tree-shaker import audit (not used here)

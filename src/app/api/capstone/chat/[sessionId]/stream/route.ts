@@ -1,5 +1,6 @@
 import type { ChildProcess } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
 import path from "node:path";
 
 import { z } from "zod";
@@ -12,6 +13,7 @@ import type {
   ToolAdapter,
   ToolId,
 } from "@/lib/capstone/adapters/types";
+import { isPathAllowed } from "@/lib/capstone/bootstrap/path-allowlist";
 import { runStreaming } from "@/lib/capstone/subprocess/run-streaming";
 import { recordCapstoneToolSessionId } from "@/lib/db/progress-db";
 
@@ -92,6 +94,14 @@ export async function GET(
   const { phase, message, tool, chosenDir } = queryParsed.data;
   const sessionId = sidResult.data;
   const isFirstTurn = sessionId === "new";
+
+  // Re-check the path allowlist on every request — the wizard validates
+  // this upstream, but Route Handlers are reachable directly and the
+  // Copilot first-turn writes a file under chosenDir.
+  const allow = isPathAllowed(chosenDir, homedir(), process.cwd());
+  if (!allow.allowed) {
+    return jsonError(403, "chosenDir is not allowed", { reason: allow.reason });
+  }
 
   let adapter: ToolAdapter;
   try {
