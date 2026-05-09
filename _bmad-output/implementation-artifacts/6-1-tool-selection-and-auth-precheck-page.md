@@ -2,7 +2,7 @@
 
 **Epic:** 6 — Setup Wizard + Bootstrap
 **Story Key:** 6-1-tool-selection-and-auth-precheck-page
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 
