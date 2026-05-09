@@ -27,18 +27,6 @@ function buildAdapter(installed: boolean, authed: boolean): ToolAdapter {
     async detectAuthenticated() {
       return authed;
     },
-    buildSpawnArgs() {
-      return { cmd: "test", args: [] };
-    },
-    parseStreamChunk() {
-      return [];
-    },
-    formatUserMessage() {
-      return "";
-    },
-    buildPrimer() {
-      return "";
-    },
   };
 }
 

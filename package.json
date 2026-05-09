@@ -13,10 +13,12 @@
     "test:e2e": "playwright test",
     "test:unit": "vitest run",
     "lint:links": "tsx scripts/check-links.ts",
-    "reset-progress": "tsx scripts/reset-progress.ts"
+    "reset-progress": "tsx scripts/reset-progress.ts",
+    "seed-chat-test-session": "tsx scripts/seed-chat-test-session.ts"
   },
   "dependencies": {
     "@xterm/addon-fit": "^0.11.0",
+    "@xterm/addon-unicode11": "^0.9.0",
     "better-sqlite3": "^12.9.0",
     "gray-matter": "^4.0.3",
     "next": "16.2.6",

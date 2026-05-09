@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { TerminalPane } from "./terminal-pane";
+import { TerminalPane } from "@/components/terminal-pane";
 
 const TOOL_VALUES = ["claude-code", "codex", "github-copilot"] as const;
 type Tool = (typeof TOOL_VALUES)[number];
@@ -115,8 +115,13 @@ export default function BootstrapPage() {
     );
   };
 
+  // Once the terminal is open, widen the page so BMAD's TUI has
+  // enough horizontal real estate. The pre-open form stays narrow
+  // (text-input UX feels heavy at full-width).
+  const mainMaxWidth = opened ? "max-w-5xl" : "max-w-3xl";
+
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-12">
+    <main className={`mx-auto flex w-full ${mainMaxWidth} flex-1 flex-col gap-6 px-6 py-12`}>
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
           Phase 2 — bootstrap
@@ -200,9 +205,13 @@ export default function BootstrapPage() {
             </p>
           </div>
           <TerminalPane
-            sessionId={sessionId}
-            tool={tool}
-            chosenDir={allow.kind === "ok" ? allow.resolved : chosenDir}
+            ptyId={sessionId}
+            spawnUrl="/api/capstone/setup/bootstrap/pty"
+            spawnBody={{
+              sessionId,
+              tool,
+              chosenDir: allow.kind === "ok" ? allow.resolved : chosenDir,
+            }}
             onComplete={handleComplete}
           />
         </section>

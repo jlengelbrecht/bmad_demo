@@ -1,24 +1,13 @@
-import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import path from "node:path";
 
 import { runStreaming } from "../subprocess/run-streaming";
-import type {
-  CapstonePhase,
-  ChatSpawnOpts,
-  ChatStreamEvent,
-  ToolAdapter,
-} from "./types";
+import type { ToolAdapter } from "./types";
 
 // See claude-code.ts VERSION_BANNER_RE for the rationale on matching
 // any semver in the first stdout line rather than a binary-name-prefixed
 // shape. Real `codex --version` output format varies by CLI version.
 const VERSION_BANNER_RE = /(\d+)\.(\d+)\.(\d+)/;
 const AUTH_PROBE_TIMEOUT_MS = 15_000;
-// See claude-code.ts PRIMERS_DIR for the Turbopack fallback rationale.
-const PRIMERS_DIR = import.meta.dirname
-  ? path.resolve(import.meta.dirname, "..", "primers")
-  : path.resolve(process.cwd(), "src", "lib", "capstone", "primers");
 
 function compareSemverAtLeast(observed: string, range: string): boolean {
   const m = /^>=\s*(\d+)\.(\d+)\.(\d+)/.exec(range.trim());
@@ -121,93 +110,6 @@ const codexAdapter: ToolAdapter = {
     }
     if (sawAgentMessage) return true;
     return exitCode === 0 && sawAgentMessage;
-  },
-
-  buildSpawnArgs(opts: ChatSpawnOpts): {
-    cmd: string;
-    args: string[];
-    env?: NodeJS.ProcessEnv;
-  } {
-    return {
-      cmd: this.manifest.cliBinary,
-      args: [
-        "exec",
-        "--json",
-        "-C",
-        opts.chosenDir,
-        "--add-dir",
-        opts.chosenDir,
-        "--sandbox",
-        "workspace-write",
-        ...(opts.sessionId ? ["resume", opts.sessionId] : []),
-      ],
-      env: { ...process.env },
-    };
-  },
-
-  parseStreamChunk(raw: string): ChatStreamEvent[] {
-    let parsed: {
-      type?: string;
-      session_id?: string;
-      id?: string;
-      delta?: string;
-      tool_name?: string;
-      input?: unknown;
-    };
-    try {
-      parsed = JSON.parse(raw) as typeof parsed;
-    } catch {
-      return [
-        {
-          kind: "error",
-          message: `malformed JSONL line: ${raw.slice(0, 80)}`,
-        },
-      ];
-    }
-    const t = parsed.type;
-    if (t === "task_started") {
-      return [
-        {
-          kind: "session-init",
-          sessionId: parsed.session_id ?? parsed.id ?? "",
-        },
-      ];
-    }
-    if (t === "agent_message_delta") {
-      return [{ kind: "message-delta", text: parsed.delta ?? "" }];
-    }
-    if (t === "agent_reasoning_delta") {
-      // v1 deliberately swallows reasoning deltas — chat surface shows
-      // the public message stream only. v1.1 may surface in a panel.
-      return [];
-    }
-    if (t === "tool_use" || t === "function_call") {
-      const toolName = parsed.tool_name ?? "(unknown tool)";
-      const summary = JSON.stringify(parsed.input ?? {}).slice(0, 80);
-      return [
-        { kind: "tool-call", description: `▶ ${toolName} ${summary}` },
-      ];
-    }
-    if (t === "task_complete" || t === "agent_message_end") {
-      return [{ kind: "message-end" }];
-    }
-    return [];
-  },
-
-  formatUserMessage(text: string): string {
-    return text + "\n";
-  },
-
-  buildPrimer(phase: CapstonePhase): string {
-    const file = path.join(PRIMERS_DIR, `${phase}.md`);
-    try {
-      return readFileSync(file, "utf8");
-    } catch (err) {
-      throw new Error(
-        `Primer not found for phase ${phase}: ${file}` +
-          ((err as Error).message ? ` (${(err as Error).message})` : ""),
-      );
-    }
   },
 };
 

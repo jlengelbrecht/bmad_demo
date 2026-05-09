@@ -106,13 +106,13 @@ test.describe("Capstone bootstrap — interactive PTY (fixture-backed)", () => {
     // exactly what xterm.onData would produce, so this exercises the
     // same server-side path with deterministic input.
     await page.evaluate(
-      ({ sid }) =>
-        fetch(`/api/capstone/setup/bootstrap/pty/${sid}/keystroke`, {
+      ({ ptyId }) =>
+        fetch(`/api/capstone/pty/${ptyId}/keystroke`, {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ keystroke: "y" }),
         }),
-      { sid: SESSION_ID },
+      { ptyId: SESSION_ID },
     );
 
     // Fixture exits 0 → onComplete fires → router pushes to /complete.

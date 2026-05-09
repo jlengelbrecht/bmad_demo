@@ -5,30 +5,24 @@ import * as ptyRegistry from "@/lib/capstone/pty/session-registry";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Hard cap on per-request keystroke payload. xterm.js fires onData per
-// keystroke (including escape sequences), so a single POST is typically
-// 1–5 bytes. The 4 KB cap is generous enough for paste events and tight
-// enough to refuse a runaway client.
-const MAX_KEYSTROKE_BYTES = 4 * 1024;
+const PTY_ID_RE = /^\d{8}T\d{6}Z(\.[a-z0-9.-]+)?$/;
 
-// Field named `keystroke` (not `data`) so it doesn't shadow Zod's
-// `parsed.data` (the parsed-body container) at the call site below.
 const RequestSchema = z.object({
-  keystroke: z.string().max(MAX_KEYSTROKE_BYTES),
+  cols: z.number().int().min(1).max(1000),
+  rows: z.number().int().min(1).max(500),
 });
 
 export async function POST(
   req: Request,
-  ctx: { params: Promise<{ sessionId: string }> },
+  ctx: { params: Promise<{ ptyId: string }> },
 ): Promise<Response> {
-  const { sessionId } = await ctx.params;
-  if (!/^\d{8}T\d{6}Z$/.test(sessionId)) {
+  const { ptyId } = await ctx.params;
+  if (!PTY_ID_RE.test(ptyId)) {
     return Response.json(
-      { ok: false, error: "Invalid sessionId" },
+      { ok: false, error: "Invalid ptyId" },
       { status: 400 },
     );
   }
-
   let body: unknown;
   try {
     body = await req.json();
@@ -45,8 +39,7 @@ export async function POST(
       { status: 400 },
     );
   }
-
-  const session = ptyRegistry.get(sessionId);
+  const session = ptyRegistry.get(ptyId);
   if (!session) {
     return Response.json(
       { ok: false, error: "No PTY session for that id" },
@@ -59,13 +52,12 @@ export async function POST(
       { status: 409 },
     );
   }
-
   try {
-    session.pty.write(parsed.data.keystroke);
+    session.pty.resize(parsed.data.cols, parsed.data.rows);
   } catch (err) {
-    console.error("pty.write failed", err);
+    console.error("pty.resize failed", err);
     return Response.json(
-      { ok: false, error: "Could not write to PTY" },
+      { ok: false, error: "Could not resize PTY" },
       { status: 500 },
     );
   }

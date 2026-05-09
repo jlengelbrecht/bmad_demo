@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   CAPSTONE_STEP_ORDER,
   CAPSTONE_STEPS,
-  type CapstoneStepName,
+  type LegacyCapstoneStepName,
   nextIncompleteStep,
   nextStepAfter,
 } from "./steps";
@@ -22,23 +22,23 @@ describe("CAPSTONE_STEP_ORDER (Story 4.3)", () => {
 
 describe("nextIncompleteStep (Story 4.3)", () => {
   it("returns 'brief' when nothing is complete", () => {
-    expect(nextIncompleteStep(new Set<CapstoneStepName>())).toBe("brief");
+    expect(nextIncompleteStep(new Set<LegacyCapstoneStepName>())).toBe("brief");
   });
 
   it("returns 'epic' when only 'brief' is complete", () => {
-    expect(nextIncompleteStep(new Set<CapstoneStepName>(["brief"]))).toBe("epic");
+    expect(nextIncompleteStep(new Set<LegacyCapstoneStepName>(["brief"]))).toBe("epic");
   });
 
   it("returns 'story-2' when brief + epic + story-1 are complete", () => {
     expect(
-      nextIncompleteStep(new Set<CapstoneStepName>(["brief", "epic", "story-1"])),
+      nextIncompleteStep(new Set<LegacyCapstoneStepName>(["brief", "epic", "story-1"])),
     ).toBe("story-2");
   });
 
   it("returns null when all five steps are complete", () => {
     expect(
       nextIncompleteStep(
-        new Set<CapstoneStepName>(["brief", "epic", "story-1", "story-2", "adr"]),
+        new Set<LegacyCapstoneStepName>(["brief", "epic", "story-1", "story-2", "adr"]),
       ),
     ).toBeNull();
   });
@@ -46,7 +46,7 @@ describe("nextIncompleteStep (Story 4.3)", () => {
   it("walks order-first (skipping ahead based on order, not input set membership)", () => {
     // 'epic' is complete but 'brief' is not — the walk still returns
     // 'brief' first because it's the canonical-order next-incomplete.
-    expect(nextIncompleteStep(new Set<CapstoneStepName>(["epic"]))).toBe("brief");
+    expect(nextIncompleteStep(new Set<LegacyCapstoneStepName>(["epic"]))).toBe("brief");
   });
 });
 

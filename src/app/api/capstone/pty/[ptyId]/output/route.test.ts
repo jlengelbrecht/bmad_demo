@@ -34,14 +34,14 @@ function makeFakePty(): {
   };
 }
 
-function makeReq(sessionId: string): {
+function makeReq(ptyId: string): {
   req: Request;
-  ctx: { params: Promise<{ sessionId: string }> };
+  ctx: { params: Promise<{ ptyId: string }> };
 } {
   const req = new Request(
-    `http://localhost/api/capstone/setup/bootstrap/pty/${sessionId}/output`,
+    `http://localhost/api/capstone/pty/${ptyId}/output`,
   );
-  return { req, ctx: { params: Promise.resolve({ sessionId }) } };
+  return { req, ctx: { params: Promise.resolve({ ptyId }) } };
 }
 
 async function readSse(res: Response, maxChunks = 10): Promise<string> {
@@ -64,8 +64,8 @@ afterEach(() => {
   __resetForTests();
 });
 
-describe("GET /api/capstone/setup/bootstrap/pty/[sessionId]/output", () => {
-  it("returns 400 on malformed sessionId", async () => {
+describe("GET /api/capstone/pty/[ptyId]/output", () => {
+  it("returns 400 on malformed ptyId", async () => {
     const { req, ctx } = makeReq("bad");
     expect((await GET(req, ctx)).status).toBe(400);
   });
@@ -112,8 +112,27 @@ describe("GET /api/capstone/setup/bootstrap/pty/[sessionId]/output", () => {
     fireData("\x1b[31mred\x1b[0m");
     fireExit(0);
     const sse = await readSse(res);
-    // base64("\x1b[31mred\x1b[0m") via Buffer.from(..., "binary").toString("base64")
-    const expected = Buffer.from("\x1b[31mred\x1b[0m", "binary").toString("base64");
+    const expected = Buffer.from("\x1b[31mred\x1b[0m", "utf8").toString("base64");
     expect(sse).toContain(`"b64":"${expected}"`);
+  });
+
+  it("preserves multi-byte UTF-8 codepoints (BMAD's TUI uses ▣ ◇ ↑ etc.)", async () => {
+    const { pty, fireData, fireExit } = makeFakePty();
+    register("20260509T120000Z", pty, () => {});
+    const { req, ctx } = makeReq("20260509T120000Z");
+    const res = await GET(req, ctx);
+    // ▣ = U+25A3 (3 UTF-8 bytes: E2 96 A3) — the selection-checkbox
+    // glyph from BMAD's --tools menu. Under the prior "binary"
+    // encoding only the first byte (E2) survived the round-trip,
+    // producing the "ü" mojibake reported by the user.
+    const tuiSnippet = "▣ BMad Core ◇ ↑ ↓";
+    fireData(tuiSnippet);
+    fireExit(0);
+    const sse = await readSse(res);
+    const expected = Buffer.from(tuiSnippet, "utf8").toString("base64");
+    expect(sse).toContain(`"b64":"${expected}"`);
+    // And critically: the bytes round-trip back to the original glyphs.
+    const decoded = Buffer.from(expected, "base64").toString("utf8");
+    expect(decoded).toBe(tuiSnippet);
   });
 });

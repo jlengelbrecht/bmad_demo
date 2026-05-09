@@ -76,7 +76,7 @@ describe("pty session-registry", () => {
     const session = register("sid-4", pty, () => {});
     expect(session.exitCode).toBeNull();
     expect(session.exitSignal).toBeNull();
-    fireExit(0, null);
+    fireExit(0);
     expect(session.exitCode).toBe(0);
     expect(session.exitSignal).toBeNull();
   });

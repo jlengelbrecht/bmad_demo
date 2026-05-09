@@ -33,18 +33,18 @@ function makeFakePty(opts: { exitImmediately?: boolean } = {}): {
 }
 
 function makeReq(
-  sessionId: string,
+  ptyId: string,
   body: unknown,
-): { req: Request; ctx: { params: Promise<{ sessionId: string }> } } {
+): { req: Request; ctx: { params: Promise<{ ptyId: string }> } } {
   const req = new Request(
-    `http://localhost/api/capstone/setup/bootstrap/pty/${sessionId}/keystroke`,
+    `http://localhost/api/capstone/pty/${ptyId}/keystroke`,
     {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     },
   );
-  return { req, ctx: { params: Promise.resolve({ sessionId }) } };
+  return { req, ctx: { params: Promise.resolve({ ptyId }) } };
 }
 
 beforeEach(() => {
@@ -55,15 +55,15 @@ afterEach(() => {
   __resetForTests();
 });
 
-describe("POST /api/capstone/setup/bootstrap/pty/[sessionId]/keystroke", () => {
-  it("returns 400 on malformed sessionId", async () => {
+describe("POST /api/capstone/pty/[ptyId]/keystroke", () => {
+  it("returns 400 on malformed ptyId", async () => {
     const { req, ctx } = makeReq("bad", { keystroke: "x" });
     expect((await POST(req, ctx)).status).toBe(400);
   });
 
   it("returns 400 on invalid JSON body", async () => {
     const req = new Request(
-      "http://localhost/api/capstone/setup/bootstrap/pty/20260509T120000Z/keystroke",
+      "http://localhost/api/capstone/pty/20260509T120000Z/keystroke",
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -71,7 +71,7 @@ describe("POST /api/capstone/setup/bootstrap/pty/[sessionId]/keystroke", () => {
       },
     );
     const res = await POST(req, {
-      params: Promise.resolve({ sessionId: "20260509T120000Z" }),
+      params: Promise.resolve({ ptyId: "20260509T120000Z" }),
     });
     expect(res.status).toBe(400);
   });

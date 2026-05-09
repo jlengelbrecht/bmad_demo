@@ -64,16 +64,6 @@ export const CAPSTONE_PHASE_NAMES = [
 export type CapstonePhaseName = (typeof CAPSTONE_PHASE_NAMES)[number];
 
 /**
- * Capstone tool-native session id row id (Story 5.7 AC10):
- * `<capstone-session-id>/<phase-name>`. The row's `completed_at` column
- * is overloaded to carry the tool-native session id captured from the
- * first SSE `system/init` event.
- */
-export const CAPSTONE_TOOL_SESSION_ID = new RegExp(
-  `^\\d{8}T\\d{6}Z\\/(${CAPSTONE_PHASE_NAMES.join("|")})$`,
-);
-
-/**
  * Request shape for `POST /api/progress` (Stories 3.2 + 4.1 + 4.4).
  *
  * Discriminated by `kind`. Architecture line 221 specifies the endpoint

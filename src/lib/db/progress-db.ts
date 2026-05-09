@@ -32,8 +32,7 @@ export type ProgressKind =
   | "lesson"
   | "lab"
   | "capstone-session"
-  | "capstone-step"
-  | "capstone-tool-session";
+  | "capstone-step";
 
 export type ProgressEntry = {
   kind: ProgressKind;
@@ -307,43 +306,6 @@ export function markCapstoneSessionAborted(
   }
   statements(db).upsert.run("capstone-session", sessionId, sentinel);
   return { updated: true };
-}
-
-/**
- * Persist the tool-native session id captured from the first SSE
- * `system/init` event (Story 5.7 AC10). Row key is
- * `<capstone-session-id>/<phase>`; the captured id is overloaded onto
- * `completed_at` per architecture line 210's column-overload pattern
- * for the `capstone-tool-session` kind.
- *
- * Idempotent — a second call for the same `(capstoneSessionId, phase)`
- * overwrites the prior id (the chat consumer always captures the
- * fresh-spawn id; the prior turn's id is no longer load-bearing).
- */
-export function recordCapstoneToolSessionId(
-  capstoneSessionId: string,
-  phase: string,
-  toolSessionId: string,
-  db: Database = getDb(),
-): void {
-  const id = `${capstoneSessionId}/${phase}`;
-  statements(db).upsert.run("capstone-tool-session", id, toolSessionId);
-}
-
-/**
- * Read the tool-native session id previously captured for
- * `(capstoneSessionId, phase)`, or `null` if never captured.
- */
-export function getCapstoneToolSessionId(
-  capstoneSessionId: string,
-  phase: string,
-  db: Database = getDb(),
-): string | null {
-  const row = statements(db).get.get(
-    "capstone-tool-session",
-    `${capstoneSessionId}/${phase}`,
-  ) as ProgressRecord | undefined;
-  return row?.completedAt ?? null;
 }
 
 /**
