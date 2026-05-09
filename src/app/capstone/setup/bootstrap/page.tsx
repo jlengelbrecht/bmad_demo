@@ -28,7 +28,28 @@ export default function BootstrapPage() {
   const [chosenDir, setChosenDir] = useState<string>("");
   const [allow, setAllow] = useState<AllowResult>({ kind: "idle" });
   const [opened, setOpened] = useState<boolean>(false);
+  const [bmadVersion, setBmadVersion] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Fetch the pinned BMAD version once on mount. The preview block
+  // below shows the trainee the exact `npx bmad-method@<version> install
+  // ...` invocation the portal will spawn — same teaching moment the
+  // original wizard's command preview provided.
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/capstone/setup/bmad-version")
+      .then((r) => r.json() as Promise<{ ok: boolean; version?: string }>)
+      .then((b) => {
+        if (cancelled) return;
+        if (b.ok && b.version) setBmadVersion(b.version);
+      })
+      .catch(() => {
+        // Preview falls back to "<version>" placeholder; not blocking.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Bounce malformed URL inputs back to the tool-pick page.
   useEffect(() => {
@@ -149,6 +170,13 @@ export default function BootstrapPage() {
               Re-check
             </button>
           )}
+          {allow.kind === "ok" ? (
+            <CommandPreview
+              chosenDir={allow.resolved}
+              tool={tool}
+              bmadVersion={bmadVersion}
+            />
+          ) : null}
           <button
             type="button"
             onClick={handleOpen}
@@ -180,6 +208,32 @@ export default function BootstrapPage() {
         </section>
       )}
     </main>
+  );
+}
+
+function CommandPreview({
+  chosenDir,
+  tool,
+  bmadVersion,
+}: {
+  chosenDir: string;
+  tool: Tool;
+  bmadVersion: string | null;
+}) {
+  const versionTag = bmadVersion ?? "<version>";
+  const command = `npx bmad-method@${versionTag} install --directory ${chosenDir} --tools ${tool}`;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+        The portal will run
+      </p>
+      <pre className="overflow-x-auto rounded-md bg-zinc-950 p-3 font-mono text-xs text-zinc-100">
+        {command}
+      </pre>
+      <p className="text-xs text-zinc-500 dark:text-zinc-500">
+        BMAD will then ask the rest interactively in the terminal below.
+      </p>
+    </div>
   );
 }
 
