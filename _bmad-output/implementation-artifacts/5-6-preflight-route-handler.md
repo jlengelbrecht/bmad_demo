@@ -2,7 +2,7 @@
 
 **Epic:** 5 — Capstone Runtime Foundation
 **Story Key:** 5-6-preflight-route-handler
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 
