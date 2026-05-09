@@ -274,9 +274,15 @@ A trainee can produce a real BMAD artifact set — 1 product brief + 1 epic + 2 
 
 The live `.github/` artifacts that lessons treat as concrete instances exist and work (CODEOWNERS, branch-protection notes, PR template with story-link field, copilot-instructions.md). Two paired CI pipelines (`.vela.yml` primary + `.github/workflows/ci.yml` mirror) gate the same npm-script contract on every PR: lint, typecheck, audit, link-integrity, unit tests, E2E tests (golden path, accessibility, no-egress, soft-bound performance). The cross-platform install checklist is documented for the maintainer. **FRs covered:** FR6.1, FR6.2, FR6.3, FR5.12 (file shell). **NFRs:** NFR-A1, NFR-A2, NFR-S1, NFR-S2, NFR-S3, NFR-R1, NFR-P2, NFR-P3, NFR-M4 (test).
 
-### Epic 6: Curriculum Content Authoring
+### Epic 6: Curriculum Content Authoring (🛑 SUPERSEDED — see Epic 12 below)
 
 All curriculum content is authored and committed: a trainee reads six full lessons, runs any of three labs, and accesses the audience-specific guides (start-here, stakeholder-demo with explicit objection sections, facilitator-guide with timing and prompts). Lesson 4 produces the reusable lead-review-checklist artifact; Lesson 5 teaches five named failure-mode recovery loops. The repo carries the canonical story template, team-rituals checklist, per-tool friction notes (with versioned/dated headers), customized AGENTS.md, and customized copilot-instructions.md. **FRs covered:** FR1.6 (content), FR1.7 (content), FR4.1, FR4.2, FR4.3, FR4.4, FR5.3, FR5.4, FR5.5, FR5.6, FR5.7, FR5.8, FR5.9, FR5.10, FR5.11 (content), FR5.12 (content). **NFRs:** NFR-M1, NFR-M2, NFR-P4.
+
+> **Status (2026-05-09):** Epic 6's slot was reclaimed by the rebuild planning for the Setup Wizard + Bootstrap epic. The curriculum-authoring scope was orphaned and lifted forward to **Epic 12 — Curriculum Content Authoring**, which adds a research foundation phase (Story 12.0) and reflects the post-rebuild architecture (interactive PTY chat, three-tool capstone).
+
+### Epic 12: Curriculum Content Authoring (replaces Epic 6)
+
+All curriculum content is authored and committed against a research foundation: a trainee reads six fully-authored lessons, runs any of three labs, and accesses the audience-specific guides — without ever encountering a "Placeholder" line. Lesson 4 produces the reusable lead-review-checklist; Lesson 5 teaches five named failure-mode recovery loops; Story 12.0 produces three research artifacts (BMAD mechanics / GitHub governance / team rituals) that ground every subsequent story. The repo carries the canonical story template, team-rituals checklist, per-tool friction notes, customized `AGENTS.md`, customized `.github/copilot-instructions.md`, and a stakeholder demo script with three explicit objection-handling sections. **FRs covered:** FR1.6 (content), FR1.7 (content), FR4.1, FR4.2, FR4.3, FR4.4, FR5.3, FR5.4, FR5.5, FR5.6, FR5.7, FR5.8, FR5.9, FR5.10, FR5.11 (content), FR5.12 (content). **NFRs:** NFR-M1, NFR-M2, NFR-P4.
 
 ## Epic 1: Project Foundation & One-Command Boot
 
@@ -1108,6 +1114,8 @@ So that platform portability is demonstrated in practice and any GitHub fork has
 
 ## Epic 6: Curriculum Content Authoring
 
+> **🛑 SUPERSEDED — see Epic 12 below (2026-05-09).** Epic 6's slot was reclaimed by the rebuild planning for the Setup Wizard + Bootstrap epic; this curriculum-authoring scope was orphaned. The stories below remain as the original spec for reference, but the active curriculum-authoring epic is **Epic 12 — Curriculum Content Authoring**, which lifts the orphaned scope, adds a research phase, and reflects the post-rebuild architecture (interactive PTY chat, three-tool support, etc.).
+
 All curriculum content is authored and committed: a trainee reads six full lessons, runs any of three labs, and accesses the audience-specific guides. Lesson 4 produces the reusable lead-review-checklist; Lesson 5 teaches five named failure-mode recovery loops. The repo carries the canonical story template, team-rituals checklist, per-tool friction notes (with versioned/dated headers), customized AGENTS.md, and customized copilot-instructions.md.
 
 **Cross-cutting AC for every story in Epic 6:** All content reads coding-skill-neutrally (FR-5.7) — no "as an engineer..." framing; examples include both engineer-facing and non-engineer-facing scenarios where relevant. Every relative repo-path link in any new content resolves under `npm run lint:links` from Story 2.4.
@@ -1329,3 +1337,302 @@ So that AI tools opening the repo get the same shared contract — and trainees 
 **Given** both files exist with substantive content
 **When** I run `npm run lint:links` and the link-integrity DOM check from Story 5.5
 **Then** all links in both files resolve
+
+---
+
+## Epic 12: Curriculum Content Authoring (replaces orphaned Epic 6)
+
+**Status:** authored 2026-05-09. Replaces the orphaned Epic 6 (slot reclaimed by Setup Wizard + Bootstrap). Lifts the original 6.1–6.8 stories, adds a research phase to source authoritative content, and reflects the post-rebuild architecture (interactive PTY chat, three-tool capstone, lessons that walk this repo's own artifacts as worked examples).
+
+**Definition of done for the epic:**
+- A trainee opening the portal cold can read 6 fully-authored lessons, run any of 3 labs, and reach the capstone with the right mental model — without ever encountering a "Placeholder" line.
+- Stakeholders walk a 15-minute scripted demo with three concrete artifacts and three explicit objection-answer sections.
+- A facilitator can prep a half-day workshop in under 2 hours using `training/facilitator-guide.md`.
+- The pinnable artifacts — `training/story-template.md`, `training/lead-review-checklist.md`, `training/team-rituals-checklist.md`, `training/tools-reference.md` — exist as copy-pasteable reference docs adopting teams can drop into their own repos.
+- `AGENTS.md` and `.github/copilot-instructions.md` are customized for *this* repo and stay in sync with each other on the load-bearing constraints.
+- Every lesson reads coding-skill-neutrally (FR-5.7) and every relative path link resolves under `npm run lint:links`.
+- The portal renders all curriculum surfaces successfully: `/start-here`, `/stakeholder`, `/facilitator`, `/lessons/1..6`, `/labs/{solo,sync,async-story-review}`.
+
+**Cross-cutting AC for every story in Epic 12:**
+- All content reads coding-skill-neutrally (FR-5.7) — no "as an engineer..." framing; examples include both engineer-facing and non-engineer-facing scenarios where relevant.
+- Every relative repo-path link in any new content resolves under `npm run lint:links` from Story 2.4.
+- Every concept introduced in a lesson references *this* repo's own artifacts as the worked example (FR-5.2 self-reference) — never abstract framing alone.
+
+### Story 12.0: Research foundation (BMAD mechanics, GitHub governance, team rituals)
+
+As the author landing the curriculum,
+I want three research artifacts authored under `_bmad-output/planning-artifacts/research/`,
+So that the lesson and reference-artifact stories that follow are grounded in accurate, sourced understanding rather than guesswork.
+
+**Acceptance Criteria:**
+
+**Given** the official BMAD docs (`bmadcode.com`) and the installed `_bmad/` directory + `.claude/skills/bmad-*` skills
+**When** I read `research/bmad-mechanics.md`
+**Then** the file documents (a) the BMAD methodology phase model (`1-analysis` → `2-plan-workflows` → `3-solutioning` → `4-implementation`), (b) the agent + skill structure used by the framework, (c) the artifact chain produced (brief → PRD → architecture → epics → stories → ADR), (d) how skills are dispatched and customized via `customize.toml`, and (e) where this portal's `bmad_demo` deviates or extends the framework
+**And** every claim is grounded in a citation: a specific URL on `bmadcode.com`, a specific path under `_bmad/` in this repo, or a specific installed skill at `.claude/skills/bmad-<name>/`
+
+**Given** GitHub's official docs on CODEOWNERS and branch protection
+**When** I read `research/github-governance.md`
+**Then** the file documents (a) CODEOWNERS file syntax + matching rules + edge cases (pattern precedence, team-handle resolution, multiple matches, last-match-wins), (b) branch-protection rules and how each interacts with CODEOWNERS (`Require a pull request before merging` vs `Require review from CODEOWNERS` vs `Require approvals from N people` vs `Restrict who can push to matching branches`), (c) the difference between branch-protection's "include administrators" toggle and "allow specified actors to bypass", (d) the gate pattern this curriculum teaches (CODEOWNERS as the *enforcement layer* for the story-as-contract pattern)
+**And** every claim cites the relevant `docs.github.com` URL
+
+**Given** the PRD's team-rituals thesis + the BMAD framework's team-collaboration patterns + the post-rebuild three-tool capstone surface (claude-code / codex / github-copilot)
+**When** I read `research/bmad-team-rituals.md`
+**Then** the file synthesizes (a) what BMAD-on-a-team actually looks like day-to-day in a mixed-tool environment, (b) the five named failure-mode recovery loops the PRD requires (drift / unclear stories / mixed-tooling conflicts / story-too-big / spec-wrong), (c) the dual-role AGENTS.md + `.github/copilot-instructions.md` pattern and why it exists (two tools, one contract), (d) how this portal's three-tool capstone (Claude Code / Codex / GitHub Copilot) maps onto the team-rituals thesis
+**And** every claim cites either the PRD §, the BMAD docs, or a concrete artifact in this repo
+
+**Given** all three research artifacts
+**When** I run `npm run lint:links`
+**Then** every internal link resolves
+**And** the artifacts are committed to `_bmad-output/planning-artifacts/research/` (not under `implementation-artifacts/`, since they are *planning* inputs to the curriculum stories)
+
+### Story 12.1: Lesson 1 — What is BMAD
+
+As a trainee opening the lesson sequence,
+I want Lesson 1 authored as full content that frames BMAD at the team-rituals + governance layer (not just the framework artifacts) and points at the official BMAD framework as the upstream source it builds on,
+So that I have the conceptual grounding for Lessons 2–6.
+
+**Acceptance Criteria:**
+
+**Given** `training/lessons/1-what-is-bmad.md`
+**When** I read it
+**Then** the lesson frames BMAD at the team-rituals + governance layer — not just the framework's artifacts — and explicitly attributes the underlying framework to bmadcode.com (Innovation #4 / Risk #7 mitigation: attribution preserved)
+**And** the lesson includes self-reference moments: it points to specific files in *this* repo (e.g., `.claude/skills/bmad-*`, `_bmad-output/planning-artifacts/`) as concrete instances of BMAD artifacts (FR-5.2)
+**And** the lesson explains *why* a team adopting BMAD needs more than the framework alone — namely, the team-rituals + CODEOWNERS layer this curriculum teaches (preview of Lessons 4 + 5)
+**And** the lesson reads in 15 minutes or less for a non-engineer (FR-5.7)
+
+**Given** the lesson at `/lessons/1-what-is-bmad`
+**When** rendered through the lesson route
+**Then** the lesson renders successfully and the sequential nav advances to Lesson 2
+
+### Story 12.2: Lesson 2 — The artifact chain
+
+As a trainee learning what BMAD produces,
+I want Lesson 2 authored as a walk through the artifact chain (brief → PRD → architecture → epics → stories → PR) using *this* repo's own `_bmad-output/planning-artifacts/` as the worked example,
+So that I see the chain in action against real artifacts rather than abstract framing.
+
+**Acceptance Criteria:**
+
+**Given** `training/lessons/2-the-artifact-chain.md`
+**When** I read it
+**Then** the lesson walks through the BMAD artifact chain using *this* repo's own `_bmad-output/planning-artifacts/` (`product-brief-bmad_demo.md`, `prd.md`, `architecture.md`, `epics.md`) as the worked example (FR-5.2 self-reference)
+**And** every artifact reference is a relative path that resolves (verified by `npm run lint:links`)
+**And** the lesson explains how each artifact in the chain *constrains* the next — the brief is the contract for the PRD, the PRD is the contract for the architecture, etc.
+**And** the lesson explicitly notes that the contract pattern is what makes the chain robust against AI-tool drift — change the spec, regenerate the implementation; do not edit the implementation while leaving the spec stale (preview of Lesson 5's drift-recovery loop)
+
+**Given** the lesson at `/lessons/2-the-artifact-chain`
+**When** rendered through the lesson route
+**Then** the lesson renders successfully and sequential nav works
+
+### Story 12.3: Lesson 3 + canonical story template
+
+As a trainee about to write a story,
+I want Lesson 3 authored as the story-as-tool-agnostic-contract thesis, AND `training/story-template.md` authored as the canonical BMAD story format,
+So that I know the format and *why* the format is load-bearing for mixed-tool teams.
+
+**Acceptance Criteria:**
+
+**Given** `training/lessons/3-stories-as-tool-agnostic-contract.md`
+**When** I read it
+**Then** the lesson teaches the **story-as-tool-agnostic-contract** thesis — the PRD's headline differentiator
+**And** the lesson explains how the story file enables a mixed-tool team to ship coherently (Claude Code + Codex + GitHub Copilot under one contract)
+**And** the lesson points to `training/story-template.md` as the canonical template
+**And** the lesson uses one of *this* repo's actual story files (e.g., `_bmad-output/implementation-artifacts/12-1-lesson-1.md` or another small story) as the worked example
+
+**Given** `training/story-template.md`
+**When** I read it
+**Then** the file is the canonical BMAD story format with load-bearing fields: title, user story (As a / I want / So that), acceptance criteria in Given/When/Then, references-to-spec section, and a "tool used to implement" optional field for mixed-tool reflection (FR-5.10)
+**And** the file ends with a worked example (a real story shaped to the template — not a meta-comment that says "fill this in")
+
+**Given** the lesson + the template
+**When** rendered through the lesson route
+**Then** the lesson renders successfully and links to the template resolve
+
+### Story 12.4: Lesson 4 + reusable lead-review-checklist artifact
+
+As a trainee learning what makes CODEOWNERS load-bearing,
+I want Lesson 4 (CODEOWNERS + lead-approval gate) authored — and `training/lead-review-checklist.md` produced as its concrete output, pinnable in any team's repo,
+So that I learn what the lead reads for at the gate, and my team's lead has a working checklist they can adopt.
+
+**Acceptance Criteria:**
+
+**Given** `training/lessons/4-codeowners-and-the-gate.md`
+**When** I read it
+**Then** the lesson explains CODEOWNERS as the *enforcement layer* (not just a routing convention) for the story-as-contract pattern
+**And** the lesson teaches **what the lead reads for at the gate** — concrete checklist items, not narrative platitudes
+**And** the lesson references the live `.github/CODEOWNERS` from the bootstrapped capstone repos as the artifact (FR-5.2)
+**And** the lesson explains the interaction between CODEOWNERS and branch-protection rules (sourced from Story 12.0 research) — review-required vs. review-from-CODEOWNERS vs. include-administrators
+**And** the lesson explicitly produces and points at `training/lead-review-checklist.md` as the pinnable artifact (FR-5.3)
+
+**Given** `training/lead-review-checklist.md`
+**When** I read it
+**Then** the file is formatted as a self-contained, copy-pasteable checklist a lead can drop into their team's repo as a working document
+**And** the checklist items cover at minimum: spec-vs-code faithfulness, scope-fit (the change matches the story scope), accessibility/tests-still-passing posture, and "who is missing from this review" (CODEOWNERS hits the right groups)
+**And** the checklist explicitly notes that this is **what the lead reads for** — it is a lead-side artifact, not a contributor-side one (PRD §FR-6.3 framing: human at the gate, not CI enforcement)
+
+**Given** the lesson and the artifact
+**When** I navigate to `/lessons/4-codeowners-and-the-gate`
+**Then** the lesson renders fully and its links resolve
+
+### Story 12.5: Lesson 5 + team-rituals checklist (with five named failure-mode recovery loops)
+
+As a trainee learning how mixed-tool teams stay coherent under AI-assisted contributions,
+I want Lesson 5 authored with the **five named failure-mode recovery loops** the PRD requires, AND `training/team-rituals-checklist.md` authored as the pinnable post-capstone reinforcement,
+So that I — and my lead — know how to recover when the contract bites and which recovery is appropriate to the failure.
+
+**Acceptance Criteria:**
+
+**Given** `training/lessons/5-working-as-a-team.md`
+**When** I read it
+**Then** the lesson teaches team rituals: async checkpoints, mixed AI tooling, the story-as-contract abstraction (so single-tool teams still benefit per Risk #6 mitigation)
+**And** the lesson explicitly enumerates **five named failure-mode recovery loops** (FR-5.4) — each with a name, a description of the failure mode, and the recovery procedure:
+  1. **Spec drift caught at the gate** — produced code drifts from story spec → revise code OR revise story (not both quietly)
+  2. **Unclear stories** — story file the implementer can't act on unambiguously → revise the story BEFORE implementing
+  3. **Mixed-tooling conflicts** — two teammates' AI tools produce diverging conventions → align on shared convention captured in the story or repo, not in tooling
+  4. **Story too big to land in one PR** — implementer or lead recognizes the story exceeds a single reviewable change → split BEFORE implementing, not after
+  5. **Lead disagrees with the spec itself, not the code** — code is faithful to the story, but the story was wrong → revise the SPEC, not the code (distinct from drift recovery)
+
+**And** the lesson explicitly distinguishes recovery #1 (drift) from recovery #5 (spec wrong) so leads don't conflate them at the gate
+**And** the lesson references `training/story-template.md` as the canonical contract format (FR-5.10)
+**And** the lesson references the dual-role `AGENTS.md` + `.github/copilot-instructions.md` pattern (Story 12.8) as a concrete instance of "two tools, one contract"
+
+**Given** `training/team-rituals-checklist.md`
+**When** I read it
+**Then** the file fits on a single screen (one-page, dense but readable)
+**And** items cover: writing a story before implementing; routing the right CODEOWNERS group; reading for spec-vs-code faithfulness at the gate; running the right async checkpoint when the story is too big or unclear; updating the story when the spec is wrong (not the code)
+**And** the checklist is formatted as copy-pasteable artifact (markdown checklist syntax: `- [ ] item` lines)
+**And** the checklist header explicitly says "post-capstone reinforcement" (FR-5.6)
+
+### Story 12.6: Lesson 6 — refined capstone framing
+
+As a trainee about to start the capstone,
+I want Lesson 6 authored as the framing narrative for the post-rebuild interactive-PTY capstone (9 phases, three tools),
+So that I enter the capstone with the right mental model.
+
+**Acceptance Criteria:**
+
+**Given** `training/lessons/6-from-lessons-to-capstone.md`
+**When** I read it
+**Then** the lesson frames the 90–120 minute capstone as the synthesis moment: the trainee runs a full BMAD planning cycle end-to-end and produces brief / PRD / architecture / epics+stories / ADR / dev-story-1.1 / HANDOFF.md
+**And** the lesson explains the link to a real PR through the lead-approval gate as the marquee aha moment (PRD's "transformation moment")
+**And** the lesson explicitly names the three tool choices (Claude Code / Codex / GitHub Copilot) and notes that the contract (story files) is identical regardless of tool
+**And** the lesson links to `/capstone` as the entry point and to `training/story-template.md` as the format
+**And** the lesson does NOT re-explain the BMAD framework (Lessons 1–2 already did) — it focuses on running it for real
+**And** the lesson reflects the *current* phase model (interactive PTY chat per phase, not the pre-pivot textarea form)
+
+### Story 12.7: Three labs — solo, synchronous full-team, async cross-team story-review
+
+As a trainee or workshop participant running a lab,
+I want each of the three labs authored as a self-contained markdown file with clear setup, steps, and a debrief prompt,
+So that I (or my facilitator) can run any of the three formats without external scaffolding.
+
+**Acceptance Criteria:**
+
+**Given** `training/labs/solo.md`
+**When** I read it
+**Then** the lab is **lesson-anchored**: a single trainee can run it without any other participant (FR-4.1)
+**And** the lab specifies which lesson(s) it follows from, the prerequisite knowledge, the steps to run, the artifact produced, and a self-debrief prompt
+**And** the lab's expected runtime is stated (e.g., 60–90 minutes)
+
+**Given** `training/labs/sync.md`
+**When** I read it
+**Then** the lab supports a **full team in one synchronous session** (FR-4.2)
+**And** the lab specifies team size, role assignments (who plays the implementer, who plays the lead), facilitator timing prompts, and a group debrief structure
+
+**Given** `training/labs/async-story-review.md`
+**When** I read it
+**Then** the lab structures an **async cross-team story-review** where one group authors a story file and another group reviews and signs off WITHOUT implementing (FR-4.3)
+**And** the lab specifies the handoff mechanism, the review checklist (referencing `training/story-template.md` + `training/lead-review-checklist.md`), and the sign-off artifact
+**And** the lab explicitly preserves the async-checkpoint muscle: review and sign-off happen on the spec, not on produced code
+
+**Given** all three lab files
+**When** rendered at `/labs/solo`, `/labs/sync`, `/labs/async-story-review` via Story 2.3
+**Then** each lab renders successfully
+
+### Story 12.8: AGENTS.md customized + `.github/copilot-instructions.md` content
+
+As a trainee or contributor opening the repo with any of Claude Code, Codex, OpenCode, or Copilot,
+I want `AGENTS.md` (root) and `.github/copilot-instructions.md` authored with content specific to *this* repo,
+So that AI tools opening the repo get the same shared contract — and trainees see the dual-role artifacts referenced by Lesson 5 as concrete instances.
+
+**Acceptance Criteria:**
+
+**Given** `AGENTS.md` at the repo root
+**When** I read it after this story lands
+**Then** the file is **customized for the bmad_demo portal** — naming the project, the load-bearing constraints (story-as-contract, plain-markdown curriculum, no-egress, no-auth, paired-CI invariant), and the canonical npm scripts an agent can use
+**And** the file is intelligible to all of Claude Code, Codex, and OpenCode (the three tools that read `AGENTS.md` per FR-5.11) — no tool-specific pragma in this file
+
+**Given** `.github/copilot-instructions.md`
+**When** I read it after this story lands
+**Then** the file is the **Copilot-specific companion** to `AGENTS.md` (FR-5.12), restating the load-bearing constraints in the format Copilot best honors
+**And** the file is explicitly cross-referenced from `AGENTS.md`
+
+**Given** both files
+**When** Lesson 5 references the dual-role file pattern
+**Then** the lesson points at *these* two files as concrete instances (FR-5.2)
+**And** both files' content stays in sync with respect to the load-bearing constraints — drift between them is a defect; a comment in each file states this
+
+### Story 12.9: Audience entries (start-here, stakeholder, facilitator) + tools-reference
+
+As a trainee, stakeholder, or facilitator landing in the portal,
+I want each audience-entry markdown file fully authored to its target — and the per-tool friction notes authored at `training/tools-reference.md`,
+So that I can self-serve from my entry point and the per-tool reference exists with maintainer cadence.
+
+**Acceptance Criteria:**
+
+**Given** `training/00-start-here.md`
+**When** I read it
+**Then** the file frames the trainee path: who the curriculum is for (anyone on the team, coding-skill-neutral), what they'll learn (six lessons, the labs, the capstone), the time investment (~3 hours or one half-day workshop), and how to navigate
+**And** the file links to the lesson sequence and the capstone entry by relative path
+
+**Given** `training/stakeholder-demo-script.md`
+**When** I read it
+**Then** the file is a **15-minute scripted walk** through three artifacts: a story file, the live `.github/CODEOWNERS` (or its template), and a sample merged PR with a story-link reference
+**And** the script includes **three explicit objection-handling sections**: (a) procurement, (b) SSO/RBAC, (c) vendor-lock-in (FR-5.8)
+**And** pacing notes are visible (e.g., "~3 minutes per artifact + 6 minutes of objection handling = 15 minutes")
+**And** the script lands the contract → enforcement → propagation triangle
+
+**Given** `training/facilitator-guide.md`
+**When** I read it
+**Then** the file is structured around the same six lessons + three labs + capstone, with per-lesson timing guidance, facilitator prompts, common-questions sections, and lab-format selection guidance (FR-5.9, FR-4.4)
+**And** the lab-format selection section explains when to pick solo vs. synchronous full-team vs. async cross-team story-review
+**And** the guide can be walked end-to-end in **NFR-P4 target of under 2 hours of prep** — verified by a "prep checklist" at the top with estimated prep-time per item summing to <2h
+
+**Given** `training/tools-reference.md`
+**When** I read it
+**Then** the file contains one section per named tool: Claude Code, Codex (CLI), GitHub Copilot CLI, OpenCode (FR-5.5)
+**And** every section's frontmatter carries `verifiedVersions: '<text>'` and `reviewedAt: 'YYYY-MM-DD'` (the format the StalenessBanner from Story 2.5 reads)
+**And** when a section is rendered, the StalenessBanner appears above its content for sections with `reviewedAt > 120 days ago` (verified manually by setting one section's date and confirming the warning surfaces)
+**And** the file's top-level header names the **quarterly review cadence** owned by the curriculum maintainer (NFR-M2)
+
+**Given** the maintainer cadence content
+**When** I look at `README.md`
+**Then** the quarterly cadence is restated for any new maintainer reading the maintainer-facing docs
+
+### Story 12.10: Language pass + curriculum-wide link integrity
+
+As the author closing out the curriculum,
+I want a single end-to-end language pass across all curriculum surfaces and a verified link-integrity sweep,
+So that voice + framing stay coherent across the curriculum and no broken links ship.
+
+**Acceptance Criteria:**
+
+**Given** all stories 12.1–12.9 landed
+**When** I read the curriculum end-to-end (start-here → lesson 1 → ... → lesson 6 → labs → audience entries → reference artifacts)
+**Then** voice + framing are coherent: identical terminology for repeated concepts ("artifact chain", "story-as-contract", "lead-approval gate", "five recovery loops"), identical capitalization for tool names ("Claude Code" not "claude-code" in trainee-facing prose), no bare "TODO" / "TBD" / "Placeholder" lines remain
+
+**Given** all curriculum files
+**When** I run `npm run lint:links`
+**Then** every relative link resolves (CI gate)
+
+**Given** all curriculum routes
+**When** I drive `/start-here`, `/stakeholder`, `/facilitator`, `/lessons/1..6`, `/labs/{solo,sync,async-story-review}` in Playwright
+**Then** every page renders without console errors and the sequential nav between lessons works
+
+**Given** the stale-content check from Story 2.5
+**When** I look at `training/tools-reference.md`
+**Then** all sections render without the StalenessBanner (recent `reviewedAt`)
+
+**Given** all changes
+**When** the quad gate is run
+**Then** `npm run test:unit`, `npm run test:e2e`, `npm run lint`, `npm run lint:links` are all green
