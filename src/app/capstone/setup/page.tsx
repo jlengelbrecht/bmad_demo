@@ -275,7 +275,7 @@ function ToolCard({
         href={
           cardDisabled
             ? "#"
-            : `/capstone/setup/wizard?session=${sessionId}&tool=${id}`
+            : `/capstone/setup/bootstrap?session=${sessionId}&tool=${id}`
         }
         aria-disabled={cardDisabled}
         className={`inline-flex w-fit rounded-md px-3 py-1.5 text-xs font-medium ${

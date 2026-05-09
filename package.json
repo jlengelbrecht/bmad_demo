@@ -16,9 +16,11 @@
     "reset-progress": "tsx scripts/reset-progress.ts"
   },
   "dependencies": {
+    "@xterm/addon-fit": "^0.11.0",
     "better-sqlite3": "^12.9.0",
     "gray-matter": "^4.0.3",
     "next": "16.2.6",
+    "node-pty": "^1.1.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "rehype-autolink-headings": "^7.1.0",
@@ -31,6 +33,7 @@
     "server-only": "^0.0.1",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.1.0",
+    "xterm": "^5.3.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
