@@ -11,6 +11,11 @@ import {
 import { getPinnedBmadVersion } from "@/lib/capstone/bootstrap/bmad-version";
 import { isPathAllowed } from "@/lib/capstone/bootstrap/path-allowlist";
 import { SUPPORTED_LANGUAGES } from "@/lib/capstone/bootstrap/languages";
+import {
+  recordCapstoneTargetDir,
+  recordCapstoneTool,
+  upsertProgress,
+} from "@/lib/db/progress-db";
 import { homedir } from "node:os";
 
 export const runtime = "nodejs";
@@ -135,6 +140,23 @@ export async function GET(req: Request): Promise<Response> {
           } else if (ev.kind === "stderr-line") {
             enqueue(sseFrame("stderr", { text: ev.text }));
           } else if (ev.kind === "exit") {
+            // On successful bootstrap, persist the three session-state
+            // rows that downstream surfaces (chat, complete page, handoff)
+            // look up by sessionId. Without this the wizard's session is
+            // invisible to every later phase.
+            if (ev.code === 0) {
+              try {
+                upsertProgress({
+                  kind: "capstone-session",
+                  id: q.session,
+                  completed: false,
+                });
+                recordCapstoneTargetDir(q.session, allow.resolved);
+                recordCapstoneTool(q.session, q.tool);
+              } catch (err) {
+                console.error("session-state persist failed", err);
+              }
+            }
             enqueue(
               sseFrame("done", {
                 code: ev.code,

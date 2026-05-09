@@ -99,16 +99,16 @@ describe("claude-code.detectInstalled", () => {
 });
 
 describe("claude-code.detectAuthenticated", () => {
-  it("returns true when both system/init and assistant/message_start are observed", async () => {
+  it("returns true when 'claude auth status' reports loggedIn:true (subscription path)", async () => {
     runStreamingMock.mockReturnValue(
       fakeStream([
         {
           kind: "stdout-line",
-          text: JSON.stringify({ type: "system/init", session_id: "abc" }),
-        },
-        {
-          kind: "stdout-line",
-          text: JSON.stringify({ type: "assistant/message_start" }),
+          text: JSON.stringify({
+            loggedIn: true,
+            authMethod: "claude.ai",
+            subscriptionType: "max",
+          }),
         },
         { kind: "exit", code: 0, signal: null },
       ]),
@@ -116,27 +116,44 @@ describe("claude-code.detectAuthenticated", () => {
     expect(await claudeCode.detectAuthenticated()).toBe(true);
   });
 
-  it("returns false when system/init is missing", async () => {
+  it("returns true when 'claude auth status' reports loggedIn:true (API-key path)", async () => {
     runStreamingMock.mockReturnValue(
       fakeStream([
         {
           kind: "stdout-line",
-          text: JSON.stringify({ type: "assistant/message_start" }),
+          text: JSON.stringify({ loggedIn: true, authMethod: "apiKey" }),
         },
+        { kind: "exit", code: 0, signal: null },
+      ]),
+    );
+    expect(await claudeCode.detectAuthenticated()).toBe(true);
+  });
+
+  it("returns false when 'claude auth status' reports loggedIn:false", async () => {
+    runStreamingMock.mockReturnValue(
+      fakeStream([
+        { kind: "stdout-line", text: JSON.stringify({ loggedIn: false }) },
         { kind: "exit", code: 0, signal: null },
       ]),
     );
     expect(await claudeCode.detectAuthenticated()).toBe(false);
   });
 
-  it("returns false when assistant/message_start is missing", async () => {
+  it("returns false when exit code is non-zero", async () => {
     runStreamingMock.mockReturnValue(
       fakeStream([
-        {
-          kind: "stdout-line",
-          text: JSON.stringify({ type: "system/init", session_id: "abc" }),
-        },
+        { kind: "stdout-line", text: "error: not signed in" },
         { kind: "exit", code: 1, signal: null },
+      ]),
+    );
+    expect(await claudeCode.detectAuthenticated()).toBe(false);
+  });
+
+  it("returns false when stdout is not valid JSON", async () => {
+    runStreamingMock.mockReturnValue(
+      fakeStream([
+        { kind: "stdout-line", text: "Logged in: yes" },
+        { kind: "exit", code: 0, signal: null },
       ]),
     );
     expect(await claudeCode.detectAuthenticated()).toBe(false);

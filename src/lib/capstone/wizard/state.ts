@@ -109,7 +109,31 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
   }
 }
 
-/** Encode wizard state to base64-encoded JSON for the bootstrap URL. */
+/**
+ * Browser+Node-safe base64url encode. The earlier implementation used
+ * `Buffer.toString('base64url')` which is valid in Node 16+ but throws
+ * `Unknown encoding: base64url` in browser Buffer polyfills (this module
+ * runs client-side too — the wizard's onNext handler in
+ * src/app/capstone/setup/wizard/page.tsx serializes state via this fn).
+ * `btoa`/`atob` are globals in both Node 22+ and modern browsers.
+ */
+function toBase64Url(s: string): string {
+  const bytes = new TextEncoder().encode(s);
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function fromBase64Url(s: string): string {
+  const padded =
+    s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4);
+  const bin = atob(padded);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder("utf8").decode(bytes);
+}
+
+/** Encode wizard state to base64url-encoded JSON for the bootstrap URL. */
 export function encodeWizardState(state: WizardState): string {
   const payload = {
     projectName: state.projectName,
@@ -119,7 +143,7 @@ export function encodeWizardState(state: WizardState): string {
     skill: state.skill,
     outputFolder: state.outputFolder,
   };
-  return Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+  return toBase64Url(JSON.stringify(payload));
 }
 
 export type WizardPayload = ReturnType<typeof decodeWizardState>;
@@ -132,6 +156,5 @@ export function decodeWizardState(encoded: string): {
   skill: SkillLevel;
   outputFolder: string;
 } {
-  const json = Buffer.from(encoded, "base64url").toString("utf8");
-  return JSON.parse(json);
+  return JSON.parse(fromBase64Url(encoded));
 }

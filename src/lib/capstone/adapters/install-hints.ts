@@ -16,11 +16,18 @@ export const INSTALL_HINTS: Record<ToolId, string> = {
 
 /**
  * One-line auth hints rendered next to a "Sign in needed" badge.
+ *
+ * Both Claude Code and Codex support subscription-based login as the
+ * primary path (Claude Pro/Max via 'claude /login' or 'claude auth login';
+ * ChatGPT Plus/Pro via 'codex login') AND an API-key fallback. The hint
+ * leads with the subscription path since that's the more common reality
+ * for trainees in 2026; the API-key fallback is mentioned second.
  */
 export const AUTH_HINTS: Record<ToolId, string> = {
   "claude-code":
-    "Set ANTHROPIC_API_KEY in your shell environment, then re-check.",
-  codex: "Set OPENAI_API_KEY in your shell environment, then re-check.",
+    "Run 'claude /login' (Claude Pro/Max subscription) or set ANTHROPIC_API_KEY in your shell, then re-check.",
+  codex:
+    "Run 'codex login' (ChatGPT Plus/Pro/Team subscription) or set OPENAI_API_KEY in your shell, then re-check.",
   "github-copilot":
     "Run 'gh auth login' (with the 'copilot' scope), then re-check. Requires an active GitHub Copilot subscription.",
 };

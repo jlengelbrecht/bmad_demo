@@ -10,7 +10,10 @@ import type {
   ToolAdapter,
 } from "./types";
 
-const VERSION_BANNER_RE = /codex(?:-cli)?\s+(\d+)\.(\d+)\.(\d+)/i;
+// See claude-code.ts VERSION_BANNER_RE for the rationale on matching
+// any semver in the first stdout line rather than a binary-name-prefixed
+// shape. Real `codex --version` output format varies by CLI version.
+const VERSION_BANNER_RE = /(\d+)\.(\d+)\.(\d+)/;
 const AUTH_PROBE_TIMEOUT_MS = 15_000;
 // See claude-code.ts PRIMERS_DIR for the Turbopack fallback rationale.
 const PRIMERS_DIR = import.meta.dirname
@@ -57,8 +60,14 @@ const codexAdapter: ToolAdapter = {
           exitCode = ev.code;
         }
       }
-    } catch {
-      return false;
+    } catch (err) {
+      // ENOENT → binary not on PATH. Surface anything else (parse / regex
+      // / spawn-config bugs) instead of silently rendering ✗.
+      if ((err as NodeJS.ErrnoException | undefined)?.code === "ENOENT") {
+        return false;
+      }
+      console.error("[codex adapter] detectInstalled error:", err);
+      throw err;
     }
     if (exitCode !== 0 || !version) return false;
     if (!compareSemverAtLeast(version, this.manifest.minVersion)) {
