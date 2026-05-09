@@ -49,7 +49,10 @@ export default async function CapstonePage({
           Capstone
         </h1>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Produce a real BMAD artifact set in your working tree: 1 product brief, 1 epic, 2 user stories, and 1 architecture decision record.
+          The capstone walks you through nine phases: pre-flight environment check, tool selection + auth, setup wizard, bootstrap (<code className="font-mono text-xs">npx bmad-method install</code>), then chat-driven artifact production for brief, PRD, architecture, epics+stories, ADR, and a working dev story 1.1 with green tests.
+        </p>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          You&apos;ll experience BMAD by chatting through the full artifact chain with your own local AI tool (Claude Code, Codex, or GitHub Copilot). Time commitment: 90-120 minutes. You walk away with a fresh git repo at a path of your choosing — BMAD-installed, populated with your own brief / PRD / architecture / epics / stories / ADR + working tested code + a HANDOFF.md you can show your team Monday morning.
         </p>
       </header>
 
@@ -62,10 +65,10 @@ function NoSessionPanel() {
   return (
     <section className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
       <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
-        Start your capstone
+        Ready to start?
       </h2>
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        The rebuilt capstone walks you through the BMAD artifact chain by chatting with your local AI tool and scaffolds a fresh repo at a path you choose.
+        The next page checks your environment (node, git, npx) and your AI tool of choice (installed + authenticated) before the wizard runs.
       </p>
       <StartCapstoneButton />
     </section>
@@ -109,10 +112,10 @@ function SessionPanel({ session }: { session: CapstoneSessionRow }) {
       </ol>
 
       <p className="text-xs text-zinc-600 dark:text-zinc-400">
-        The textarea-based capstone has been retired. The rebuilt capstone is in active development; your prior session row is preserved for history.
+        The textarea-based capstone has been retired in favor of the chat-driven rebuild. Your prior session row is preserved for history; start a new session below to use the new flow.
       </p>
 
-      <StartCapstoneButton label={isComplete ? "Start a new capstone" : "Try the rebuilt capstone"} />
+      <StartCapstoneButton label={isComplete ? "Start a new capstone" : "Start the capstone"} />
     </section>
   );
 }

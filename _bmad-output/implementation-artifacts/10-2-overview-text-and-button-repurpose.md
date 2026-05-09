@@ -2,7 +2,7 @@
 
 **Epic:** 10 — Migration (Delete Current Epic 4)
 **Story Key:** 10-2-overview-text-and-button-repurpose
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 
