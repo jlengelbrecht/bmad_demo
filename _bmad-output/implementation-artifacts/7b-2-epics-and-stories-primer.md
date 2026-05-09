@@ -2,7 +2,7 @@
 
 **Epic:** 7b — HOW Phases
 **Story Key:** 7b-2-epics-and-stories-primer
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 

@@ -2,7 +2,7 @@
 
 **Epic:** 7a — WHY Phases (Brief + PRD)
 **Story Key:** 7a-2-brief-and-prd-primers
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 

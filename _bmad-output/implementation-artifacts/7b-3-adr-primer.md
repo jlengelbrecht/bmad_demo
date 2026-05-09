@@ -2,7 +2,7 @@
 
 **Epic:** 7b — HOW Phases
 **Story Key:** 7b-3-adr-primer
-**Status:** ready-for-dev
+**Status:** done
 
 ## Story
 
