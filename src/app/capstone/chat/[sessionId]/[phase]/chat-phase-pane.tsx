@@ -1,15 +1,29 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useCallback, useMemo, useState } from "react";
 
-import { TerminalPane } from "@/components/terminal-pane";
 import {
   getLaunchCommand,
   PHASE_DISPLAY_NAMES,
 } from "@/lib/capstone/phases/launch-commands";
 import { PHASE_TEACHING_PRIMERS } from "@/lib/capstone/phases/teaching-primers";
 import type { CapstonePhase, ToolId } from "@/lib/capstone/adapters/types";
+
+// xterm reads `self` at module evaluation time — a browser-only global.
+// Even though this whole file is "use client", Next.js's prerender
+// step still evaluates imported client modules during page generation.
+// Loading TerminalPane via next/dynamic with ssr:false defers the
+// xterm import until the browser actually mounts the component, which
+// is the only place it can run.
+const TerminalPane = dynamic(
+  () =>
+    import("@/components/terminal-pane").then((mod) => ({
+      default: mod.TerminalPane,
+    })),
+  { ssr: false },
+);
 
 const TOOL_DISPLAY_NAMES: Record<ToolId, string> = {
   "claude-code": "Claude Code",

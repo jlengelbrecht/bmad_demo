@@ -3,7 +3,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { TerminalPane } from "@/components/terminal-pane";
+import dynamic from "next/dynamic";
+
+// xterm (loaded inside TerminalPane) reads `self` at module evaluation
+// — browser-only. Defer until the browser mounts the component.
+const TerminalPane = dynamic(
+  () =>
+    import("@/components/terminal-pane").then((mod) => ({
+      default: mod.TerminalPane,
+    })),
+  { ssr: false },
+);
 
 const TOOL_VALUES = ["claude-code", "codex", "github-copilot"] as const;
 type Tool = (typeof TOOL_VALUES)[number];
