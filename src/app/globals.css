@@ -64,3 +64,20 @@ body {
 .prose code::after {
   content: none !important;
 }
+
+/*
+ * xterm internal scrollbar reservation.
+ *
+ * When PTY output exceeds the visible terminal rows, xterm's
+ * `.xterm-viewport` grows a vertical scrollbar. Without
+ * `scrollbar-gutter: stable`, the scrollbar appears AFTER the FitAddon
+ * has computed `cols` against the full container width — so the
+ * rightmost column gets covered by the scrollbar and trailing chars get
+ * clipped (surfaced during long codex/claude/copilot runs in Phase 4+).
+ *
+ * Reserving the gutter proactively keeps the column count accurate
+ * whether the buffer fits or scrolls.
+ */
+.xterm-viewport {
+  scrollbar-gutter: stable;
+}
