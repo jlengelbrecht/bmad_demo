@@ -31,6 +31,13 @@ FROM node:22-bookworm-slim
 # - curl, ca-certificates: AI-tool installer scripts.
 # - gh: GitHub CLI; needed for `gh extension install github/gh-copilot`.
 # - sqlite3: convenience for inspecting the progress DB.
+#
+# Run apt-get install + the gh-CLI repo setup as a single RUN so the
+# packages-list cache stays warm across the two install passes. The
+# command chain is POSIX-sh compatible (no bash-isms; use `curl -o`
+# instead of `... | dd ...` so no pipefail is required) — works in
+# both Docker (docker format) and Podman (OCI format) without a SHELL
+# override.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         build-essential \
@@ -42,9 +49,8 @@ RUN apt-get update \
         python3 \
         sqlite3 \
         sudo \
-    && type -p curl >/dev/null \
     && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-        | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+        -o /usr/share/keyrings/githubcli-archive-keyring.gpg \
     && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
         > /etc/apt/sources.list.d/github-cli.list \
@@ -52,16 +58,11 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends gh \
     && rm -rf /var/lib/apt/lists/*
 
-# Codex CLI (npm-distributed). Pinned to the @latest dist-tag — Lesson 6
-# explains the trade-off (current vs pinned) for the capstone install
-# command; this devcontainer mirrors the same evergreen choice for
-# the AI tool itself.
+# Codex CLI (npm-distributed). Installs into /usr/local/lib/node_modules
+# with a /usr/local/bin/codex symlink — visible to every user.
+# Pinned to the @latest dist-tag, mirroring the capstone's
+# `npx bmad-method@latest install` evergreen choice.
 RUN npm install -g @openai/codex
-
-# Claude Code CLI (Anthropic-hosted install script).
-RUN curl -fsSL https://claude.ai/install.sh -o /tmp/install-claude.sh \
-    && bash /tmp/install-claude.sh \
-    && rm /tmp/install-claude.sh
 
 # GitHub Copilot CLI is a `gh` extension; users install it after
 # authenticating to GitHub on first use:
@@ -71,13 +72,24 @@ RUN curl -fsSL https://claude.ai/install.sh -o /tmp/install-claude.sh \
 # which doesn't work reliably. Documented in the README quickstart.
 
 # Set up a non-root `node` user (already exists in node:22-bookworm
-# images; verify and add sudo). Keeping a non-root user matches
+# images; we add passwordless sudo). Keeping a non-root user matches
 # devcontainer best practice.
 RUN echo "node ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/node \
     && chmod 0440 /etc/sudoers.d/node
 
 USER node
+# Anthropic's `claude` CLI installs into the invoking user's
+# `~/.local/bin/`. Add it to PATH so non-interactive shells (e.g.
+# the devcontainer's PTY spawn path, the npm scripts) can find it.
+ENV PATH="/home/node/.local/bin:${PATH}"
 WORKDIR /workspaces/bmad_demo
+
+# Claude Code CLI — install AS THE NODE USER so it lands in
+# /home/node/.local/bin/. Installing as root would put it in
+# /root/.local/bin/, invisible to the node user the capstone runs as.
+RUN curl -fsSL https://claude.ai/install.sh -o /tmp/install-claude.sh \
+    && bash /tmp/install-claude.sh \
+    && rm /tmp/install-claude.sh
 
 # The repo gets bind-mounted by the devcontainer at runtime; we don't
 # COPY it in. postCreateCommand handles `npm install` on first launch.
