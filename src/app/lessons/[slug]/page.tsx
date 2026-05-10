@@ -37,7 +37,7 @@ export async function generateMetadata({
   const lesson = getLessonBySlug(slug);
   if (!lesson) return { title: "Lesson not found · BMAD Demo" };
   return {
-    title: `Lesson ${lesson.number} — ${lesson.title} · BMAD Demo`,
+    title: `Lesson ${lesson.displayNumber} — ${lesson.title} · BMAD Demo`,
   };
 }
 
