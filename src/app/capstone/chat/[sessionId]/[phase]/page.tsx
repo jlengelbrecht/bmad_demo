@@ -17,7 +17,9 @@ const PHASE_TITLES: Record<CapstonePhase, string> = {
   prd: "Phase 4 — PRD",
   architecture: "Phase 5 — Architecture",
   "epics-and-stories": "Phase 6 — Epics + stories",
-  "dev-story-1.1": "Phase 7 — Dev story 1.1",
+  "implementation-readiness": "Phase 7 — Implementation readiness",
+  "sprint-planning": "Phase 8 — Sprint planning",
+  "dev-story-1.1": "Phase 9 — Dev story 1.1",
 };
 
 type Params = Promise<{ sessionId: string; phase: string }>;

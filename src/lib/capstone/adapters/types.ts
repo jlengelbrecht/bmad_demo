@@ -32,12 +32,14 @@ export interface ToolManifest {
   supportedOS: ("darwin" | "linux")[];
 }
 
-/** The five rebuilt-capstone phases that drive primer + chat behavior. */
+/** The seven rebuilt-capstone phases that drive primer + chat behavior. */
 export type CapstonePhase =
   | "brief"
   | "prd"
   | "architecture"
   | "epics-and-stories"
+  | "implementation-readiness"
+  | "sprint-planning"
   | "dev-story-1.1";
 
 /** The contract every adapter implements. */

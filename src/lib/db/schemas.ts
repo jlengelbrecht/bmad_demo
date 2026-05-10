@@ -21,6 +21,11 @@ export const CAPSTONE_SESSION_ID = /^\d{8}T\d{6}Z$/;
  * Canonical capstone step names. Single source of truth: the regex
  * `CAPSTONE_STEP_ID` and the parametric tests in `progress-db.test.ts`
  * iterate over this constant rather than re-declaring the literal list.
+ *
+ * Historical entries (`epic`, `story-1`, `story-2`, `adr`) are preserved
+ * for backward compatibility with any session-step rows from the
+ * Epic-4 textarea capstone era. New phases use their CapstonePhase
+ * names directly.
  */
 export const CAPSTONE_STEP_NAMES = [
   "brief",
@@ -29,6 +34,8 @@ export const CAPSTONE_STEP_NAMES = [
   "story-2",
   "adr",
   "dev-story-1.1",
+  "implementation-readiness",
+  "sprint-planning",
 ] as const;
 
 export type CapstoneStepName = (typeof CAPSTONE_STEP_NAMES)[number];
@@ -52,17 +59,22 @@ export const CAPSTONE_STEP_ID = new RegExp(
  * artifacts). The rebuild's chat phases drive primer selection and
  * `capstone-tool-session` row keys.
  *
- * Note: `adr` was removed in 2026-05-10 — BMAD 6.6.0 doesn't ship an
- * ADR skill, and `bmad-create-architecture` already emits decision
- * rationale inline in `architecture.md` (per its step-04-decisions.md).
- * The legacy `'adr'` value remains in `CAPSTONE_STEP_NAMES` above for
- * backward compatibility with any in-flight session rows.
+ * History:
+ *  - `adr` removed 2026-05-10 — BMAD 6.6.0 doesn't ship an ADR skill;
+ *    decision rationale lives inline in `architecture.md`.
+ *  - `implementation-readiness` and `sprint-planning` added 2026-05-10
+ *    after a codex walkthrough hit "no sprint-status.yaml" because the
+ *    capstone jumped from epics-and-stories straight to dev-story-1.1,
+ *    skipping the readiness gate (3-solutioning) and sprint init
+ *    (4-implementation) that BMAD's manifest marks `required`.
  */
 export const CAPSTONE_PHASE_NAMES = [
   "brief",
   "prd",
   "architecture",
   "epics-and-stories",
+  "implementation-readiness",
+  "sprint-planning",
   "dev-story-1.1",
 ] as const;
 

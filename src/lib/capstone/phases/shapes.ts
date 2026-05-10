@@ -70,6 +70,25 @@ export const PHASE_SHAPES: Record<CapstonePhase, PhaseShape> = {
     ],
     minSizeBytes: 200,
   },
+  "implementation-readiness": {
+    // bmad-check-implementation-readiness writes
+    // `{planning_artifacts}/implementation-readiness-report-<date>.md`.
+    // The date suffix shifts per run, so we match the prefix.
+    searchSubdir: "planning-artifacts",
+    artifactPatterns: [
+      /^implementation-readiness-report.*\.md$/,
+      /^readiness-report.*\.md$/,
+    ],
+    minSizeBytes: 200,
+  },
+  "sprint-planning": {
+    // bmad-sprint-planning writes
+    // `{implementation_artifacts}/sprint-status.yaml` (per the skill's
+    // step-01: `status_file = {implementation_artifacts}/sprint-status.yaml`).
+    searchSubdir: "implementation-artifacts",
+    artifactPatterns: [/^sprint-status\.yaml$/, /^sprint-status\.yml$/],
+    minSizeBytes: 20,
+  },
   "dev-story-1.1": {
     // The dev-story-1.1 phase's gate is a green test run, not a
     // planning artifact. The phase-done route bypasses validatePhaseShape
@@ -206,6 +225,8 @@ export const PHASE_ORDER: CapstonePhase[] = [
   "prd",
   "architecture",
   "epics-and-stories",
+  "implementation-readiness",
+  "sprint-planning",
   "dev-story-1.1",
 ];
 

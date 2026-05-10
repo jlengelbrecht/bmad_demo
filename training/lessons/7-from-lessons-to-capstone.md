@@ -25,7 +25,7 @@ The portal makes **zero cloud calls of its own.** Every model invocation goes th
 
 ---
 
-## The eight phases
+## The ten phases
 
 | # | Phase | What you do | Output |
 |---|---|---|---|
@@ -37,8 +37,12 @@ The portal makes **zero cloud calls of its own.** Every model invocation goes th
 | 4 | PRD | Chat through `bmad-create-prd` (brief auto-loaded as context) | `prd.md` |
 | 5 | Architecture | Chat through `bmad-create-architecture` (decision rationale lands inline — see Lesson 2's note on architecture documents containing decision records) | `architecture.md` |
 | 6 | Epics + stories | Chat through `bmad-create-epics-and-stories` | `epics.md` |
-| 7 | Dev Story 1.1 | Chat through `bmad-create-story` for the first story, then implement via `bmad-dev-story` with a green-tests gate | code + updated story file |
-| 8 | Handoff | The portal generates `HANDOFF.md` with push instructions and Day-2 next steps | `HANDOFF.md` in your repo |
+| 7 | Implementation readiness | Chat through `bmad-check-implementation-readiness` — BMAD's gate between planning and implementation. Validates that PRD requirements have story coverage and that the architecture supports the decomposed work. | `implementation-readiness-report-<date>.md` |
+| 8 | Sprint planning | Chat through `bmad-sprint-planning`. Builds the sprint-status tracking that the dev-story phase reads to know which story to create. | `_bmad-output/implementation-artifacts/sprint-status.yaml` |
+| 9 | Dev Story 1.1 | Chat through `bmad-create-story` (reads `sprint-status.yaml`) for the first story, then implement via `bmad-dev-story` with a green-tests gate | code + updated story file |
+| 10 | Handoff | The portal generates `HANDOFF.md` with push instructions and Day-2 next steps | `HANDOFF.md` in your repo |
+
+Phases 7 and 8 are easy to overlook conceptually but BMAD treats them as **required** between planning (phases 3–6) and implementation (phase 9). The readiness check catches PRD requirements that haven't been decomposed into stories. Sprint planning produces the `sprint-status.yaml` that `bmad-create-story` reads to know which story to create — without it, the dev-story phase stalls asking "where should I start?"
 
 The contract between phases is **the files on disk** — not the chat history. If you close the page and come back tomorrow, the portal re-loads the prior artifacts as primer context for the next phase. This is the same property your team will rely on day-to-day after the capstone (Lesson 5's "stories propagate; conversations don't").
 
@@ -48,7 +52,7 @@ The contract between phases is **the files on disk** — not the chat history. I
 
 When the capstone finishes, you have:
 
-- **A real BMAD repo** at the path you chose, with brief / PRD / architecture / epics+stories / story-1.1 produced — and Story 1.1's tests passing.
+- **A real BMAD repo** at the path you chose, with brief / PRD / architecture / epics+stories / readiness report / sprint-status / story-1.1 produced — and Story 1.1's tests passing.
 - **A `HANDOFF.md`** with the full Day-2 checklist: how to push to your team's GitHub org, which `CODEOWNERS` placeholders to replace, what branch protection to apply, where to pin the [`team-rituals-checklist.md`](/source/training/team-rituals-checklist.md) and [`lead-review-checklist.md`](/source/training/lead-review-checklist.md) you've now seen referenced in Lessons 4 and 5.
 - **A working mental model** for running BMAD natively from your terminal. The portal is a training tool; after the capstone, you'll never need it again to run BMAD — you invoke skills through your AI tool's normal interface, the same way you did during the capstone.
 

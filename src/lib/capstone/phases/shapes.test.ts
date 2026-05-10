@@ -156,10 +156,82 @@ describe("nextPhase", () => {
     expect(nextPhase("brief")).toBe("prd");
     expect(nextPhase("prd")).toBe("architecture");
     expect(nextPhase("architecture")).toBe("epics-and-stories");
-    expect(nextPhase("epics-and-stories")).toBe("dev-story-1.1");
+    expect(nextPhase("epics-and-stories")).toBe("implementation-readiness");
+    expect(nextPhase("implementation-readiness")).toBe("sprint-planning");
+    expect(nextPhase("sprint-planning")).toBe("dev-story-1.1");
   });
 
   it("returns null after the final phase", () => {
     expect(nextPhase("dev-story-1.1")).toBe(null);
+  });
+});
+
+describe("validatePhaseShape — implementation-readiness", () => {
+  it("matches the date-suffixed readiness report filename", () => {
+    const cd = mkChosen();
+    writeArtifact(
+      cd,
+      "implementation-readiness-report-2026-05-08.md",
+      "x".repeat(300),
+    );
+    const r = validatePhaseShape(
+      "implementation-readiness",
+      cd,
+      "_bmad-output",
+      REAL_FS,
+    );
+    expect(r.artifactExists).toBe(true);
+    expect(r.shapeValid).toBe(true);
+    expect(r.artifactPath).toMatch(/implementation-readiness-report-2026-05-08\.md$/);
+  });
+});
+
+describe("validatePhaseShape — sprint-planning", () => {
+  it("matches sprint-status.yaml in implementation-artifacts", () => {
+    const cd = mkChosen();
+    mkdirSync(path.join(cd, "_bmad-output", "implementation-artifacts"), {
+      recursive: true,
+    });
+    writeFileSync(
+      path.join(
+        cd,
+        "_bmad-output",
+        "implementation-artifacts",
+        "sprint-status.yaml",
+      ),
+      "sprint:\n  - name: foo\n",
+    );
+    const r = validatePhaseShape(
+      "sprint-planning",
+      cd,
+      "_bmad-output",
+      REAL_FS,
+    );
+    expect(r.artifactExists).toBe(true);
+    expect(r.shapeValid).toBe(true);
+    expect(r.artifactPath).toMatch(/sprint-status\.yaml$/);
+  });
+
+  it("also matches sprint-status.yml fallback", () => {
+    const cd = mkChosen();
+    mkdirSync(path.join(cd, "_bmad-output", "implementation-artifacts"), {
+      recursive: true,
+    });
+    writeFileSync(
+      path.join(
+        cd,
+        "_bmad-output",
+        "implementation-artifacts",
+        "sprint-status.yml",
+      ),
+      "sprint:\n  - name: foo\n",
+    );
+    const r = validatePhaseShape(
+      "sprint-planning",
+      cd,
+      "_bmad-output",
+      REAL_FS,
+    );
+    expect(r.artifactExists).toBe(true);
   });
 });

@@ -228,11 +228,18 @@ export async function POST(req: Request): Promise<Response> {
  * rationale lives inline in `architecture.md`.
  */
 function legacyStepName(phase: CapstonePhase): string {
+  // Phases brief/prd/architecture/epics-and-stories map onto the
+  // historical Epic-4 textarea-step slot names (preserves the DB row
+  // shape). Phases added post-Epic-4 (implementation-readiness,
+  // sprint-planning, dev-story-1.1) use their own names — they were
+  // added to CAPSTONE_STEP_NAMES alongside the legacy slots.
   const map: Record<CapstonePhase, string> = {
     brief: "brief",
     prd: "epic",
     architecture: "story-1",
     "epics-and-stories": "story-2",
+    "implementation-readiness": "implementation-readiness",
+    "sprint-planning": "sprint-planning",
     "dev-story-1.1": "dev-story-1.1",
   };
   return map[phase];

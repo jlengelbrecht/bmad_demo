@@ -50,6 +50,8 @@ const BMAD_SKILLS: Record<CapstonePhase, string | null> = {
   prd: "/bmad-create-prd",
   architecture: "/bmad-create-architecture",
   "epics-and-stories": "/bmad-create-epics-and-stories",
+  "implementation-readiness": "/bmad-check-implementation-readiness",
+  "sprint-planning": "/bmad-sprint-planning",
   "dev-story-1.1": "/bmad-create-story",
 };
 
@@ -143,5 +145,7 @@ export const PHASE_DISPLAY_NAMES: Record<CapstonePhase, string> = {
   prd: "PRD",
   architecture: "Architecture",
   "epics-and-stories": "Epics & Stories",
+  "implementation-readiness": "Implementation Readiness",
+  "sprint-planning": "Sprint Planning",
   "dev-story-1.1": "Dev Story 1.1",
 };

@@ -1,4 +1,10 @@
-import { existsSync, renameSync, statSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  readdirSync,
+  renameSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 
 import { z } from "zod";
@@ -25,11 +31,41 @@ const TOOL_DISPLAY_NAMES: Record<string, string> = {
   "github-copilot": "GitHub Copilot CLI",
 };
 
-const ARTIFACT_PATHS: { phase: string; rel: string }[] = [
-  { phase: "brief", rel: "planning-artifacts/brief.md" },
+/**
+ * Per-phase artifact lookup for the HANDOFF.md "What was produced"
+ * section. Each entry has either:
+ *   - `rel`: a fixed relative path under outputFolder, OR
+ *   - `dir` + `pattern`: a directory glob — the first matching file is
+ *     used. Used for phases whose canonical filename includes a date
+ *     (readiness report) or otherwise varies.
+ *
+ * Brief uses a glob too because BMAD writes
+ * `product-brief-<project_name>.md` parameterized by project name,
+ * not a literal `brief.md`.
+ */
+type ArtifactLookup =
+  | { phase: string; rel: string }
+  | { phase: string; dir: string; pattern: RegExp };
+
+const ARTIFACT_PATHS: ArtifactLookup[] = [
+  {
+    phase: "brief",
+    dir: "planning-artifacts",
+    pattern: /^product-brief-(?!.*-distillate)[a-zA-Z0-9._-]+\.md$|^brief\.md$/,
+  },
   { phase: "prd", rel: "planning-artifacts/prd.md" },
   { phase: "architecture", rel: "planning-artifacts/architecture.md" },
   { phase: "epics-and-stories", rel: "planning-artifacts/epics.md" },
+  {
+    phase: "implementation-readiness",
+    dir: "planning-artifacts",
+    pattern: /^implementation-readiness-report.*\.md$/,
+  },
+  {
+    phase: "sprint-planning",
+    dir: "implementation-artifacts",
+    pattern: /^sprint-status\.ya?ml$/,
+  },
 ];
 
 function formatSize(bytes: number): string {
@@ -91,15 +127,32 @@ export async function POST(req: Request): Promise<Response> {
     tool === null ? "<unknown>" : (TOOL_DISPLAY_NAMES[tool] ?? tool);
 
   const artifactLines: string[] = [];
-  for (const { phase, rel } of ARTIFACT_PATHS) {
-    const abs = path.join(chosenDir, outputFolder, rel);
-    if (existsSync(abs)) {
+  for (const lookup of ARTIFACT_PATHS) {
+    let resolvedRel: string | null = null;
+    if ("rel" in lookup) {
+      const abs = path.join(chosenDir, outputFolder, lookup.rel);
+      if (existsSync(abs)) resolvedRel = lookup.rel;
+    } else {
+      const dirAbs = path.join(chosenDir, outputFolder, lookup.dir);
+      if (existsSync(dirAbs)) {
+        try {
+          const entries = readdirSync(dirAbs);
+          const match = entries.find((name) => lookup.pattern.test(name));
+          if (match) resolvedRel = path.join(lookup.dir, match);
+        } catch {
+          // Directory unreadable — leave resolvedRel null so we report
+          // the artifact as not-produced.
+        }
+      }
+    }
+    if (resolvedRel) {
+      const abs = path.join(chosenDir, outputFolder, resolvedRel);
       const size = statSync(abs).size;
       artifactLines.push(
-        `- **${phase}** — \`${path.join(outputFolder, rel)}\` (${formatSize(size)})`,
+        `- **${lookup.phase}** — \`${path.join(outputFolder, resolvedRel)}\` (${formatSize(size)})`,
       );
     } else {
-      artifactLines.push(`- **${phase}** — *(not produced)*`);
+      artifactLines.push(`- **${lookup.phase}** — *(not produced)*`);
     }
   }
 
