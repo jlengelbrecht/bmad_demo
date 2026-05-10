@@ -1,0 +1,23 @@
+# Keep the build context lean — these are recreated inside the container.
+node_modules
+.next
+dist
+.cache
+data
+test-results
+.playwright-mcp
+playwright-report
+
+# Local-only state that should never travel with the image.
+.env
+.env.local
+.env.*.local
+
+# Editor / IDE noise.
+.vscode
+.idea
+*.swp
+.DS_Store
+
+# Git history is provided by the bind mount, not the image.
+.git

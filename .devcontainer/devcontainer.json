@@ -1,0 +1,60 @@
+{
+  "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
+  "name": "BMAD Demo",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+
+  // Bind-mount the repo into /workspaces (devcontainer convention).
+  // No `mounts` overrides — VS Code / GitHub Codespaces handle this.
+
+  "remoteUser": "node",
+
+  // Forward the Next.js dev server port. Trainees open the URL the
+  // editor surfaces.
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "BMAD Demo dev server",
+      "onAutoForward": "openBrowser"
+    }
+  },
+
+  // Run on first container start: install JS deps + verify the dev
+  // server boots. Stays interactive — `npm run dev` is the trainee's
+  // call to make.
+  "postCreateCommand": "npm install",
+
+  // Environment hints for the AI-tool CLIs. Trainees authenticate
+  // interactively on first use (claude /login, codex login, gh auth
+  // login). Their tokens persist in the container's named volume so
+  // they don't re-auth on every container restart.
+  "containerEnv": {
+    "BMAD_RUNNING_IN_DEVCONTAINER": "1"
+  },
+
+  "features": {
+    // Pinned-version git + sane dotfile defaults; opt-in.
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "username": "node",
+      "userUid": "automatic",
+      "userGid": "automatic"
+    }
+  },
+
+  // VS Code-specific — other devcontainer-aware editors ignore this.
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "ms-playwright.playwright"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "typescript.tsdk": "node_modules/typescript/lib"
+      }
+    }
+  }
+}

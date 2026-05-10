@@ -10,6 +10,10 @@ Curriculum maintainer: **Devbox** ([@jlengelbrecht](https://github.com/jlengelbr
 
 ## Quickstart
 
+Two paths. Pick whichever matches your machine.
+
+### Native install (Linux, macOS)
+
 Requires **Node 20+** and **npm**.
 
 ```bash
@@ -20,6 +24,37 @@ npm run dev
 ```
 
 The dev server starts on `http://localhost:3000` (Next.js falls back to the next free port if 3000 is taken — check the terminal output). No account, no signup, no remote services — open the URL and pick a path.
+
+You'll also need at least one of the supported AI-tool CLIs installed and authenticated on your host: **Claude Code**, **Codex**, or **GitHub Copilot CLI**. Per-tool install + auth notes live in [`training/tools-reference.md`](training/tools-reference.md).
+
+### Run in a devcontainer (any OS, including Windows)
+
+The portal ships a devcontainer config that produces a Linux dev environment with Node, the native-build toolchain (`node-pty`, `better-sqlite3`), and the Codex + Claude Code CLIs pre-installed. Use this if you're on Windows, or if you want to skip per-OS native-module pain on macOS.
+
+Requires Docker (or Podman) and a devcontainer-aware editor — VS Code (with the "Dev Containers" extension), Cursor, GitHub Codespaces, JetBrains Gateway, or the standalone [devcontainer CLI](https://github.com/devcontainers/cli).
+
+1. Open the repo in your editor.
+2. Trigger "Reopen in Container" (VS Code: Cmd/Ctrl-Shift-P → "Dev Containers: Reopen in Container"). The image builds on first launch (~2 min).
+3. The editor forwards port 3000; you'll get a notification with a clickable URL.
+4. Run `npm run dev` in the container's terminal.
+
+Authenticate your AI tool inside the container on first use:
+
+```bash
+# Claude Code
+claude /login
+
+# Codex
+codex login
+
+# GitHub Copilot CLI (requires GitHub auth first)
+gh auth login
+gh extension install github/gh-copilot
+```
+
+Tokens persist in the container's named volume across restarts — sign in once, rebuild the image without losing auth.
+
+**Why a devcontainer?** This is a training tool meant to work cross-OS. Native installs of `node-pty` and `better-sqlite3` surface platform-specific build pain (Xcode CLT on macOS, Visual Studio Build Tools on Windows). Pushing the runtime into a Linux container makes the install path uniform regardless of host OS. Native install still works on Linux/macOS for developers who prefer it.
 
 ## Pick your path
 

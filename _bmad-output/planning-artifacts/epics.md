@@ -1675,3 +1675,55 @@ So that my team has explicit guidance on which BMAD changes (PRD, architecture, 
 **Given** all changes
 **When** the quad gate is run
 **Then** `npm run test:unit`, `npm run test:e2e`, `npm run lint`, `npm run lint:links` are all green
+
+---
+
+## Epic 13: Distribution + packaging
+
+**Status:** authored 2026-05-10. Separable from Epic 12 (curriculum content) — covers how the portal is *delivered* to trainees rather than what the curriculum teaches. Initial scope is one story; future stories may add npm publish, install scripts, or packaging artifacts as adoption surfaces friction.
+
+**Why now:** during the 2026-05-10 codex walkthrough Devbox raised cross-OS reach: "is it worth trying to create a container for our platform so it can be ran with docker or podman? I want this to be useable for users on linux, mac, perhaps windows." Today the portal is `git clone && npm install && npm run dev`, which works for Linux dev boxes but surfaces native-build pain (`node-pty`, `better-sqlite3`) on macOS and Windows. A devcontainer pushes the runtime into Linux uniformly while preserving the trainee's host AI-tool auth.
+
+### Story 13.1: Devcontainer scaffolding
+
+As a trainee on macOS or Windows-via-WSL2 who wants to run the portal without wrestling with native-build tooling on my host,
+I want a devcontainer config that produces a Linux container with Node, the build toolchain, and the supported AI-tool CLIs baked in,
+So that I can open the repo in a devcontainer-aware editor (VS Code, Cursor, Codespaces, JetBrains Gateway, etc.), click "Reopen in Container," and have the portal running without per-OS install steps.
+
+**Acceptance Criteria:**
+
+**Given** the repo
+**When** I read `.devcontainer/devcontainer.json`
+**Then** the file declares a Dockerfile-based image with a single forwarded port (3000), `remoteUser: node`, and a `postCreateCommand` that runs `npm install` on first container start
+**And** VS Code customizations (eslint / prettier / Tailwind / Playwright extensions) are listed but the file remains valid for non-VS Code devcontainer hosts
+**And** the file references the `common-utils` feature for non-root user setup
+
+**Given** `.devcontainer/Dockerfile`
+**When** I read it
+**Then** the base is a stable `node:22-bookworm-slim` (matches the portal's `engines: node >=20`)
+**And** the image installs the build toolchain (`build-essential`, `python3`) needed by `node-pty` and `better-sqlite3` native modules
+**And** the image installs `gh` (GitHub CLI), `git`, `sqlite3`, `curl`
+**And** the image pre-installs the **Codex** and **Claude Code** CLIs so trainees can authenticate them on first use without an additional install step
+**And** **GitHub Copilot CLI** install steps are documented in the README rather than baked in (because `gh extension install` requires GH auth that a trainee provides interactively)
+**And** the image creates a non-root `node` user with passwordless sudo
+
+**Given** `.dockerignore`
+**When** I read it
+**Then** it excludes `node_modules`, `.next`, `dist`, `data`, `test-results`, `.git`, and editor/local-state files so the build context stays lean
+
+**Given** `README.md`
+**When** I read the Quickstart section
+**Then** the README documents two install paths:
+  1. The existing `git clone && npm install && npm run dev` (Linux + macOS native).
+  2. A new "Run in a devcontainer" section with the click-path: open the repo in VS Code → Reopen in Container → wait for build → URL forwards on port 3000.
+**And** the README notes that AI-tool authentication (Claude Code, Codex, GitHub Copilot) happens *inside the container* on first use, with tokens persisting in the container volume across restarts
+
+**Given** the devcontainer build
+**When** a developer runs `devcontainer build --workspace-folder .` from the repo root (or VS Code's "Rebuild Container")
+**Then** the build completes without errors on a current Docker engine
+**And** the resulting image runs `npm install && npm run dev` successfully
+**And** the dev server is reachable on the forwarded port
+
+**Given** an existing Linux native-install workflow
+**When** a developer who's not using a devcontainer pulls the repo
+**Then** nothing about the existing `npm install && npm run dev` flow regresses — the devcontainer is opt-in via editor reopen, not something native users need to know about
