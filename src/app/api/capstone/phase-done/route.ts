@@ -4,6 +4,7 @@ import path from "node:path";
 import { z } from "zod";
 
 import type { CapstonePhase } from "@/lib/capstone/adapters/types";
+import { readBmadOutputFolder } from "@/lib/capstone/bootstrap/output-folder";
 import {
   nextPhase,
   validatePhaseShape,
@@ -121,7 +122,14 @@ const RequestSchema = z.object({
   phase: z.enum(CAPSTONE_PHASE_NAMES),
   acknowledged: z.boolean(),
   dryRun: z.boolean().optional(),
-  outputFolder: z.string().min(1).max(64).default("_bmad-output"),
+  /**
+   * Optional override of the output folder name. By default, the route
+   * reads the trainee's actual choice from
+   * `<chosenDir>/_bmad/bmm/config.yaml::output_folder` (BMAD persists
+   * whatever folder the trainee picked during `npx bmad-method install`,
+   * defaulting to `_bmad-output`). Tests can pin this via the override.
+   */
+  outputFolder: z.string().min(1).max(64).optional(),
 });
 
 export async function POST(req: Request): Promise<Response> {
@@ -141,7 +149,13 @@ export async function POST(req: Request): Promise<Response> {
       { status: 400 },
     );
   }
-  const { sessionId, phase, acknowledged, dryRun, outputFolder } = parsed.data;
+  const {
+    sessionId,
+    phase,
+    acknowledged,
+    dryRun,
+    outputFolder: outputFolderOverride,
+  } = parsed.data;
   const chosenDir = getCapstoneTargetDir(sessionId);
   if (!chosenDir) {
     return Response.json(
@@ -149,6 +163,12 @@ export async function POST(req: Request): Promise<Response> {
       { status: 404 },
     );
   }
+  // Discover the trainee's actual `output_folder` from their
+  // bootstrapped BMAD config; fall back to the request override or the
+  // BMAD default. Trainees may pick a custom folder during
+  // `npx bmad-method install`, so the gate must respect that choice
+  // rather than hardcoding `_bmad-output`.
+  const outputFolder = outputFolderOverride ?? readBmadOutputFolder(chosenDir);
   // dev-story-1.1's gate is the test suite, not a shape check — there's
   // no planning artifact for "tests pass." Synthesize a passthrough
   // validation so the response shape stays consistent for all phases.
@@ -188,6 +208,9 @@ export async function POST(req: Request): Promise<Response> {
     valid,
     advanced,
     nextPhase: nextPhase(phase),
+    outputFolder,
+    outputFolderSource:
+      outputFolderOverride !== undefined ? "request-override" : "bmad-config",
     validation,
     ...(testGate ? { testGate } : {}),
   });
