@@ -208,6 +208,7 @@ export default function BootstrapPage() {
           <TerminalPane
             ptyId={sessionId}
             spawnUrl="/api/capstone/setup/bootstrap/pty"
+            deleteUrl={`/api/capstone/setup/bootstrap/pty?sessionId=${sessionId}`}
             spawnBody={{
               sessionId,
               tool,

@@ -16,7 +16,9 @@ export function TerminalPane({
   ptyId,
   spawnUrl,
   spawnBody,
+  deleteUrl,
   onComplete,
+  onExit,
 }: {
   /**
    * Stable id for the PTY in the registry. Bootstrap uses the bare
@@ -28,8 +30,21 @@ export function TerminalPane({
   spawnUrl: string;
   /** JSON body forwarded to the spawn POST. */
   spawnBody: Record<string, unknown>;
+  /**
+   * Optional DELETE endpoint that kills the PTY in the server registry.
+   * Called on component unmount with `keepalive: true` so the request
+   * survives tab close / route navigation, preventing orphaned AI-tool
+   * processes that would otherwise live until the dev server restarts.
+   */
+  deleteUrl?: string;
   /** Fired when the PTY exits with code 0. */
   onComplete?: () => void;
+  /**
+   * Fired on every exit (clean or non-zero). Receives the exit code and
+   * signal so the parent can branch (trigger phase-done on 0, show retry
+   * on non-0). `onComplete` is the convenience for the common case.
+   */
+  onExit?: (info: { exitCode: number; signal: number | null }) => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const termRef = useRef<Terminal | null>(null);
@@ -39,6 +54,8 @@ export function TerminalPane({
 
   useEffect(() => {
     let cancelled = false;
+    let disposed = false;
+    let pendingFitFrame: number | null = null;
     const term = new Terminal({
       convertEol: true,
       cursorBlink: true,
@@ -68,7 +85,9 @@ export function TerminalPane({
     // calling fit() in the same tick throws "this._renderer.value is
     // undefined" and aborts the rest of useEffect (spawn POST never
     // fires). Defer the initial fit one animation frame.
-    requestAnimationFrame(() => {
+    pendingFitFrame = requestAnimationFrame(() => {
+      pendingFitFrame = null;
+      if (disposed) return;
       try {
         fit.fit();
       } catch {
@@ -87,10 +106,13 @@ export function TerminalPane({
     }
 
     const onResize = () => {
+      if (disposed) return;
       try {
         fit.fit();
       } catch {
-        // ignore — happens during unmount
+        // ignore — happens during unmount or when the renderer is between
+        // teardown phases (xterm's Viewport tries to read .dimensions on
+        // a detached renderer).
       }
     };
     window.addEventListener("resize", onResize);
@@ -185,6 +207,7 @@ export function TerminalPane({
               (e as MessageEvent).data,
             ) as { exitCode: number; signal: number | null };
             setStatus({ kind: "exited", exitCode, signal });
+            onExit?.({ exitCode, signal });
             if (exitCode === 0) onComplete?.();
           } catch (err) {
             console.error("decode SSE exit failed", err);
@@ -209,11 +232,32 @@ export function TerminalPane({
 
     return () => {
       cancelled = true;
+      disposed = true;
+      if (pendingFitFrame !== null) {
+        cancelAnimationFrame(pendingFitFrame);
+        pendingFitFrame = null;
+      }
+      window.removeEventListener("resize", onResize);
       dataDispose.dispose();
       resizeDispose.dispose();
       sseRef.current?.close();
       sseRef.current = null;
-      window.removeEventListener("resize", onResize);
+      // Best-effort kill the server-side PTY so we don't leave the
+      // trainee's AI-tool process running orphaned. `keepalive: true`
+      // makes the request survive tab close / route navigation; the
+      // browser flushes it as the page unmounts. The endpoint is
+      // idempotent — duplicate DELETEs are safe.
+      if (deleteUrl) {
+        try {
+          void fetch(deleteUrl, { method: "DELETE", keepalive: true }).catch(
+            () => {
+              // Swallow; nothing we can do from a teardown.
+            },
+          );
+        } catch {
+          // fetch can throw synchronously during unload in some browsers.
+        }
+      }
       if (
         typeof window !== "undefined" &&
         (window as unknown as { __bmadTerm__?: Terminal }).__bmadTerm__ ===
@@ -224,12 +268,13 @@ export function TerminalPane({
       }
       term.dispose();
       termRef.current = null;
+      fitRef.current = null;
     };
     // The deps list intentionally omits spawnBody (object identity
     // would force re-spawn on every render even if values match).
-    // Callers should keep ptyId+spawnUrl stable for a given mount.
+    // Callers should keep ptyId+spawnUrl+deleteUrl stable for a given mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ptyId, spawnUrl, onComplete]);
+  }, [ptyId, spawnUrl, deleteUrl, onComplete, onExit]);
 
   return (
     <div className="flex flex-col gap-3">

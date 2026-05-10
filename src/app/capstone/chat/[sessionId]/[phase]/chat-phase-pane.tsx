@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useCallback, useMemo, useState } from "react";
 
 import { TerminalPane } from "@/components/terminal-pane";
 import {
@@ -15,15 +16,34 @@ const TOOL_DISPLAY_NAMES: Record<ToolId, string> = {
   "github-copilot": "GitHub Copilot",
 };
 
+type PhaseDoneCheck =
+  | { kind: "idle" }
+  | { kind: "checking" }
+  | {
+      kind: "valid";
+      nextPhase: CapstonePhase | null;
+      artifactPath: string;
+    }
+  | {
+      kind: "invalid";
+      artifactExists: boolean;
+      artifactPath: string;
+      missingSections: string[];
+    }
+  | { kind: "error"; message: string };
+
+type ExitInfo = { exitCode: number; signal: number | null };
+
 /**
  * Chat-phase surface — same teaching shape as Phase 2 (bootstrap):
  * show the trainee the exact command the portal is about to run, the
  * BMAD invocation they'll type once the tool opens, then click to
  * launch the tool inside their CHOSEN_DIR.
  *
- * Replaces the prior chat-thread + textbox UI; the trainee now drives
- * the AI tool directly via xterm.js, learning the same workflow they'd
- * use day-2 at their own machine.
+ * After the trainee quits the tool (Ctrl-D / /exit) the page calls
+ * the phase-done route to validate the artifact and offers a Continue
+ * button to the next phase. The PTY is killed on every unmount so we
+ * don't leave orphaned AI-tool processes on the trainee's machine.
  */
 export function ChatPhasePane({
   sessionId,
@@ -39,15 +59,114 @@ export function ChatPhasePane({
   title: string;
 }) {
   const [opened, setOpened] = useState(false);
+  const [openCount, setOpenCount] = useState(0);
+  const [exitInfo, setExitInfo] = useState<ExitInfo | null>(null);
+  const [phaseDone, setPhaseDone] = useState<PhaseDoneCheck>({ kind: "idle" });
+
   const launch = useMemo(() => getLaunchCommand(tool, phase), [tool, phase]);
 
   // Spawn body for the chat PTY route. Stable across renders so the
   // TerminalPane's useEffect doesn't re-spawn the PTY.
   const spawnBody = useMemo(() => ({ tool, phase }), [tool, phase]);
   const spawnUrl = `/api/capstone/chat/${sessionId}/pty/spawn`;
+  // DELETE endpoint — same route, with phase as a query param. Called
+  // by TerminalPane on unmount so we don't leak the tool process.
+  const deleteUrl = `/api/capstone/chat/${sessionId}/pty/spawn?phase=${phase}`;
+  // ptyId matches the server's registry key (`<sid>.<phase>` — see the
+  // chat-phase spawn route). On "Re-open terminal" we bump openCount and
+  // pass it as React `key` on TerminalPane so the component remounts —
+  // unmount cleanup fires DELETE, then the new mount re-POSTs spawn.
   const ptyId = `${sessionId}.${phase}`;
 
+  const checkPhaseDone = useCallback(async () => {
+    setPhaseDone({ kind: "checking" });
+    try {
+      const res = await fetch("/api/capstone/phase-done", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          phase,
+          acknowledged: true,
+        }),
+      });
+      const body = (await res.json()) as {
+        ok: boolean;
+        valid: boolean;
+        nextPhase: CapstonePhase | null;
+        validation: {
+          artifactExists: boolean;
+          artifactPath: string;
+          shapeValid: boolean;
+          missingSections: string[];
+        };
+        error?: string;
+      };
+      if (!res.ok || !body.ok) {
+        setPhaseDone({
+          kind: "error",
+          message: body.error ?? `phase-done check failed (HTTP ${res.status})`,
+        });
+        return;
+      }
+      if (body.valid) {
+        setPhaseDone({
+          kind: "valid",
+          nextPhase: body.nextPhase,
+          artifactPath: body.validation.artifactPath,
+        });
+      } else {
+        setPhaseDone({
+          kind: "invalid",
+          artifactExists: body.validation.artifactExists,
+          artifactPath: body.validation.artifactPath,
+          missingSections: body.validation.missingSections,
+        });
+      }
+    } catch (err) {
+      setPhaseDone({
+        kind: "error",
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }, [sessionId, phase]);
+
+  const handleExit = useCallback(
+    (info: ExitInfo) => {
+      setExitInfo(info);
+      // Auto-trigger the phase-done validation on a clean exit. The
+      // trainee can re-run it manually from the result UI if they edit
+      // the artifact later without re-opening the tool.
+      if (info.exitCode === 0) {
+        void checkPhaseDone();
+      }
+    },
+    [checkPhaseDone],
+  );
+
+  const reopenTerminal = useCallback(() => {
+    setExitInfo(null);
+    setPhaseDone({ kind: "idle" });
+    setOpenCount((c) => c + 1);
+    setOpened(true);
+  }, []);
+
   const mainMaxWidth = opened ? "max-w-5xl" : "max-w-3xl";
+
+  // After the last phase, the Continue button heads to the handoff page
+  // instead of another /capstone/chat/<phase>.
+  const continueHref =
+    phaseDone.kind === "valid"
+      ? phaseDone.nextPhase
+        ? `/capstone/chat/${sessionId}/${phaseDone.nextPhase}?tool=${tool}`
+        : `/capstone/handoff/${sessionId}`
+      : null;
+  const continueLabel =
+    phaseDone.kind === "valid"
+      ? phaseDone.nextPhase
+        ? `Continue → Phase: ${PHASE_DISPLAY_NAMES[phaseDone.nextPhase]}`
+        : "Continue → Handoff"
+      : "";
 
   return (
     <main
@@ -148,23 +267,191 @@ export function ChatPhasePane({
             </p>
           ) : null}
           <TerminalPane
+            key={openCount}
             ptyId={ptyId}
             spawnUrl={spawnUrl}
+            deleteUrl={deleteUrl}
             spawnBody={spawnBody}
+            onExit={handleExit}
           />
         </section>
       )}
 
-      <footer className="flex flex-col gap-2 rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm dark:border-zinc-800 dark:bg-zinc-900/60">
-        <h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-          When you&apos;re done with this phase
-        </h2>
-        <p className="text-xs text-zinc-600 dark:text-zinc-400">
-          Quit the tool (Ctrl-D / type <code className="font-mono">/exit</code>)
-          when the artifact is on disk. The phase-done gate validates the
-          artifact exists in your CHOSEN_DIR before advancing.
-        </p>
-      </footer>
+      {exitInfo && (
+        <PhaseDoneSection
+          exitInfo={exitInfo}
+          phaseDone={phaseDone}
+          continueHref={continueHref}
+          continueLabel={continueLabel}
+          onRecheck={() => void checkPhaseDone()}
+          onReopen={reopenTerminal}
+        />
+      )}
+
+      {!exitInfo && (
+        <footer className="flex flex-col gap-2 rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+          <h2 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
+            When you&apos;re done with this phase
+          </h2>
+          <p className="text-xs text-zinc-600 dark:text-zinc-400">
+            Quit the tool (Ctrl-D / type{" "}
+            <code className="font-mono">/exit</code>) when the artifact is on
+            disk. The portal will check that the artifact exists and offer a
+            Continue button to the next phase.
+          </p>
+        </footer>
+      )}
     </main>
+  );
+}
+
+function PhaseDoneSection({
+  exitInfo,
+  phaseDone,
+  continueHref,
+  continueLabel,
+  onRecheck,
+  onReopen,
+}: {
+  exitInfo: ExitInfo;
+  phaseDone: PhaseDoneCheck;
+  continueHref: string | null;
+  continueLabel: string;
+  onRecheck: () => void;
+  onReopen: () => void;
+}) {
+  const cleanExit = exitInfo.exitCode === 0;
+
+  return (
+    <section
+      aria-labelledby="phase-done-heading"
+      className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
+    >
+      <h2
+        id="phase-done-heading"
+        className="text-lg font-medium text-zinc-900 dark:text-zinc-100"
+      >
+        Phase done?
+      </h2>
+
+      {!cleanExit ? (
+        <p className="rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-900 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-200">
+          ⚠ Tool exited with code {exitInfo.exitCode}
+          {exitInfo.signal !== null ? ` (signal ${exitInfo.signal})` : ""}.
+          That usually means the tool crashed or you Ctrl-C&apos;d before the
+          artifact was written. Re-open the terminal and finish the phase.
+        </p>
+      ) : null}
+
+      {phaseDone.kind === "checking" ? (
+        <p className="text-xs text-zinc-600 dark:text-zinc-400">
+          Checking the artifact on disk…
+        </p>
+      ) : null}
+
+      {phaseDone.kind === "valid" && continueHref ? (
+        <>
+          <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
+            ✓ Artifact found and valid:{" "}
+            <code className="font-mono">{phaseDone.artifactPath}</code>
+          </p>
+          <Link
+            href={continueHref}
+            className="w-fit rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+          >
+            {continueLabel}
+          </Link>
+        </>
+      ) : null}
+
+      {phaseDone.kind === "invalid" ? (
+        <>
+          <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+            ⚠ Phase artifact validation failed.
+          </p>
+          <ul className="ml-4 list-disc text-xs text-zinc-700 dark:text-zinc-300">
+            {!phaseDone.artifactExists ? (
+              <li>
+                Expected file not found:{" "}
+                <code className="font-mono">{phaseDone.artifactPath}</code>
+              </li>
+            ) : (
+              <>
+                <li>
+                  File exists at{" "}
+                  <code className="font-mono">{phaseDone.artifactPath}</code>{" "}
+                  but is missing required sections:
+                </li>
+                {phaseDone.missingSections.map((s) => (
+                  <li key={s} className="ml-4">
+                    <code className="font-mono">{s}</code>
+                  </li>
+                ))}
+              </>
+            )}
+          </ul>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onReopen}
+              className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+            >
+              Re-open terminal →
+            </button>
+            <button
+              type="button"
+              onClick={onRecheck}
+              className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-900 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+            >
+              Re-check
+            </button>
+          </div>
+        </>
+      ) : null}
+
+      {phaseDone.kind === "error" ? (
+        <>
+          <p className="rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-900 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-200">
+            ⚠ Could not check the artifact: {phaseDone.message}
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onRecheck}
+              className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+            >
+              Re-check
+            </button>
+            <button
+              type="button"
+              onClick={onReopen}
+              className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-900 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+            >
+              Re-open terminal
+            </button>
+          </div>
+        </>
+      ) : null}
+
+      {phaseDone.kind === "idle" && cleanExit ? (
+        <button
+          type="button"
+          onClick={onRecheck}
+          className="w-fit rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+        >
+          Check artifact + continue
+        </button>
+      ) : null}
+
+      {phaseDone.kind === "idle" && !cleanExit ? (
+        <button
+          type="button"
+          onClick={onReopen}
+          className="w-fit rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+        >
+          Re-open terminal →
+        </button>
+      ) : null}
+    </section>
   );
 }
