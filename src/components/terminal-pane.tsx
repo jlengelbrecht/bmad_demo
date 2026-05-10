@@ -61,19 +61,26 @@ export function TerminalPane({
     // schedules a setTimeout → requestAnimationFrame refresh that
     // sometimes runs before the canvas renderer's async init resolves,
     // throwing "Cannot read properties of undefined (reading
-    // 'dimensions')" out of Viewport._innerRefresh. Terminal continues
+    // 'dimensions')" from Viewport._innerRefresh. Terminal continues
     // working (renderer recovers; cols/rows correct), but Next.js's
     // dev overlay surfaces it as a runtime error.
     //
     // Catch that one specific error during the terminal's lifetime and
-    // prevent it from propagating to the dev overlay. We deliberately
-    // gate the suppression on the stack containing "Viewport" so we
-    // don't accidentally swallow real bugs that happen to mention
-    // "dimensions".
+    // prevent it from propagating to the dev overlay. The raw
+    // ev.error.stack does NOT include the "Viewport" class qualifier
+    // (that's only the source-mapped pretty-printed form the dev
+    // overlay shows); the stable markers in the raw stack are the
+    // method names `_innerRefresh` + `_refreshAnimationFrame`. Gating on
+    // both `dimensions` (in the message) and `_innerRefresh` (in the
+    // stack) keeps the filter precise enough that we won't accidentally
+    // swallow a real bug that happens to mention "dimensions".
     const xtermInitErrorHandler = (ev: ErrorEvent) => {
       const stack = ev.error?.stack ?? "";
       const msg = ev.error?.message ?? ev.message ?? "";
-      if (msg.includes("dimensions") && stack.includes("Viewport")) {
+      if (
+        msg.includes("dimensions") &&
+        (stack.includes("_innerRefresh") || stack.includes("Viewport"))
+      ) {
         ev.preventDefault();
         ev.stopImmediatePropagation();
       }
