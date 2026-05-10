@@ -33,7 +33,7 @@ By the end:
 3. **The story-as-contract pattern** that lets mixed-tool teams ship coherently — and the canonical story template you'll use (Lesson 3).
 4. **CODEOWNERS and branch protection** as the *enforcement* layer for the contract — and a pinnable lead-review checklist for your team's repo (Lesson 4).
 5. **Five named recovery loops** for the moments when the contract bites — and a pinnable team-rituals checklist (Lesson 5).
-6. **The capstone** — a 90–120 min run where you experience BMAD on a real artifact chain through your own AI tool (Lesson 6 + capstone).
+6. **The capstone** — a 90–120 min run where you experience BMAD on a real artifact chain through your own AI tool (Lesson 7 frames it; the capstone is the practice).
 
 After the capstone, your team has a working BMAD repo, a HANDOFF.md with Day-2 instructions, and the muscle memory to run the chain natively.
 
@@ -43,7 +43,7 @@ After the capstone, your team has a working BMAD repo, a HANDOFF.md with Day-2 i
 
 | Component | Time | Format |
 |---|---|---|
-| 6 in-app lessons | ~15 min each | Self-paced reading with links to this repo's own artifacts |
+| 7 in-app lessons | ~15 min each | Self-paced reading with links to this repo's own artifacts |
 | 3 labs (post-capstone) | 60–90 min each | [Solo](/labs/solo) / [Sync (full team)](/labs/sync) / [Async cross-team](/labs/async-story-review) |
 | 1 capstone | 90–120 min | The synthesis exercise — run the artifact chain on a fresh repo |
 

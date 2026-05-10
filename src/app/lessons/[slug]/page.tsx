@@ -16,11 +16,11 @@ import { StartCapstoneButton } from "@/app/capstone/start-capstone-button";
 
 import { LessonCompleteButton } from "./lesson-complete-button";
 
-// Lesson 6 is the capstone hand-off — its prose ends with "click
+// Lesson 7 is the capstone hand-off — its prose ends with "click
 // 'Start the capstone' below", so we embed the StartCapstoneButton
 // inline at the end of that lesson. Other lessons rely on Next-link
 // navigation only.
-const CAPSTONE_HANDOFF_SLUG = "6-from-lessons-to-capstone";
+const CAPSTONE_HANDOFF_SLUG = "7-from-lessons-to-capstone";
 
 type LessonPageParams = { slug: string };
 
@@ -37,7 +37,7 @@ export async function generateMetadata({
   const lesson = getLessonBySlug(slug);
   if (!lesson) return { title: "Lesson not found · BMAD Demo" };
   return {
-    title: `Lesson ${lesson.displayNumber} — ${lesson.title} · BMAD Demo`,
+    title: `Lesson ${lesson.number} — ${lesson.title} · BMAD Demo`,
   };
 }
 

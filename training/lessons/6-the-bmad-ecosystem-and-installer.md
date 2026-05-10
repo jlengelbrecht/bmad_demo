@@ -2,9 +2,9 @@
 title: The BMAD ecosystem and installer
 ---
 
-# Lesson 1.5 — The BMAD ecosystem and installer
+# Lesson 6 — The BMAD ecosystem and installer
 
-> **Reading time:** ~15 minutes. **Prerequisite:** Lesson 1.
+> **Reading time:** ~15 minutes. **Prerequisites:** Lessons 1–5.
 
 ## What you'll learn
 
@@ -14,7 +14,7 @@ title: The BMAD ecosystem and installer
 - **Community modules + custom sources** — how the ecosystem extends beyond what BMAD ships, and the trade-off of using third-party content.
 - A practical **decision frame** for picking modules + tools the first time your team installs.
 
-This is a lesson you'll come back to before clicking "start the capstone." The capstone runs a bare-minimum install (BMM core + your AI tool); knowing what *else* is on the menu matters when you bring BMAD home to your team.
+This lesson sits right before the capstone for a reason: in a few minutes you'll be answering BMAD's installer prompts for real. The capstone runs a lean install (BMM core + your AI tool), but knowing what *else* is on the menu matters when you bring BMAD home to your team afterward.
 
 ---
 
@@ -145,6 +145,6 @@ The capstone in this portal runs a leaner version (`--tools <one>` only, since y
 
 ## What's next
 
-You now know what BMAD is (Lesson 1) and what its installer offers (this lesson). **Lesson 2** walks the artifact chain — what each phase produces and how the chain holds across people, tools, and time — using *this repo's own* BMAD output as the worked example.
+You now have the full conceptual picture (Lessons 1–5) and the installer's option-space (this lesson). **Lesson 7** frames the capstone — the 90–120 minute synthesis exercise where you'll experience the artifact chain by running it on a fresh repo through your own AI tool.
 
-If you're considering which modules to install for your team, hold the decision until you've finished the curriculum. The lessons after this one will sharpen the picture of what your team will actually use, and you can answer the installer's prompts confidently then.
+When you bring BMAD home to your team after the capstone, this lesson is the one you'll come back to. The install command at the bottom of this page is the cheat-sheet for Day 2.

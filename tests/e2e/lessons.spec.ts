@@ -1,31 +1,26 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("lesson route (Story 2.2)", () => {
-  test("lesson 1: position 1 of 7, no Previous, Next points to lesson 1.5", async ({ page }) => {
+  test("lesson 1: position 1 of 7, no Previous, Next points to lesson 2", async ({ page }) => {
     const response = await page.goto("/lessons/1-what-is-bmad");
     expect(response?.status()).toBe(200);
 
     await expect(page.getByRole("heading", { level: 1 })).toContainText("What is BMAD");
 
-    // LessonNav <ol> aria-label is "Lesson N of 7" after the 1.5 insert.
     await expect(page.getByLabel(/Lesson 1 of 7/i).first()).toBeVisible();
 
-    // No Previous affordance → instead the "Start of curriculum" sentinel
     await expect(page.getByText("Start of curriculum").first()).toBeVisible();
 
-    // Next link present, points to lesson 1.5 (the BMAD-ecosystem insert).
-    const next = page.getByLabel("Next: Lesson 1.5 — The BMAD ecosystem and installer").first();
+    const next = page.getByLabel("Next: Lesson 2 — The artifact chain").first();
     await expect(next).toBeVisible();
-    await expect(next).toHaveAttribute("href", "/lessons/1-5-the-bmad-ecosystem");
+    await expect(next).toHaveAttribute("href", "/lessons/2-the-artifact-chain");
   });
 
-  test("lesson 3: position 4 of 7, Previous → 2, Next → 4", async ({ page }) => {
-    // Note: lesson 3's POSITION shifted from 3-of-6 → 4-of-7 when 1.5
-    // landed; its filename slug + content stayed the same.
+  test("lesson 3: position 3 of 7, Previous → 2, Next → 4", async ({ page }) => {
     const response = await page.goto("/lessons/3-stories-as-tool-agnostic-contract");
     expect(response?.status()).toBe(200);
 
-    await expect(page.getByLabel(/Lesson 4 of 7/i).first()).toBeVisible();
+    await expect(page.getByLabel(/Lesson 3 of 7/i).first()).toBeVisible();
 
     const prev = page.getByLabel("Previous: Lesson 2 — The artifact chain").first();
     await expect(prev).toBeVisible();
@@ -36,37 +31,39 @@ test.describe("lesson route (Story 2.2)", () => {
     await expect(next).toHaveAttribute("href", "/lessons/4-codeowners-and-the-gate");
   });
 
-  test("lesson 6: position 7 of 7, Previous → 5, Next hidden (capstone not yet present)", async ({
+  test("lesson 7: position 7 of 7, Previous → 6, Next hidden (capstone not yet present)", async ({
     page,
   }) => {
-    const response = await page.goto("/lessons/6-from-lessons-to-capstone");
+    const response = await page.goto("/lessons/7-from-lessons-to-capstone");
     expect(response?.status()).toBe(200);
 
     await expect(page.getByLabel(/Lesson 7 of 7/i).first()).toBeVisible();
 
-    const prev = page.getByLabel("Previous: Lesson 5 — Working as a team").first();
+    const prev = page
+      .getByLabel("Previous: Lesson 6 — The BMAD ecosystem and installer")
+      .first();
     await expect(prev).toBeVisible();
 
-    // Next is hidden → "End of curriculum" sentinel shown instead
     await expect(page.getByText("End of curriculum").first()).toBeVisible();
-    // Negative assertion: no Next: link of any kind on lesson 6
     await expect(page.getByLabel(/^Next: /)).toHaveCount(0);
   });
 
-  test("lesson 1.5: positioned between 1 and 2", async ({ page }) => {
-    const response = await page.goto("/lessons/1-5-the-bmad-ecosystem");
+  test("lesson 6 (the BMAD ecosystem) sits between 5 and 7", async ({ page }) => {
+    const response = await page.goto("/lessons/6-the-bmad-ecosystem-and-installer");
     expect(response?.status()).toBe(200);
 
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
       "The BMAD ecosystem and installer",
     );
-    await expect(page.getByLabel(/Lesson 2 of 7/i).first()).toBeVisible();
+    await expect(page.getByLabel(/Lesson 6 of 7/i).first()).toBeVisible();
 
-    const prev = page.getByLabel("Previous: Lesson 1 — What is BMAD").first();
-    await expect(prev).toHaveAttribute("href", "/lessons/1-what-is-bmad");
+    const prev = page.getByLabel("Previous: Lesson 5 — Working as a team").first();
+    await expect(prev).toHaveAttribute("href", "/lessons/5-working-as-a-team");
 
-    const next = page.getByLabel("Next: Lesson 2 — The artifact chain").first();
-    await expect(next).toHaveAttribute("href", "/lessons/2-the-artifact-chain");
+    const next = page
+      .getByLabel("Next: Lesson 7 — From lessons to capstone")
+      .first();
+    await expect(next).toHaveAttribute("href", "/lessons/7-from-lessons-to-capstone");
   });
 
   test("keyboard tab order: header → header-capstone → top-Prev → first nav pill", async ({ page }) => {

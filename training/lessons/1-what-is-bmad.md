@@ -110,8 +110,8 @@ If a question is about how a skill works internally — what `bmad-create-prd` d
 
 ## What's next
 
-**Lesson 1.5** — *The BMAD ecosystem and installer* — covers what BMAD ships beyond the framework itself: the additional modules (BMad Builder, Test Architect, Game Dev Studio, Creative Intelligence Suite), the ~42 AI tools BMAD knows how to wire, and what the installer's interactive prompts actually mean. Worth reading before the capstone so you can answer the prompts deliberately when you bring BMAD home to your team.
-
 **Lesson 2** walks the BMAD artifact chain — brief → PRD → architecture → epics → stories → PR — using *this repo's own* planning artifacts as the worked example. By the end you'll have read every artifact BMAD produces, and you'll see how each one constrains the next.
+
+The conceptual lessons are 1–5 — the chain, the contract, the gate, the team rituals. **Lesson 6** then surveys what BMAD's installer actually offers (modules beyond BMM, the ~42 supported AI tools, the install prompts, community plugins). **Lesson 7** frames the capstone itself.
 
 If you want a preview, open the [product brief](/source/_bmad-output/planning-artifacts/product-brief-bmad_demo.md), [PRD](/source/_bmad-output/planning-artifacts/prd.md), [architecture](/source/_bmad-output/planning-artifacts/architecture.md), and [epics](/source/_bmad-output/planning-artifacts/epics.md) for *this portal*. They're right there — produced through BMAD, the same way the capstone will have you produce them.

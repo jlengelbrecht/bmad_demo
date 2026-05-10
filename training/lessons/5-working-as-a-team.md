@@ -245,4 +245,6 @@ The lesson here: **the contract pattern is what makes the recovery loops work, n
 
 You now have the recovery loops named. The pinnable artifact at [`training/team-rituals-checklist.md`](/source/training/team-rituals-checklist.md) carries them as a one-page reference — print it, pin it in your repo, refer back to it when things go sideways.
 
-**Lesson 6** is short. It frames the **capstone** — the 90–120 minute synthesis exercise where you'll experience everything in this curriculum on a real artifact chain through your own AI tool. The lessons end at Lesson 6; the actual practice begins at the capstone.
+**Lesson 6** surveys the BMAD ecosystem and the installer's options — what modules and tools BMAD ships, and what each install prompt is asking. Worth reading before the capstone so you can answer the prompts deliberately when you bring BMAD home to your team.
+
+**Lesson 7** frames the **capstone** — the 90–120 minute synthesis exercise where you'll experience everything in this curriculum on a real artifact chain through your own AI tool. The lessons end at Lesson 7; the actual practice begins at the capstone.

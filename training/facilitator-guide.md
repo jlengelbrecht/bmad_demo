@@ -14,7 +14,7 @@ This guide gives you everything you need to run the workshop without re-deriving
 
 Tick these off before the workshop. Each is sized to the time it takes.
 
-- [ ] **Read all six lessons end-to-end** in `training/lessons/`. (~90 minutes; you've already done this if you completed the curriculum)
+- [ ] **Read all seven lessons end-to-end** in `training/lessons/`. (~90 minutes; you've already done this if you completed the curriculum)
 - [ ] **Run the capstone yourself once.** Not optional — you cannot facilitate a capstone-walk you haven't experienced. (~90 minutes; one-time)
 - [ ] **Pre-clone and bootstrap a sandbox repo** the team can use. Save 15 minutes of session time. (~5 min)
 - [ ] **Verify each attendee has the right AI tool installed and authenticated.** Send the [`tools-reference.md`](tools-reference.md) link a few days in advance with the install commands and an "if this doesn't work, message the facilitator before the session" note. (~10 min for outreach + verification)
@@ -123,9 +123,13 @@ For each lesson, the most useful facilitator move:
 
 **Facilitator move:** the five-loops drill described in the full-day schedule. Even in a half-day, allocate 10 minutes to "name a recent PR review you struggled with — which loop was it?" The activity unlocks the lesson.
 
-### Lesson 6 — Capstone framing
+### Lesson 6 — BMAD ecosystem and installer
 
-Don't recap this — go straight into the capstone. Lesson 6 is itself short; running through it is the recap.
+Quick walk: the modules table, the four BMAD-recommended AI tools, the installer prompts. Land the take-away: trainees pick their team's modules + tools deliberately when bringing BMAD home; the curriculum's role is to make those choices informed.
+
+### Lesson 7 — Capstone framing
+
+Don't recap this — go straight into the capstone. Lesson 7 is itself short; running through it is the recap.
 
 ---
 

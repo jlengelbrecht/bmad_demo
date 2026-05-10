@@ -4,7 +4,7 @@ title: The artifact chain
 
 # Lesson 2 — The artifact chain
 
-> **Reading time:** ~15–20 minutes. **Prerequisites:** Lessons 1 and 1.5.
+> **Reading time:** ~15–20 minutes. **Prerequisite:** Lesson 1.
 
 ## What you'll learn
 

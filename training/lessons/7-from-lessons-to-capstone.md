@@ -2,13 +2,13 @@
 title: From lessons to capstone
 ---
 
-# Lesson 6 — From lessons to capstone
+# Lesson 7 — From lessons to capstone
 
-> **Reading time:** ~10 minutes. **Prerequisites:** Lessons 1–5.
+> **Reading time:** ~10 minutes. **Prerequisites:** Lessons 1–6.
 
-You've walked the artifact chain, seen the gate, and named the recovery loops. The capstone is where you experience BMAD as your team will: by chatting with your AI tool through the full artifact chain on a fresh repo at a path you choose.
+You've walked the artifact chain, seen the gate, named the recovery loops, and now know what BMAD's installer actually offers. The capstone is where you experience BMAD as your team will: by chatting with your AI tool through the full artifact chain on a fresh repo at a path you choose.
 
-This lesson is short on purpose. Lessons 1–5 did the conceptual work; the capstone is the practice. The aim here is to set expectations — what you'll do, what the portal does and doesn't do for you, how long it takes, and what you walk out with.
+This lesson is short on purpose. Lessons 1–6 did the conceptual + ecosystem work; the capstone is the practice. The aim here is to set expectations — what you'll do, what the portal does and doesn't do for you, how long it takes, and what you walk out with.
 
 ---
 

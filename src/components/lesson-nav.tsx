@@ -33,7 +33,7 @@ export function LessonNav({
           <Link
             href={`/lessons/${prev.slug}`}
             className="group inline-flex flex-col text-left"
-            aria-label={`Previous: Lesson ${prev.displayNumber} — ${prev.title}${
+            aria-label={`Previous: Lesson ${prev.number} — ${prev.title}${
               completedSlugs?.has(prev.slug) ? ", completed" : ""
             }`}
           >
@@ -41,7 +41,7 @@ export function LessonNav({
               ← Previous
             </span>
             <span className="font-medium text-zinc-900 group-hover:underline dark:text-zinc-100">
-              {prev.displayNumber}. {prev.title}
+              {prev.number}. {prev.title}
               {completedSlugs?.has(prev.slug) ? " ✓" : ""}
             </span>
           </Link>
@@ -55,7 +55,7 @@ export function LessonNav({
       {sequence && sequence.length > 0 ? (
         <ol
           className="flex items-center gap-1.5"
-          aria-label={`Lesson ${total > 0 ? sequence.findIndex((l) => l.slug === current.slug) + 1 : 0} of ${total}`}
+          aria-label={`Lesson ${current.number} of ${total}`}
         >
           {sequence.map((lesson) => {
             const isCurrent = lesson.slug === current.slug;
@@ -67,7 +67,7 @@ export function LessonNav({
             if (isCurrent) stateParts.push("current");
             if (isComplete) stateParts.push("completed");
             if (stateParts.length === 0) stateParts.push("not started");
-            const ariaLessonLabel = `Lesson ${lesson.displayNumber} — ${lesson.title}, ${stateParts.join(", ")}`;
+            const ariaLessonLabel = `Lesson ${lesson.number} — ${lesson.title}, ${stateParts.join(", ")}`;
             return (
               <li key={lesson.slug}>
                 <Link
@@ -86,7 +86,7 @@ export function LessonNav({
                     isCurrent && isComplete ? "ring-2 ring-emerald-500 ring-offset-1 dark:ring-offset-zinc-900" : "",
                   ].join(" ")}
                 >
-                  <span aria-hidden>{isComplete && !isCurrent ? "✓" : lesson.displayNumber}</span>
+                  <span aria-hidden>{isComplete && !isCurrent ? "✓" : lesson.number}</span>
                 </Link>
               </li>
             );
@@ -94,7 +94,7 @@ export function LessonNav({
         </ol>
       ) : (
         <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          Lesson {current.displayNumber} of {total}
+          Lesson {current.number} of {total}
         </p>
       )}
 
@@ -103,7 +103,7 @@ export function LessonNav({
           <Link
             href={`/lessons/${next.slug}`}
             className="group inline-flex flex-col text-right"
-            aria-label={`Next: Lesson ${next.displayNumber} — ${next.title}${
+            aria-label={`Next: Lesson ${next.number} — ${next.title}${
               completedSlugs?.has(next.slug) ? ", completed" : ""
             }`}
           >
@@ -111,7 +111,7 @@ export function LessonNav({
               Next →
             </span>
             <span className="font-medium text-zinc-900 group-hover:underline dark:text-zinc-100">
-              {next.displayNumber}. {next.title}
+              {next.number}. {next.title}
               {completedSlugs?.has(next.slug) ? " ✓" : ""}
             </span>
           </Link>
