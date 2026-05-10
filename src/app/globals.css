@@ -2,9 +2,27 @@
 @plugin "@tailwindcss/typography";
 @config "../../tailwind.config.ts";
 
-:root {
+/*
+ * Tailwind v4 dark-variant strategy: switch on a `data-theme="dark"`
+ * attribute on <html> rather than the OS-level `prefers-color-scheme`
+ * media query. The attribute is set by the inline init script in
+ * `src/app/layout.tsx` BEFORE first paint and is updated at runtime
+ * by the <ThemeToggle> via `<ThemeProvider>` (see
+ * `src/components/theme-provider.tsx`). This lets the user override
+ * the OS preference (Light / Dark / Auto) while still falling back
+ * to the OS preference when Auto is selected.
+ */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root,
+:root[data-theme="light"] {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+:root[data-theme="dark"] {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -12,13 +30,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

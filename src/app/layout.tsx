@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
+import {
+  ThemeProvider,
+  THEME_INIT_SCRIPT,
+} from "@/components/theme-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,10 +31,28 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      // suppressHydrationWarning because the inline init script below
+      // mutates `data-theme` on <html> before React hydrates; the
+      // server-rendered markup deliberately doesn't include the
+      // attribute, so React would otherwise warn about the mismatch.
+      suppressHydrationWarning
     >
+      <head>
+        {/*
+          No-flicker theme bootstrap — must run synchronously before any
+          rendered content so `data-theme` is set on <html> before the
+          first paint. See `THEME_INIT_SCRIPT` in theme-provider.tsx for
+          the source.
+        */}
+        <script
+          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
-        <SiteHeader />
-        {children}
+        <ThemeProvider>
+          <SiteHeader />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

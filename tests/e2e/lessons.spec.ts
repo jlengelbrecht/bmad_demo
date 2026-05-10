@@ -66,36 +66,55 @@ test.describe("lesson route (Story 2.2)", () => {
     await expect(next).toHaveAttribute("href", "/lessons/7-from-lessons-to-capstone");
   });
 
-  test("keyboard tab order: header brand → audience-entries → capstone → top-Prev → first nav pill", async ({ page }) => {
+  test("keyboard tab order: header brand → audience-entries → capstone → theme-toggle → top-Prev → first nav pill", async ({ page }) => {
     await page.goto("/lessons/3-stories-as-tool-agnostic-contract");
 
     // Focus the document body so Tab starts from the document beginning.
     await page.evaluate(() => document.body.focus());
 
-    const focusedHref = async () =>
+    const focusedDescriptor = async () =>
       page.evaluate(() => {
         const el = document.activeElement;
-        if (el && el.tagName === "A") return (el as HTMLAnchorElement).getAttribute("href");
-        return null;
+        if (!el) return null;
+        if (el.tagName === "A") {
+          return {
+            kind: "link",
+            href: (el as HTMLAnchorElement).getAttribute("href"),
+          };
+        }
+        if (el.tagName === "BUTTON") {
+          return {
+            kind: "button",
+            label: el.getAttribute("aria-label") ?? el.textContent?.trim(),
+          };
+        }
+        return { kind: el.tagName.toLowerCase() };
       });
 
-    // The site header (post UI pass) lays out brand mark + 3 audience-entry
-    // links + capstone, in that order. Tab traversal walks them in order
-    // before reaching the lesson body.
-    const expected = [
-      "/",
-      "/start-here",
-      "/stakeholder",
-      "/facilitator",
-      "/capstone",
+    // The site header (post Story 11.1 partial — theme toggle landed)
+    // lays out: brand link → 3 audience-entry links → capstone → 3
+    // theme-toggle buttons → (then page content starts).
+    const expected: (
+      | { kind: "link"; href: string }
+      | { kind: "button"; label: string }
+    )[] = [
+      { kind: "link", href: "/" },
+      { kind: "link", href: "/start-here" },
+      { kind: "link", href: "/stakeholder" },
+      { kind: "link", href: "/facilitator" },
+      { kind: "link", href: "/capstone" },
+      { kind: "button", label: "Theme: Light" },
+      { kind: "button", label: "Theme: Dark" },
+      { kind: "button", label: "Theme: Auto" },
       // Then the lesson page's top Previous link
-      "/lessons/2-the-artifact-chain",
+      { kind: "link", href: "/lessons/2-the-artifact-chain" },
       // Then the first numbered pill in the LessonNav <ol>
-      "/lessons/1-what-is-bmad",
+      { kind: "link", href: "/lessons/1-what-is-bmad" },
     ];
-    for (const href of expected) {
+    for (const want of expected) {
       await page.keyboard.press("Tab");
-      expect(await focusedHref()).toBe(href);
+      const got = await focusedDescriptor();
+      expect(got).toMatchObject(want);
     }
   });
 

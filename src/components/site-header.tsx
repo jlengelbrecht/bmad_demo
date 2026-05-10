@@ -1,35 +1,56 @@
+import Image from "next/image";
 import Link from "next/link";
 
+import { ThemeToggle } from "./theme-toggle";
+
+/**
+ * Sticky site header with three layout slots:
+ *  - left:  brand mark from `public/brand/logo.png` + label
+ *  - middle: primary nav (audience entries + capstone)
+ *  - right: theme toggle (light / dark / auto)
+ *
+ * Logo source is a forkable slot — drop a different file at
+ * `public/brand/logo.png` (or .svg) to skin the portal for your
+ * team. Default ships the Cargill mark since this repo is for
+ * Cargill internal use; adopters who fork are expected to swap the
+ * file. Story 11.1 AC7's `<picture>`-element separate-light/dark
+ * variant is a future upgrade; v1 uses a CSS filter for dark mode.
+ */
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/85 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/85">
-      <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-3.5">
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-3">
         <Link
           href="/"
           aria-label="BMAD Demo home"
-          className="group inline-flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
+          className="group inline-flex items-center gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
         >
-          <span
-            aria-hidden
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-sky-500 to-sky-700 text-white shadow-sm transition-transform group-hover:scale-105"
-          >
-            <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
-              <path d="M10 2 1 6l9 4 9-4-9-4Zm0 6L4 5.6V11l6 2.6 6-2.6V5.6L10 8Z" />
-            </svg>
-          </span>
-          <span className="text-sm font-semibold tracking-tight text-zinc-900 group-hover:text-sky-700 dark:text-zinc-100 dark:group-hover:text-sky-300">
+          <Image
+            src="/brand/logo.png"
+            alt=""
+            width={120}
+            height={40}
+            priority
+            className="h-7 w-auto object-contain dark:brightness-0 dark:invert"
+          />
+          <span aria-hidden className="hidden h-5 w-px bg-zinc-300 sm:block dark:bg-zinc-700" />
+          <span className="hidden text-sm font-semibold tracking-tight text-zinc-700 group-hover:text-sky-700 sm:inline dark:text-zinc-300 dark:group-hover:text-sky-300">
             BMAD Demo
           </span>
         </Link>
-        <nav aria-label="Primary" className="flex items-center gap-1">
-          <NavLink href="/start-here">Trainee</NavLink>
-          <NavLink href="/stakeholder">Stakeholder</NavLink>
-          <NavLink href="/facilitator">Facilitator</NavLink>
-          <span aria-hidden className="mx-1 h-4 w-px bg-zinc-300 dark:bg-zinc-700" />
-          <NavLink href="/capstone" emphasized>
-            Capstone
-          </NavLink>
-        </nav>
+        <div className="flex items-center gap-3">
+          <nav aria-label="Primary" className="flex items-center gap-0.5">
+            <NavLink href="/start-here">Trainee</NavLink>
+            <NavLink href="/stakeholder">Stakeholder</NavLink>
+            <NavLink href="/facilitator">Facilitator</NavLink>
+            <span aria-hidden className="mx-1 h-4 w-px bg-zinc-300 dark:bg-zinc-700" />
+            <NavLink href="/capstone" emphasized>
+              Capstone
+            </NavLink>
+          </nav>
+          <span aria-hidden className="hidden h-4 w-px bg-zinc-300 sm:block dark:bg-zinc-700" />
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );
