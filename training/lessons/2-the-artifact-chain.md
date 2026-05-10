@@ -93,15 +93,17 @@ Architecture documents in BMAD have a specific property worth noticing: they con
 
 **What the next skill uses from this:** every contract the implementation must hold. The epics-and-stories step reads the architecture and decomposes its commitments into stories the dev agent can execute against.
 
-### 5. Epics & stories list — the "what, broken down"
+### 5. Epics & stories list — the **backlog**
 
 📄 [`epics.md`](/source/_bmad-output/planning-artifacts/epics.md) (1638 lines, the largest artifact in the chain)
 
-Produced by `bmad-create-epics-and-stories`. This artifact is where the abstract requirements of the PRD + architecture become concrete pieces of work. An **epic** is a body of related stories that ships together (e.g., "Epic 3 — Trainee Progress State & Reset"). A **story** is a single, reviewable unit a developer can pick up and ship as one PR.
+Produced by `bmad-create-epics-and-stories`. This artifact is the project's **backlog index** — every story the project needs, organized by user value into epics. An **epic** is a body of related stories that ships together (e.g., "Epic 3 — Trainee Progress State & Reset"). A **story** is a single, reviewable unit a developer can pick up and ship as one PR.
 
-This portal's `epics.md` lists Epics 1–10 (build-out), Epic 11 (UI polish), and Epic 12 (this curriculum you're reading). Each epic has a paragraph of context plus a list of stories with full Given/When/Then acceptance criteria.
+Each story entry in `epics.md` is **summary-level**: a one-line title, a brief user-story statement, 3–6 high-level acceptance criteria, maybe a sentence of context. ~10–20 lines per story.
 
-The stories in `epics.md` are the *plan*. The actual story files (which the implementer reads) are produced one-at-a-time by the next skill in the chain.
+This portal's `epics.md` lists Epics 1–13 with ~50 stories total. Each epic has a paragraph of context plus its story entries.
+
+> **The distinction that matters here.** `epics.md` is the *index*, not the implementation specs. The detailed per-story spec (Given/When/Then ACs, dev notes, tasks/subtasks, Dev Agent Record) doesn't exist yet — it gets produced **lazily, one story at a time**, when implementation actually starts. See artifact #7 below for what that detailed file looks like.
 
 ### 6. Implementation-readiness report
 
@@ -111,21 +113,29 @@ Produced by `bmad-check-implementation-readiness`. This is BMAD's gate between p
 
 Skim ours. It's where this portal caught its own gaps before Phase 4 kicked off.
 
-### 7. Per-story file — the contract for one PR
+### 7. Per-story implementation spec — the contract for one PR
 
 📁 `_bmad-output/implementation-artifacts/` (about 50 files — see for example [`3-3-mark-complete-ui.md`](/source/_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md))
 
-Produced one-at-a-time by `bmad-create-story`. This is the most important artifact in the chain. The skill's own description states it explicitly: *"Your purpose is NOT to copy from epics — it's to create a comprehensive, optimized story file that gives the dev agent EVERYTHING needed for flawless implementation."*
+Produced **one-at-a-time, lazily, at implementation time** by `bmad-create-story`. This is the artifact that makes the per-PR contract real. The skill's own description states it explicitly: *"Your purpose is NOT to copy from epics — it's to create a comprehensive, optimized story file that gives the dev agent EVERYTHING needed for flawless implementation."*
 
-A story file contains:
+A per-story implementation spec contains:
 
 - The user story (As a / I want / So that)
-- Full acceptance criteria in Given/When/Then form
-- A "Dev Notes" section with relevant context lifted from the architecture
+- **Full** acceptance criteria in Given/When/Then form (where the backlog had summary-level)
+- A "Dev Notes" section with relevant context lifted from the **current** architecture
 - A "Tasks/Subtasks" checklist the dev agent will tick off during implementation
 - A "Dev Agent Record" section (filled in *during* implementation, not at story-creation time)
 
-Open one — try [`3-3-mark-complete-ui.md`](/source/_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md) — and notice that you could hand this file to any of Claude Code, Codex, or GitHub Copilot and they'd produce the same set of files in the same shape. **That is the tool-agnostic contract claim made physical.** Lesson 3 returns to this property.
+A story entry in `epics.md` is ~15 lines; the corresponding per-story spec file is **typically 100–300 lines**. The expansion is where summary-level intent becomes implementation-ready detail.
+
+> **Why this is split into two artifacts.** You could imagine a single doc that contains every story at full implementation detail up front. BMAD deliberately doesn't:
+>
+> 1. **Most stories never ship.** Backlogs are aspirational; teams typically deliver ~60% of what gets planned. Producing 200-line implementation specs for every story up front would be wasted work.
+> 2. **Architecture context drifts.** Story 1.1's Dev Notes pull from the current architecture; by the time Story 1.10 is implemented, that architecture has been refined by stories 1.2–1.9. Lazy expansion at implementation time pulls *current* context, not stale context.
+> 3. **The detailed spec is the per-PR contract.** Lesson 3's *story-as-tool-agnostic-contract* is the per-implementation file, not the backlog entry. The backlog entry doesn't need to be tool-agnostic; the implementation spec does.
+
+Open [`3-3-mark-complete-ui.md`](/source/_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md) — and notice that you could hand this file to any of Claude Code, Codex, or GitHub Copilot and they'd produce the same set of files in the same shape. **That is the tool-agnostic contract claim made physical.** Lesson 3 returns to this property.
 
 ### 8. Dev story execution — implementation
 

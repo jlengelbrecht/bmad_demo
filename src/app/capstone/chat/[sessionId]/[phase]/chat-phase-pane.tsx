@@ -8,6 +8,7 @@ import {
   getLaunchCommand,
   PHASE_DISPLAY_NAMES,
 } from "@/lib/capstone/phases/launch-commands";
+import { PHASE_TEACHING_PRIMERS } from "@/lib/capstone/phases/teaching-primers";
 import type { CapstonePhase, ToolId } from "@/lib/capstone/adapters/types";
 
 const TOOL_DISPLAY_NAMES: Record<ToolId, string> = {
@@ -190,6 +191,8 @@ export function ChatPhasePane({
           your own machine.
         </p>
       </header>
+
+      <PhaseTeachingPanel phase={phase} />
 
       {!opened ? (
         <section className="flex flex-col gap-4 rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
@@ -475,6 +478,92 @@ function PhaseDoneSection({
           Re-open terminal →
         </button>
       ) : null}
+    </section>
+  );
+}
+
+/**
+ * Per-phase teaching panel that surfaces the goal of the phase, what
+ * the BMAD skill we're about to launch actually does, what the trainee
+ * can expect in the conversation, and where the artifact lands. Lives
+ * above the "What the portal will run" / terminal sections so the
+ * teaching context is the FIRST thing the trainee reads, not an
+ * afterthought.
+ *
+ * The portal is a teaching tool — without this panel we'd be telling
+ * trainees to click a button without saying why.
+ */
+function PhaseTeachingPanel({ phase }: { phase: CapstonePhase }) {
+  const primer = PHASE_TEACHING_PRIMERS[phase];
+  return (
+    <section
+      aria-labelledby="phase-teaching-heading"
+      className="flex flex-col gap-4 rounded-lg border border-sky-300 bg-sky-50 p-5 dark:border-sky-800 dark:bg-sky-950/30"
+    >
+      <header className="flex flex-col gap-1">
+        <h2
+          id="phase-teaching-heading"
+          className="text-lg font-medium text-sky-900 dark:text-sky-100"
+        >
+          📚 What this phase is for
+        </h2>
+        <p className="text-sm text-sky-900 dark:text-sky-100">
+          {primer.goal}
+        </p>
+      </header>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="flex flex-col gap-1">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+            What the BMAD skill does
+          </h3>
+          <p className="text-sm text-zinc-800 dark:text-zinc-200">
+            {primer.skillDoes
+              .split(/(`[^`]+`)/g)
+              .map((part, i) =>
+                part.startsWith("`") && part.endsWith("`") ? (
+                  <code
+                    key={i}
+                    className="font-mono text-xs rounded bg-zinc-900 px-1 py-0.5 text-zinc-100 dark:bg-zinc-800"
+                  >
+                    {part.slice(1, -1)}
+                  </code>
+                ) : (
+                  <span key={i}>{part}</span>
+                ),
+              )}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+            What to expect in the chat
+          </h3>
+          <ul className="ml-4 list-disc text-sm text-zinc-800 dark:text-zinc-200">
+            {primer.whatToExpect.map((bullet, i) => (
+              <li key={i}>{bullet}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1 border-t border-sky-200 pt-3 dark:border-sky-900">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+          Why this phase exists in the chain
+        </h3>
+        <p className="text-sm text-zinc-800 dark:text-zinc-200">
+          {primer.whyThisMatters}
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+          Artifact this phase produces
+        </h3>
+        <code className="self-start font-mono text-xs rounded bg-zinc-900 px-2 py-1 text-zinc-100 dark:bg-zinc-800">
+          {primer.artifactPath}
+        </code>
+      </div>
     </section>
   );
 }
