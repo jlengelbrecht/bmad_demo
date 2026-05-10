@@ -31,10 +31,11 @@ export default function BootstrapPage() {
   const [bmadVersion, setBmadVersion] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Fetch the pinned BMAD version once on mount. The preview block
-  // below shows the trainee the exact `npx bmad-method@<version> install
-  // ...` invocation the portal will spawn — same teaching moment the
-  // original wizard's command preview provided.
+  // Fetch the BMAD install tag once on mount (default: "latest"). The
+  // preview block below shows the trainee the exact
+  // `npx bmad-method@<tag> install ...` invocation the portal will spawn
+  // — same teaching moment the original wizard's command preview
+  // provided.
   useEffect(() => {
     let cancelled = false;
     void fetch("/api/capstone/setup/bmad-version")

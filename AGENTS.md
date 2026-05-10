@@ -48,7 +48,7 @@ These constraints are the contract this repo promises. Violating them is a defec
 | TypeScript | tsc | type-checked in CI |
 | Style | Tailwind CSS + `@tailwindcss/typography` | per project |
 | PTY (interactive terminals) | node-pty + xterm | for capstone phase chat |
-| BMAD | `_bmad/` + `.claude/skills/bmad-*` | pinned to v6.6.0 |
+| BMAD | `_bmad/` + `.claude/skills/bmad-*` | latest at install time (capstone runs `npx bmad-method@latest`) |
 
 ---
 
@@ -87,7 +87,7 @@ src/
 training/                 The curriculum content (markdown + checklists)
   lessons/
   labs/
-_bmad/                    Installed BMAD methodology source (v6.6.0)
+_bmad/                    Installed BMAD methodology source (whatever `npx bmad-method install` resolved at install time)
 _bmad-output/
   planning-artifacts/     brief / PRD / architecture / epics / research /
   implementation-artifacts/   per-story files + retros + session-state docs

@@ -79,7 +79,7 @@ The PRD is rigorous because everything downstream depends on it. If the PRD is v
 
 📄 [`ux-design.md`](../../_bmad-output/planning-artifacts/ux-design.md) (1352 lines)
 
-Produced by `bmad-create-ux-design` — Sally's domain. Optional in BMAD; load-bearing for any project with a non-trivial UI. Not every project needs it (a CLI or a backend service might skip).
+Produced by `bmad-create-ux-design` — owned by the UX-designer agent. Optional in BMAD; load-bearing for any project with a non-trivial UI. Not every project needs it (a CLI or a backend service might skip).
 
 This portal does have one. It walks every screen, every interaction, every breakpoint, and links each one back to the PRD's user-journey requirements.
 
@@ -87,9 +87,9 @@ This portal does have one. It walks every screen, every interaction, every break
 
 📄 [`architecture.md`](../../_bmad-output/planning-artifacts/architecture.md) (1160 lines)
 
-Produced by `bmad-create-architecture` — Winston's domain. The architecture document turns the PRD's *what* into a concrete *how*: technologies, data models, route handlers, subprocess discipline, threat model, deployment shape.
+Produced by `bmad-create-architecture` — owned by the system-architect agent. The architecture document turns the PRD's *what* into a concrete *how*: technologies, data models, route handlers, subprocess discipline, threat model, deployment shape.
 
-Architecture documents in BMAD have a specific property worth noticing: they contain **decision records** inline. When the architecture made a choice between two viable options — SQLite vs. Postgres, SSE vs. WebSocket, server-component vs. client-component — the rationale lives in the architecture document itself. This is BMAD 6.6.0's lightweight take on Architecture Decision Records (ADRs); a future BMAD version may emit a separate ADR series, but for now the architecture document is where decisions live.
+Architecture documents in BMAD have a specific property worth noticing: they contain **decision records** inline. When the architecture made a choice between two viable options — SQLite vs. Postgres, SSE vs. WebSocket, server-component vs. client-component — the rationale lives in the architecture document itself. At the time of this curriculum's authoring, BMAD's architecture skill emits decision rationale inside `architecture.md` rather than as a separate ADR series; future BMAD versions may ship a dedicated ADR skill — check the skill manifest in your install for what's available.
 
 **What the next skill uses from this:** every contract the implementation must hold. The epics-and-stories step reads the architecture and decomposes its commitments into stories the dev agent can execute against.
 
@@ -129,7 +129,7 @@ Open one — try [`3-3-mark-complete-ui.md`](../../_bmad-output/implementation-a
 
 ### 8. Dev story execution — implementation
 
-Produced by `bmad-dev-story` — Amelia's domain. The dev agent reads the story file, executes its tasks in order, modifies the codebase, and updates the story file's Dev Agent Record + status as it goes. The skill enforces single-shot execution: it does not stop at "milestones" or "session boundaries" — it runs until every acceptance criterion is satisfied or it hits an explicit halt condition.
+Produced by `bmad-dev-story` — owned by the developer agent. The dev agent reads the story file, executes its tasks in order, modifies the codebase, and updates the story file's Dev Agent Record + status as it goes. The skill enforces single-shot execution: it does not stop at "milestones" or "session boundaries" — it runs until every acceptance criterion is satisfied or it hits an explicit halt condition.
 
 What the dev agent is allowed to modify in the story file is bounded: tasks/subtasks checkboxes, the Dev Agent Record, the file list, the change log, and the status. The story's user-story text and acceptance criteria are immutable from the dev agent's side. *That* is what keeps the story binding even after it's been implemented — the lead, reviewing the PR later, can compare the produced code against the same acceptance criteria the implementer agreed to.
 

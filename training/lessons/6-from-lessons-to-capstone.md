@@ -37,7 +37,7 @@ The portal makes **zero cloud calls of its own.** Every model invocation goes th
 | 4 | PRD | Chat through `bmad-create-prd` (brief auto-loaded as context) | `prd.md` |
 | 5 | Architecture | Chat through `bmad-create-architecture` | `architecture.md` |
 | 6 | Epics + stories | Chat through `bmad-create-epics-and-stories` | `epics.md` |
-| 7 | ADR | Manually capture key architecture decisions in `adr-001-<slug>.md` (BMAD 6.6.0 doesn't ship a dedicated ADR skill; you'll write this yourself or amend `architecture.md` inline) | `adr-001-<slug>.md` (or sections in `architecture.md`) |
+| 7 | ADR | Capture key architecture decisions — your install may include a dedicated ADR skill, or decision rationale may be embedded in `architecture.md`. The phase-done gate validates the artifact exists in either location. | `adr-001-<slug>.md` and/or sections in `architecture.md` |
 | 8 | Dev Story 1.1 | Chat through `bmad-create-story` for the first story, then implement via `bmad-dev-story` with a green-tests gate | code + updated story file |
 | 9 | Handoff | The portal generates `HANDOFF.md` with push instructions and Day-2 next steps | `HANDOFF.md` in your repo |
 

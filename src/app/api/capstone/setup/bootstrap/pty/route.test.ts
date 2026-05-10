@@ -4,9 +4,6 @@ import type { IPty } from "node-pty";
 vi.mock("node-pty", () => ({
   spawn: vi.fn(),
 }));
-vi.mock("@/lib/capstone/bootstrap/bmad-version", () => ({
-  getPinnedBmadVersion: vi.fn(),
-}));
 vi.mock("@/lib/db/progress-db", () => ({
   upsertProgress: vi.fn(),
   recordCapstoneTargetDir: vi.fn(),
@@ -14,7 +11,6 @@ vi.mock("@/lib/db/progress-db", () => ({
 }));
 
 import { spawn as spawnPty } from "node-pty";
-import { getPinnedBmadVersion } from "@/lib/capstone/bootstrap/bmad-version";
 import {
   recordCapstoneTargetDir,
   recordCapstoneTool,
@@ -25,7 +21,6 @@ import { __resetForTests, __snapshotForTests } from "@/lib/capstone/pty/session-
 import { DELETE, POST } from "./route";
 
 const spawnMock = vi.mocked(spawnPty);
-const versionMock = vi.mocked(getPinnedBmadVersion);
 const upsertMock = vi.mocked(upsertProgress);
 const targetMock = vi.mocked(recordCapstoneTargetDir);
 const toolMock = vi.mocked(recordCapstoneTool);
@@ -65,11 +60,9 @@ function jsonReq(body: unknown): Request {
 
 beforeEach(() => {
   spawnMock.mockReset();
-  versionMock.mockReset();
   upsertMock.mockReset();
   targetMock.mockReset();
   toolMock.mockReset();
-  versionMock.mockReturnValue("6.6.0");
 });
 
 afterEach(() => {
@@ -143,7 +136,7 @@ describe("POST /api/capstone/setup/bootstrap/pty", () => {
     const [cmd, args] = spawnMock.mock.calls[0];
     expect(cmd).toBe("npx");
     expect(args).toEqual([
-      "bmad-method@6.6.0",
+      "bmad-method@latest",
       "install",
       "--directory",
       "/tmp/walkthrough",

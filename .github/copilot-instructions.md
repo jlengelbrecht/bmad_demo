@@ -22,7 +22,7 @@ This is a Next.js + Express + SQLite training portal that teaches teams to adopt
 - unified + remark-* + rehype-* + rehype-pretty-code (markdown pipeline)
 - Vitest (unit), Playwright (e2e)
 - node-pty + xterm (interactive PTY for capstone phase chat)
-- BMAD pinned to v6.6.0 (under `_bmad/` and `.claude/skills/bmad-*`)
+- BMAD installed under `_bmad/` and `.claude/skills/bmad-*` (version is whatever `npx bmad-method@latest install` resolved at install time)
 
 ## Canonical npm scripts
 

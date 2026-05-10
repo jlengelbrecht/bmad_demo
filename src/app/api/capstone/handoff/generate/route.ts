@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { z } from "zod";
 
-import { getPinnedBmadVersion } from "@/lib/capstone/bootstrap/bmad-version";
+import { readInstalledBmadVersion } from "@/lib/capstone/bootstrap/bmad-version";
 import { renderHandoff } from "@/lib/capstone/handoff/render";
 import { runStreaming } from "@/lib/capstone/subprocess/run-streaming";
 import {
@@ -104,9 +104,12 @@ export async function POST(req: Request): Promise<Response> {
     }
   }
 
+  // Read the version from the trainee's bootstrapped repo, not the
+  // portal's own install — the trainee may have bootstrapped against a
+  // newer BMAD than the portal was tested against (we install @latest).
   let bmadVersion: string;
   try {
-    bmadVersion = getPinnedBmadVersion();
+    bmadVersion = readInstalledBmadVersion(chosenDir);
   } catch {
     bmadVersion = "<unknown>";
   }

@@ -38,7 +38,7 @@ Replace `<your-org>` and `<repo-name>` with your team's GitHub org and the desir
 
 ## BMAD version
 
-This repo was bootstrapped against **BMAD {{bmad-version}}**. Future BMAD upgrades in this repo are a deliberate decision (re-run `npx bmad-method install` against the same directory with a newer `@<version>` tag).
+This repo was bootstrapped against **BMAD {{bmad-version}}** (the latest release at install time). Future BMAD upgrades are a deliberate decision — re-run `npx bmad-method@latest install` against the same directory to pull the current release, or `@<specific-tag>` to pin to a particular version.
 
 ## Trainee tools used during the capstone
 

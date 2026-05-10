@@ -5,7 +5,7 @@ import path from "node:path";
 import { spawn as spawnPty } from "node-pty";
 import { z } from "zod";
 
-import { getPinnedBmadVersion } from "@/lib/capstone/bootstrap/bmad-version";
+import { INSTALL_TAG } from "@/lib/capstone/bootstrap/bmad-version";
 import { isPathAllowed } from "@/lib/capstone/bootstrap/path-allowlist";
 import * as ptyRegistry from "@/lib/capstone/pty/session-registry";
 import {
@@ -28,11 +28,12 @@ const RequestSchema = z.object({
 });
 
 /**
- * Spawn a PTY running `npx bmad-method@<pinned-version> install` with
- * just the boundary inputs we collected at the portal layer:
- * `--directory` (allowlist-validated) and `--tools` (preflight-validated).
- * Everything else is left for BMAD's interactive prompts — the trainee
- * walks them with arrow keys / Enter via the terminal pane.
+ * Spawn a PTY running `npx bmad-method@<INSTALL_TAG> install` (default
+ * tag: "latest") with just the boundary inputs we collected at the
+ * portal layer: `--directory` (allowlist-validated) and `--tools`
+ * (preflight-validated). Everything else is left for BMAD's interactive
+ * prompts — the trainee walks them with arrow keys / Enter via the
+ * terminal pane.
  *
  * Idempotent per sessionId: a duplicate POST while a PTY is live returns
  * 200 with the existing session's status. After exit, a fresh POST with
@@ -79,14 +80,6 @@ export async function POST(req: Request): Promise<Response> {
     });
   }
 
-  let bmadVersion: string;
-  try {
-    bmadVersion = getPinnedBmadVersion();
-  } catch (err) {
-    console.error("BMAD version pin unreadable", err);
-    return Response.json({ ok: false, error: "Internal error" }, { status: 500 });
-  }
-
   const parentOfChosenDir = path.dirname(allow.resolved);
   try {
     await mkdir(parentOfChosenDir, { recursive: true });
@@ -98,7 +91,8 @@ export async function POST(req: Request): Promise<Response> {
     );
   }
 
-  // Spawn the PTY. Production: `npx bmad-method@<ver> install ...`.
+  // Spawn the PTY. Production: `npx bmad-method@<INSTALL_TAG> install ...`
+  // (INSTALL_TAG defaults to "latest").
   // Test override: if CAPSTONE_PTY_FIXTURE_SCRIPT is set, spawn that
   // script instead — used by the e2e to drive a deterministic
   // "Continue? (y/n)" fixture without invoking real npm I/O.
@@ -107,7 +101,7 @@ export async function POST(req: Request): Promise<Response> {
   const args = fixturePath
     ? [allow.resolved, tool]
     : [
-        `bmad-method@${bmadVersion}`,
+        `bmad-method@${INSTALL_TAG}`,
         "install",
         "--directory",
         allow.resolved,
