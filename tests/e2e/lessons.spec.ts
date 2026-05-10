@@ -66,7 +66,7 @@ test.describe("lesson route (Story 2.2)", () => {
     await expect(next).toHaveAttribute("href", "/lessons/7-from-lessons-to-capstone");
   });
 
-  test("keyboard tab order: header → header-capstone → top-Prev → first nav pill", async ({ page }) => {
+  test("keyboard tab order: header brand → audience-entries → capstone → top-Prev → first nav pill", async ({ page }) => {
     await page.goto("/lessons/3-stories-as-tool-agnostic-contract");
 
     // Focus the document body so Tab starts from the document beginning.
@@ -79,22 +79,24 @@ test.describe("lesson route (Story 2.2)", () => {
         return null;
       });
 
-    // First tab → site header home link
-    await page.keyboard.press("Tab");
-    expect(await focusedHref()).toBe("/");
-
-    // Second tab → site header Capstone link (added in Story 4.3 for /capstone walkability).
-    await page.keyboard.press("Tab");
-    expect(await focusedHref()).toBe("/capstone");
-
-    // Third tab → top Previous link
-    await page.keyboard.press("Tab");
-    expect(await focusedHref()).toBe("/lessons/2-the-artifact-chain");
-
-    // Fourth tab → first numbered pill in the LessonNav <ol> (lesson 1).
-    // The pill row inserts six focusable links between Previous and Next.
-    await page.keyboard.press("Tab");
-    expect(await focusedHref()).toBe("/lessons/1-what-is-bmad");
+    // The site header (post UI pass) lays out brand mark + 3 audience-entry
+    // links + capstone, in that order. Tab traversal walks them in order
+    // before reaching the lesson body.
+    const expected = [
+      "/",
+      "/start-here",
+      "/stakeholder",
+      "/facilitator",
+      "/capstone",
+      // Then the lesson page's top Previous link
+      "/lessons/2-the-artifact-chain",
+      // Then the first numbered pill in the LessonNav <ol>
+      "/lessons/1-what-is-bmad",
+    ];
+    for (const href of expected) {
+      await page.keyboard.press("Tab");
+      expect(await focusedHref()).toBe(href);
+    }
   });
 
   test("unknown slug renders the global not-found page", async ({ page }) => {

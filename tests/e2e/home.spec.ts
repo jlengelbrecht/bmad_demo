@@ -1,14 +1,20 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("home page (Story 1.2)", () => {
-  test("renders the BMAD Demo heading and three audience cards", async ({ page }) => {
+  test("renders the hero headline and three audience cards", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.locator("h1")).toHaveText("BMAD Demo");
+    // Post-Epic-11 hero: "Adopt BMAD as a team — without the guesswork."
+    // The exact wording is curriculum content; assert containment of the
+    // load-bearing brand phrase rather than the literal headline.
+    await expect(page.locator("h1")).toContainText(/BMAD/);
 
-    const trainee = page.getByRole("link", { name: /Trainee — Start Here/ });
-    const stakeholder = page.getByRole("link", { name: /Stakeholder — 15-minute Demo/ });
-    const facilitator = page.getByRole("link", { name: /Facilitator — Workshop Guide/ });
+    // Audience cards' aria-labels were tightened to "<Title> (<time>)"
+    // (audience type lives on a separate badge); match by title only so
+    // the assertion stays robust against future copy edits.
+    const trainee = page.getByRole("link", { name: /^Start Here/ });
+    const stakeholder = page.getByRole("link", { name: /^15-minute Demo/ });
+    const facilitator = page.getByRole("link", { name: /^Workshop Guide/ });
 
     await expect(trainee).toBeVisible();
     await expect(stakeholder).toBeVisible();
@@ -25,17 +31,19 @@ test.describe("home page (Story 1.2)", () => {
     await page.goto("/");
 
     await expect(
-      page.getByLabel("Trainee — Start Here (~3 hours · self-paced)")
+      page.getByLabel("Start Here (~3 hours · self-paced)"),
     ).toBeVisible();
-    await expect(page.getByLabel("Stakeholder — 15-minute Demo (15 minutes)")).toBeVisible();
     await expect(
-      page.getByLabel("Facilitator — Workshop Guide (~30 min prep · half-day delivery)")
+      page.getByLabel("15-minute Demo (15 minutes)"),
+    ).toBeVisible();
+    await expect(
+      page.getByLabel("Workshop Guide (~30 min prep · half-day delivery)"),
     ).toBeVisible();
   });
 
   test("clicking the trainee card client-routes to /start-here", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("link", { name: /Trainee — Start Here/ }).click();
+    await page.getByRole("link", { name: /^Start Here/ }).click();
     await expect(page).toHaveURL("/start-here");
     // Markdown rendering prepends a `#` anchor link inside the heading; assert containment.
     await expect(page.locator("h1")).toContainText("Trainee — Start Here");
