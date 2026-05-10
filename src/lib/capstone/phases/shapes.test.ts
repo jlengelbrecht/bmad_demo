@@ -125,7 +125,7 @@ describe("validatePhaseShape — epics-and-stories", () => {
   });
 });
 
-describe("validatePhaseShape — prd / architecture / adr", () => {
+describe("validatePhaseShape — prd / architecture", () => {
   it("matches prd.md", () => {
     const cd = mkChosen();
     writeArtifact(cd, "prd.md", "x".repeat(500));
@@ -138,21 +138,6 @@ describe("validatePhaseShape — prd / architecture / adr", () => {
     writeArtifact(cd, "architecture.md", "x".repeat(500));
     const r = validatePhaseShape("architecture", cd, "_bmad-output", REAL_FS);
     expect(r.shapeValid).toBe(true);
-  });
-
-  it("matches various ADR file naming styles", () => {
-    for (const name of [
-      "adr-001.md",
-      "adr-001-some-decision.md",
-      "adr.md",
-      "adrs.md",
-      "ADR-1.md",
-    ]) {
-      const cd = mkChosen();
-      writeArtifact(cd, name, "x".repeat(80));
-      const r = validatePhaseShape("adr", cd, "_bmad-output", REAL_FS);
-      expect(r.artifactExists, `pattern should match ${name}`).toBe(true);
-    }
   });
 });
 
@@ -171,8 +156,7 @@ describe("nextPhase", () => {
     expect(nextPhase("brief")).toBe("prd");
     expect(nextPhase("prd")).toBe("architecture");
     expect(nextPhase("architecture")).toBe("epics-and-stories");
-    expect(nextPhase("epics-and-stories")).toBe("adr");
-    expect(nextPhase("adr")).toBe("dev-story-1.1");
+    expect(nextPhase("epics-and-stories")).toBe("dev-story-1.1");
   });
 
   it("returns null after the final phase", () => {

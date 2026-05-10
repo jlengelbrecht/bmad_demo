@@ -218,10 +218,14 @@ export async function POST(req: Request): Promise<Response> {
 
 /**
  * The capstone-step row's id format uses the Story-4.1 step names. The
- * rebuild's `CapstonePhase` enum is wider; we map onto unique step slots
- * so completion of each phase writes a distinct row. `dev-story-1.1` was
- * added to `CAPSTONE_STEP_NAMES` (Story 7a.3 fix) so it no longer
- * collides with `adr`.
+ * rebuild's `CapstonePhase` enum maps onto distinct legacy step slots
+ * so each phase writes a distinct row.
+ *
+ * Historical note: the legacy `'adr'` slot is preserved in
+ * `CAPSTONE_STEP_NAMES` for backward compatibility (older session rows
+ * may reference it), but the rebuild's `CapstonePhase` no longer
+ * includes ADR — BMAD 6.6.0 doesn't ship an ADR skill, and decision
+ * rationale lives inline in `architecture.md`.
  */
 function legacyStepName(phase: CapstonePhase): string {
   const map: Record<CapstonePhase, string> = {
@@ -229,7 +233,6 @@ function legacyStepName(phase: CapstonePhase): string {
     prd: "epic",
     architecture: "story-1",
     "epics-and-stories": "story-2",
-    adr: "adr",
     "dev-story-1.1": "dev-story-1.1",
   };
   return map[phase];

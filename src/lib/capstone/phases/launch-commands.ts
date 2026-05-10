@@ -42,9 +42,7 @@ export interface LaunchCommand {
  * under `.claude/skills/` (and equivalent dirs for codex / copilot)
  * by `npx bmad-method install`.
  *
- * The ADR phase has no shipped BMAD skill — the trainee writes the
- * ADR by hand following the conventions taught in lessons. The
- * dev-story phase is two skills back-to-back (`/bmad-create-story`
+ * The dev-story phase is two skills back-to-back (`/bmad-create-story`
  * then `/bmad-dev-story`); the preview surfaces the first.
  */
 const BMAD_SKILLS: Record<CapstonePhase, string | null> = {
@@ -52,7 +50,6 @@ const BMAD_SKILLS: Record<CapstonePhase, string | null> = {
   prd: "/bmad-create-prd",
   architecture: "/bmad-create-architecture",
   "epics-and-stories": "/bmad-create-epics-and-stories",
-  adr: null,
   "dev-story-1.1": "/bmad-create-story",
 };
 
@@ -146,6 +143,5 @@ export const PHASE_DISPLAY_NAMES: Record<CapstonePhase, string> = {
   prd: "PRD",
   architecture: "Architecture",
   "epics-and-stories": "Epics & Stories",
-  adr: "ADR",
   "dev-story-1.1": "Dev Story 1.1",
 };

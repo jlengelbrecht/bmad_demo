@@ -12,7 +12,6 @@ const PHASES: CapstonePhase[] = [
   "prd",
   "architecture",
   "epics-and-stories",
-  "adr",
   "dev-story-1.1",
 ];
 
@@ -27,13 +26,6 @@ describe("getLaunchCommand", () => {
     expect(cmd.autoRun).toBe(true);
   });
 
-  it("for claude-code with no BMAD skill (adr), launches bare without positional", () => {
-    const cmd = getLaunchCommand("claude-code", "adr");
-    expect(cmd.args).toEqual(["--dangerously-skip-permissions"]);
-    expect(cmd.autoRun).toBe(false);
-    expect(cmd.bmadInvocation).toBeNull();
-  });
-
   it("for codex, appends the BMAD slash command as positional argv (autoRun)", () => {
     const cmd = getLaunchCommand("codex", "brief");
     expect(cmd.cmd).toBe("codex");
@@ -42,13 +34,6 @@ describe("getLaunchCommand", () => {
       "/bmad-product-brief",
     ]);
     expect(cmd.autoRun).toBe(true);
-  });
-
-  it("for codex with no BMAD skill (adr), launches bare without positional", () => {
-    const cmd = getLaunchCommand("codex", "adr");
-    expect(cmd.args).toEqual(["--dangerously-bypass-approvals-and-sandbox"]);
-    expect(cmd.autoRun).toBe(false);
-    expect(cmd.bmadInvocation).toBeNull();
   });
 
   it("for github-copilot, uses -i to auto-execute the BMAD slash command", () => {
@@ -62,24 +47,19 @@ describe("getLaunchCommand", () => {
     expect(cmd.autoRun).toBe(true);
   });
 
-  it("for github-copilot with no BMAD skill (adr), launches bare without -i", () => {
-    const cmd = getLaunchCommand("github-copilot", "adr");
-    expect(cmd.args).toEqual(["--allow-all-tools"]);
-    expect(cmd.autoRun).toBe(false);
-    expect(cmd.bmadInvocation).toBeNull();
-  });
-
   it("preview includes `cd <chosenDir>` so the trainee sees the cwd context", () => {
     const cmd = getLaunchCommand("claude-code", "brief");
     expect(cmd.preview("/tmp/my-repo")).toContain("cd /tmp/my-repo");
     expect(cmd.preview("/tmp/my-repo")).toContain("claude");
   });
 
-  it.each(TOOLS)("preview surfaces the BMAD slash command in quotes for tool=%s phase=brief", (tool) => {
-    const cmd = getLaunchCommand(tool, "brief");
-    // claude/codex use bare quotes around the positional; copilot uses -i "<...>"
-    expect(cmd.preview("/tmp/r")).toContain('"/bmad-product-brief"');
-  });
+  it.each(TOOLS)(
+    "preview surfaces the BMAD slash command in quotes for tool=%s phase=brief",
+    (tool) => {
+      const cmd = getLaunchCommand(tool, "brief");
+      expect(cmd.preview("/tmp/r")).toContain('"/bmad-product-brief"');
+    },
+  );
 
   it.each(TOOLS)("yields a non-null bmadInvocation for tool=%s phase=brief", (tool) => {
     expect(getLaunchCommand(tool, "brief").bmadInvocation).toBe(
@@ -88,9 +68,17 @@ describe("getLaunchCommand", () => {
   });
 
   it.each(TOOLS)(
-    "yields null bmadInvocation for tool=%s phase=adr (no shipped skill)",
+    "every CapstonePhase has a non-null BMAD skill (no skill-less phases after the ADR drop)",
     (tool) => {
-      expect(getLaunchCommand(tool, "adr").bmadInvocation).toBeNull();
+      // Post-ADR-removal: every phase in the chain has a backing BMAD
+      // skill. If a future phase ships without one, add a test that
+      // explicitly covers the null case.
+      for (const phase of PHASES) {
+        expect(
+          getLaunchCommand(tool, phase).bmadInvocation,
+          `phase=${phase} should have a BMAD skill`,
+        ).not.toBeNull();
+      }
     },
   );
 
@@ -106,14 +94,10 @@ describe("getLaunchCommand", () => {
     expect(cmd.preview).toBeTypeOf("function");
   });
 
-  it.each(TOOLS)("autoRun is true for tool=%s on a phase with a BMAD skill", (tool) => {
-    expect(getLaunchCommand(tool, "brief").autoRun).toBe(true);
-    expect(getLaunchCommand(tool, "prd").autoRun).toBe(true);
-    expect(getLaunchCommand(tool, "architecture").autoRun).toBe(true);
-  });
-
-  it.each(TOOLS)("autoRun is false for tool=%s on the adr phase (no skill)", (tool) => {
-    expect(getLaunchCommand(tool, "adr").autoRun).toBe(false);
+  it.each(TOOLS)("autoRun is true for tool=%s on every phase", (tool) => {
+    for (const phase of PHASES) {
+      expect(getLaunchCommand(tool, phase).autoRun, `phase=${phase}`).toBe(true);
+    }
   });
 });
 

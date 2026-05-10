@@ -70,17 +70,6 @@ export const PHASE_SHAPES: Record<CapstonePhase, PhaseShape> = {
     ],
     minSizeBytes: 200,
   },
-  adr: {
-    searchSubdir: "planning-artifacts",
-    // BMAD 6.6.0 doesn't ship a dedicated ADR skill; trainees write
-    // these manually with a variety of common naming conventions.
-    artifactPatterns: [
-      /^adr-\d+.*\.md$/i, // adr-001.md, adr-001-foo.md, ADR-1.md
-      /^adr\.md$/i,
-      /^adrs\.md$/i,
-    ],
-    minSizeBytes: 50,
-  },
   "dev-story-1.1": {
     // The dev-story-1.1 phase's gate is a green test run, not a
     // planning artifact. The phase-done route bypasses validatePhaseShape
@@ -217,7 +206,6 @@ export const PHASE_ORDER: CapstonePhase[] = [
   "prd",
   "architecture",
   "epics-and-stories",
-  "adr",
   "dev-story-1.1",
 ];
 

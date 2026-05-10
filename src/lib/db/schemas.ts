@@ -51,13 +51,18 @@ export const CAPSTONE_STEP_ID = new RegExp(
  * `CAPSTONE_STEP_NAMES` set above (those were the Epic-4 textarea-form
  * artifacts). The rebuild's chat phases drive primer selection and
  * `capstone-tool-session` row keys.
+ *
+ * Note: `adr` was removed in 2026-05-10 — BMAD 6.6.0 doesn't ship an
+ * ADR skill, and `bmad-create-architecture` already emits decision
+ * rationale inline in `architecture.md` (per its step-04-decisions.md).
+ * The legacy `'adr'` value remains in `CAPSTONE_STEP_NAMES` above for
+ * backward compatibility with any in-flight session rows.
  */
 export const CAPSTONE_PHASE_NAMES = [
   "brief",
   "prd",
   "architecture",
   "epics-and-stories",
-  "adr",
   "dev-story-1.1",
 ] as const;
 

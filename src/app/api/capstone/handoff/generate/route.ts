@@ -29,8 +29,7 @@ const ARTIFACT_PATHS: { phase: string; rel: string }[] = [
   { phase: "brief", rel: "planning-artifacts/brief.md" },
   { phase: "prd", rel: "planning-artifacts/prd.md" },
   { phase: "architecture", rel: "planning-artifacts/architecture.md" },
-  { phase: "epics-and-stories", rel: "planning-artifacts/epics-and-stories.md" },
-  { phase: "adr", rel: "planning-artifacts/adr-001.md" },
+  { phase: "epics-and-stories", rel: "planning-artifacts/epics.md" },
 ];
 
 function formatSize(bytes: number): string {

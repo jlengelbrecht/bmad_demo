@@ -25,7 +25,7 @@ The portal makes **zero cloud calls of its own.** Every model invocation goes th
 
 ---
 
-## The nine phases
+## The eight phases
 
 | # | Phase | What you do | Output |
 |---|---|---|---|
@@ -35,11 +35,10 @@ The portal makes **zero cloud calls of its own.** Every model invocation goes th
 | 2 | Bootstrap | The portal runs `npx bmad-method install --tools <your-choice>` against your chosen path; you watch the install in an embedded terminal | a fresh BMAD-bootstrapped repo |
 | 3 | Brief | Chat with your tool through `bmad-product-brief` | `_bmad-output/planning-artifacts/product-brief-<project>.md` |
 | 4 | PRD | Chat through `bmad-create-prd` (brief auto-loaded as context) | `prd.md` |
-| 5 | Architecture | Chat through `bmad-create-architecture` | `architecture.md` |
+| 5 | Architecture | Chat through `bmad-create-architecture` (decision rationale lands inline — see Lesson 2's note on architecture documents containing decision records) | `architecture.md` |
 | 6 | Epics + stories | Chat through `bmad-create-epics-and-stories` | `epics.md` |
-| 7 | ADR | Capture key architecture decisions — your install may include a dedicated ADR skill, or decision rationale may be embedded in `architecture.md`. The phase-done gate validates the artifact exists in either location. | `adr-001-<slug>.md` and/or sections in `architecture.md` |
-| 8 | Dev Story 1.1 | Chat through `bmad-create-story` for the first story, then implement via `bmad-dev-story` with a green-tests gate | code + updated story file |
-| 9 | Handoff | The portal generates `HANDOFF.md` with push instructions and Day-2 next steps | `HANDOFF.md` in your repo |
+| 7 | Dev Story 1.1 | Chat through `bmad-create-story` for the first story, then implement via `bmad-dev-story` with a green-tests gate | code + updated story file |
+| 8 | Handoff | The portal generates `HANDOFF.md` with push instructions and Day-2 next steps | `HANDOFF.md` in your repo |
 
 The contract between phases is **the files on disk** — not the chat history. If you close the page and come back tomorrow, the portal re-loads the prior artifacts as primer context for the next phase. This is the same property your team will rely on day-to-day after the capstone (Lesson 5's "stories propagate; conversations don't").
 
@@ -49,7 +48,7 @@ The contract between phases is **the files on disk** — not the chat history. I
 
 When the capstone finishes, you have:
 
-- **A real BMAD repo** at the path you chose, with brief / PRD / architecture / epics+stories / ADR / story-1.1 produced — and Story 1.1's tests passing.
+- **A real BMAD repo** at the path you chose, with brief / PRD / architecture / epics+stories / story-1.1 produced — and Story 1.1's tests passing.
 - **A `HANDOFF.md`** with the full Day-2 checklist: how to push to your team's GitHub org, which `CODEOWNERS` placeholders to replace, what branch protection to apply, where to pin the [`team-rituals-checklist.md`](/source/training/team-rituals-checklist.md) and [`lead-review-checklist.md`](/source/training/lead-review-checklist.md) you've now seen referenced in Lessons 4 and 5.
 - **A working mental model** for running BMAD natively from your terminal. The portal is a training tool; after the capstone, you'll never need it again to run BMAD — you invoke skills through your AI tool's normal interface, the same way you did during the capstone.
 
