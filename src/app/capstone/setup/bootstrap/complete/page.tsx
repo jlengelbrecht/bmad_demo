@@ -1,14 +1,18 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import path from "node:path";
 
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import type { ToolId } from "@/lib/capstone/adapters/types";
+import { buildBootstrapExplainer } from "@/lib/capstone/bootstrap/explainer";
 import { readBootstrappedTree, formatSize, type TreeNode } from "@/lib/capstone/bootstrap/file-tree";
 import { getCapstoneTargetDir } from "@/lib/db/progress-db";
 import { CAPSTONE_SESSION_ID } from "@/lib/db/schemas";
 import { Markdown } from "@/lib/markdown/render";
+
+const TOOL_VALUES: ToolId[] = ["claude-code", "codex", "github-copilot"];
 
 export const metadata: Metadata = {
   title: "Capstone setup — bootstrap complete · BMAD Demo",
@@ -34,15 +38,10 @@ export default async function BootstrapCompletePage({
   if (!existsSync(chosenDir)) notFound();
 
   const tree = readBootstrappedTree(chosenDir, 3);
-  const explainerPath = path.join(
-    process.cwd(),
-    "src",
-    "lib",
-    "capstone",
-    "bootstrap",
-    "explainer.md",
-  );
-  const explainer = readFileSync(explainerPath, "utf8");
+  const validTool = tool && (TOOL_VALUES as string[]).includes(tool)
+    ? (tool as ToolId)
+    : undefined;
+  const explainer = buildBootstrapExplainer({ tool: validTool });
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-12">
@@ -70,7 +69,7 @@ export default async function BootstrapCompletePage({
         aria-labelledby="explainer-heading"
         className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
       >
-        <Markdown source={explainer} sourcePath={explainerPath} />
+        <Markdown source={explainer} />
       </section>
 
       <Link
