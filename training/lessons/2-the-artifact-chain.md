@@ -46,7 +46,7 @@ Let's walk it. You'll click into each artifact below; this is the most concrete 
 
 ### 1. Product brief — the "why"
 
-📄 [`product-brief-bmad_demo.md`](../../_bmad-output/planning-artifacts/product-brief-bmad_demo.md) (134 lines)
+📄 [`product-brief-bmad_demo.md`](/source/_bmad-output/planning-artifacts/product-brief-bmad_demo.md) (134 lines)
 
 Produced by `bmad-product-brief`. The brief is a 1–2 page executive summary that establishes the project's purpose, problem, and solution shape. Open it and skim:
 
@@ -54,13 +54,13 @@ Produced by `bmad-product-brief`. The brief is a 1–2 page executive summary th
 - **The Problem** names the five concrete pain points BMAD-on-a-team addresses (artifact drift, unreviewed AI code, mixed-tool conflicts, etc.).
 - **The Solution** frames the curriculum's headline differentiator — the **story file as a tool-agnostic contract**.
 
-There's also a **distillate** sibling at [`product-brief-bmad_demo-distillate.md`](../../_bmad-output/planning-artifacts/product-brief-bmad_demo-distillate.md). This is the LLM-optimized version: dense, no narrative scaffolding, optimized for being loaded as context by the PRD skill. The dual-output design — readable brief + dense distillate — is one of the things that makes downstream PRD creation efficient.
+There's also a **distillate** sibling at [`product-brief-bmad_demo-distillate.md`](/source/_bmad-output/planning-artifacts/product-brief-bmad_demo-distillate.md). This is the LLM-optimized version: dense, no narrative scaffolding, optimized for being loaded as context by the PRD skill. The dual-output design — readable brief + dense distillate — is one of the things that makes downstream PRD creation efficient.
 
 **What the next skill uses from this:** the problem statement, the headline differentiator, and the success criteria. The PRD will read all three from disk and treat them as fixed.
 
 ### 2. PRD — the "what"
 
-📄 [`prd.md`](../../_bmad-output/planning-artifacts/prd.md) (656 lines)
+📄 [`prd.md`](/source/_bmad-output/planning-artifacts/prd.md) (656 lines)
 
 Produced by `bmad-create-prd` through a strict twelve-step facilitated workflow. The PRD turns the brief's "why" into a concrete "what" — the functional requirements the system must support and the non-functional constraints it must hold.
 
@@ -77,7 +77,7 @@ The PRD is rigorous because everything downstream depends on it. If the PRD is v
 
 ### 3. UX design *(optional)*
 
-📄 [`ux-design.md`](../../_bmad-output/planning-artifacts/ux-design.md) (1352 lines)
+📄 [`ux-design.md`](/source/_bmad-output/planning-artifacts/ux-design.md) (1352 lines)
 
 Produced by `bmad-create-ux-design` — owned by the UX-designer agent. Optional in BMAD; load-bearing for any project with a non-trivial UI. Not every project needs it (a CLI or a backend service might skip).
 
@@ -85,7 +85,7 @@ This portal does have one. It walks every screen, every interaction, every break
 
 ### 4. Architecture — the "how"
 
-📄 [`architecture.md`](../../_bmad-output/planning-artifacts/architecture.md) (1160 lines)
+📄 [`architecture.md`](/source/_bmad-output/planning-artifacts/architecture.md) (1160 lines)
 
 Produced by `bmad-create-architecture` — owned by the system-architect agent. The architecture document turns the PRD's *what* into a concrete *how*: technologies, data models, route handlers, subprocess discipline, threat model, deployment shape.
 
@@ -95,7 +95,7 @@ Architecture documents in BMAD have a specific property worth noticing: they con
 
 ### 5. Epics & stories list — the "what, broken down"
 
-📄 [`epics.md`](../../_bmad-output/planning-artifacts/epics.md) (1638 lines, the largest artifact in the chain)
+📄 [`epics.md`](/source/_bmad-output/planning-artifacts/epics.md) (1638 lines, the largest artifact in the chain)
 
 Produced by `bmad-create-epics-and-stories`. This artifact is where the abstract requirements of the PRD + architecture become concrete pieces of work. An **epic** is a body of related stories that ships together (e.g., "Epic 3 — Trainee Progress State & Reset"). A **story** is a single, reviewable unit a developer can pick up and ship as one PR.
 
@@ -105,7 +105,7 @@ The stories in `epics.md` are the *plan*. The actual story files (which the impl
 
 ### 6. Implementation-readiness report
 
-📄 [`implementation-readiness-report-2026-05-08.md`](../../_bmad-output/planning-artifacts/implementation-readiness-report-2026-05-08.md) (231 lines)
+📄 [`implementation-readiness-report-2026-05-08.md`](/source/_bmad-output/planning-artifacts/implementation-readiness-report-2026-05-08.md) (231 lines)
 
 Produced by `bmad-check-implementation-readiness`. This is BMAD's gate between planning and implementation — a traceability check that walks every PRD requirement and asks: "Is there a story that implements this? Is there an architecture decision that supports it?" Drift between the PRD, the architecture, and the epics surfaces here, before any code is written.
 
@@ -113,7 +113,7 @@ Skim ours. It's where this portal caught its own gaps before Phase 4 kicked off.
 
 ### 7. Per-story file — the contract for one PR
 
-📁 `_bmad-output/implementation-artifacts/` (about 50 files — see for example [`3-3-mark-complete-ui.md`](../../_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md))
+📁 `_bmad-output/implementation-artifacts/` (about 50 files — see for example [`3-3-mark-complete-ui.md`](/source/_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md))
 
 Produced one-at-a-time by `bmad-create-story`. This is the most important artifact in the chain. The skill's own description states it explicitly: *"Your purpose is NOT to copy from epics — it's to create a comprehensive, optimized story file that gives the dev agent EVERYTHING needed for flawless implementation."*
 
@@ -125,7 +125,7 @@ A story file contains:
 - A "Tasks/Subtasks" checklist the dev agent will tick off during implementation
 - A "Dev Agent Record" section (filled in *during* implementation, not at story-creation time)
 
-Open one — try [`3-3-mark-complete-ui.md`](../../_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md) — and notice that you could hand this file to any of Claude Code, Codex, or GitHub Copilot and they'd produce the same set of files in the same shape. **That is the tool-agnostic contract claim made physical.** Lesson 3 returns to this property.
+Open one — try [`3-3-mark-complete-ui.md`](/source/_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md) — and notice that you could hand this file to any of Claude Code, Codex, or GitHub Copilot and they'd produce the same set of files in the same shape. **That is the tool-agnostic contract claim made physical.** Lesson 3 returns to this property.
 
 ### 8. Dev story execution — implementation
 
@@ -137,7 +137,7 @@ What the dev agent is allowed to modify in the story file is bounded: tasks/subt
 
 `bmad-code-review` runs three adversarial review layers in parallel against the produced code: a **Blind Hunter** that doesn't see the spec and tries to break the code from cold; an **Edge Case Hunter** that walks every branching path; an **Acceptance Auditor** that checks the code against the story's acceptance criteria. Findings get triaged into actionable categories.
 
-`bmad-retrospective` runs at the end of an epic. You can find ours under `_bmad-output/implementation-artifacts/`: [`epic-1-retro-2026-05-08.md`](../../_bmad-output/implementation-artifacts/epic-1-retro-2026-05-08.md), [`epic-3-retro-2026-05-08.md`](../../_bmad-output/implementation-artifacts/epic-3-retro-2026-05-08.md), [`epic-5-and-6-retro-2026-05-09.md`](../../_bmad-output/implementation-artifacts/epic-5-and-6-retro-2026-05-09.md). Each captures what went well, what didn't, and what changes carry forward to the next epic.
+`bmad-retrospective` runs at the end of an epic. You can find ours under `_bmad-output/implementation-artifacts/`: [`epic-1-retro-2026-05-08.md`](/source/_bmad-output/implementation-artifacts/epic-1-retro-2026-05-08.md), [`epic-3-retro-2026-05-08.md`](/source/_bmad-output/implementation-artifacts/epic-3-retro-2026-05-08.md), [`epic-5-and-6-retro-2026-05-09.md`](/source/_bmad-output/implementation-artifacts/epic-5-and-6-retro-2026-05-09.md). Each captures what went well, what didn't, and what changes carry forward to the next epic.
 
 ---
 

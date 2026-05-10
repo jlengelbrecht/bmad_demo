@@ -95,7 +95,7 @@ For each lesson, the most useful facilitator move:
 
 - *"Do we need to produce all of these artifacts for every feature?"* — No. Feature-sized work uses a brief-equivalent paragraph + a story file. Project-sized work uses the full chain. Match artifacts to scope.
 
-**Facilitator move:** open [`_bmad-output/planning-artifacts/`](../_bmad-output/planning-artifacts/architecture.md) tabs to a real artifact each. Click around live; the self-reference is the lesson.
+**Facilitator move:** open [`_bmad-output/planning-artifacts/`](/source/_bmad-output/planning-artifacts/architecture.md) tabs to a real artifact each. Click around live; the self-reference is the lesson.
 
 ### Lesson 3 — Stories as tool-agnostic contract
 
@@ -180,4 +180,4 @@ Without these three commitments, the workshop is a nice memory.
 - [`/start-here`](/start-here) — what attendees see before the workshop
 - [`/stakeholder`](/stakeholder) — for the leadership conversation that authorized the workshop
 - [`training/tools-reference.md`](tools-reference.md) — what to send attendees a few days before
-- [`_bmad-output/planning-artifacts/research/bmad-team-rituals.md`](../_bmad-output/planning-artifacts/research/bmad-team-rituals.md) — the underlying research the curriculum draws on; useful for "why does the lesson say X?" questions you can't answer in the moment
+- [`_bmad-output/planning-artifacts/research/bmad-team-rituals.md`](/source/_bmad-output/planning-artifacts/research/bmad-team-rituals.md) — the underlying research the curriculum draws on; useful for "why does the lesson say X?" questions you can't answer in the moment

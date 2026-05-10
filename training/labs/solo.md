@@ -90,7 +90,7 @@ The PR description must link the story file (see [Lesson 4](/lessons/4-codeowner
 
 ### 5. Walk the lead-review checklist on yourself (10 min)
 
-Before you ask for review, walk [`training/lead-review-checklist.md`](../lead-review-checklist.md) on your own diff. The most useful check: **is the story file unchanged from before the dev agent started?** If the user-story or acceptance criteria moved, you have spec drift you didn't catch — pause, name the loop, fix.
+Before you ask for review, walk [`training/lead-review-checklist.md`](/source/training/lead-review-checklist.md) on your own diff. The most useful check: **is the story file unchanged from before the dev agent started?** If the user-story or acceptance criteria moved, you have spec drift you didn't catch — pause, name the loop, fix.
 
 If the checklist surfaces something you missed, fix it before requesting review.
 
@@ -123,6 +123,6 @@ Keep your notes. They're the input for your team's next BMAD-adoption conversati
 ## See also
 
 - [Lesson 5 — Working as a team](/lessons/5-working-as-a-team) — recovery loops by name.
-- [`training/lead-review-checklist.md`](../lead-review-checklist.md) — what to walk on yourself before requesting review.
-- [`training/team-rituals-checklist.md`](../team-rituals-checklist.md) — pin this in your team's repo if you haven't already.
+- [`training/lead-review-checklist.md`](/source/training/lead-review-checklist.md) — what to walk on yourself before requesting review.
+- [`training/team-rituals-checklist.md`](/source/training/team-rituals-checklist.md) — pin this in your team's repo if you haven't already.
 - [Sync lab](/labs/sync) — same shape as this one, but with your team in the room.

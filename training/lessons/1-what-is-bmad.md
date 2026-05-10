@@ -82,7 +82,7 @@ Concretely, BMAD does not specify:
 - **What to do when the contract bites.** When code drifts from a story, when two teammates' tools produce diverging conventions, when a story turns out to be too big — BMAD doesn't name the recovery procedure. This curriculum does (Lesson 5 names five recovery loops).
 - **How mixed-tool teams stay coherent.** One engineer uses Claude Code, another uses Codex, a third uses GitHub Copilot. BMAD's artifacts are tool-agnostic — but only if the team treats them as the contract. The portal's capstone has you run the same artifact chain against all three tools to make this real, not theoretical.
 
-In short: BMAD is **necessary** for spec-driven AI work. It is not **sufficient** for a team adopting that pattern. The team needs the rituals on top — CODEOWNERS as the enforcement layer, branch protection as the gate, the dual-role [`AGENTS.md`](../../AGENTS.md) + `.github/copilot-instructions.md` pattern, the named recovery loops. That's what this curriculum is.
+In short: BMAD is **necessary** for spec-driven AI work. It is not **sufficient** for a team adopting that pattern. The team needs the rituals on top — CODEOWNERS as the enforcement layer, branch protection as the gate, the dual-role [`AGENTS.md`](/source/AGENTS.md) + [`.github/copilot-instructions.md`](/source/.github/copilot-instructions.md) pattern, the named recovery loops. That's what this curriculum is.
 
 ---
 
@@ -93,8 +93,8 @@ BMAD is the framework. This portal is the **training ground** for the team layer
 A few specific extensions you'll encounter:
 
 - **The capstone is a guided BMAD run** — but it's also a deliberate proof that the artifact chain is tool-agnostic. You'll pick your AI tool (Claude Code, Codex, or GitHub Copilot) and walk the same chain. The artifacts you produce are identical in shape; only the tool's terminal output differs. This is a load-bearing demonstration, not a stylistic flourish — Lesson 5 returns to it.
-- **The lead-review checklist** ([`training/lead-review-checklist.md`](../lead-review-checklist.md), produced by Lesson 4) is *not* a BMAD artifact. It's a team-side artifact this curriculum produces — designed so your team's lead can pin it in your repo on Day 2 and use it on real PRs.
-- **The team-rituals checklist** ([`training/team-rituals-checklist.md`](../team-rituals-checklist.md), produced by Lesson 5) names the five recovery loops as a one-page reference. Same pattern: a team-layer artifact pinnable in any repo.
+- **The lead-review checklist** ([`training/lead-review-checklist.md`](/source/training/lead-review-checklist.md), produced by Lesson 4) is *not* a BMAD artifact. It's a team-side artifact this curriculum produces — designed so your team's lead can pin it in your repo on Day 2 and use it on real PRs.
+- **The team-rituals checklist** ([`training/team-rituals-checklist.md`](/source/training/team-rituals-checklist.md), produced by Lesson 5) names the five recovery loops as a one-page reference. Same pattern: a team-layer artifact pinnable in any repo.
 
 When you finish the capstone you'll get a `HANDOFF.md` in your bootstrapped repo with explicit Day-2 instructions: how to push to your team's GitHub org, which CODEOWNERS placeholders to replace, what branch protection to apply. The curriculum is over at handoff; the team's actual work begins there.
 
@@ -112,4 +112,4 @@ If a question is about how a skill works internally — what `bmad-create-prd` d
 
 **Lesson 2** walks the BMAD artifact chain — brief → PRD → architecture → epics → stories → PR — using *this repo's own* planning artifacts as the worked example. By the end you'll have read every artifact BMAD produces, and you'll see how each one constrains the next.
 
-If you want a preview, open the [product brief](../../_bmad-output/planning-artifacts/product-brief-bmad_demo.md), [PRD](../../_bmad-output/planning-artifacts/prd.md), [architecture](../../_bmad-output/planning-artifacts/architecture.md), and [epics](../../_bmad-output/planning-artifacts/epics.md) for *this portal*. They're right there — produced through BMAD, the same way the capstone will have you produce them.
+If you want a preview, open the [product brief](/source/_bmad-output/planning-artifacts/product-brief-bmad_demo.md), [PRD](/source/_bmad-output/planning-artifacts/prd.md), [architecture](/source/_bmad-output/planning-artifacts/architecture.md), and [epics](/source/_bmad-output/planning-artifacts/epics.md) for *this portal*. They're right there — produced through BMAD, the same way the capstone will have you produce them.

@@ -13,7 +13,7 @@ title: CODEOWNERS and the gate
 - The four CODEOWNERS rules that catch teams in production — last-match-wins, silent-skip on missing teams, draft-PR behavior, and the markdown-trap pattern-precedence example.
 - What the **lead reads for at the gate** — concrete, repeatable items rather than narrative platitudes.
 
-This lesson is the densest in the curriculum and produces the curriculum's most pinnable artifact: [`training/lead-review-checklist.md`](../lead-review-checklist.md), a one-page checklist your team's lead can drop into your repo on Day 2 and use on real PRs.
+This lesson is the densest in the curriculum and produces the curriculum's most pinnable artifact: [`training/lead-review-checklist.md`](/source/training/lead-review-checklist.md), a one-page checklist your team's lead can drop into your repo on Day 2 and use on real PRs.
 
 ---
 
@@ -195,7 +195,7 @@ CODEOWNERS routes the PR to the right human. Branch protection makes that human'
 
 This is the lesson moment that gets handwaved more often than any other in industry "how to review AI-generated code" guides. Vague injunctions ("look for quality, look for safety") don't translate into a repeatable practice. So this curriculum produces a concrete artifact instead: the **lead-review checklist**.
 
-The full checklist lives at [`training/lead-review-checklist.md`](../lead-review-checklist.md). The headline items:
+The full checklist lives at [`training/lead-review-checklist.md`](/source/training/lead-review-checklist.md). The headline items:
 
 1. **Spec-vs-code faithfulness.** The PR claims to implement Story X. Read Story X's user-story and acceptance criteria. Compare against the diff. Does the diff implement what the story specified — nothing more, nothing less?
 2. **Scope-fit.** Is the diff doing only what the story asked? Refactoring code outside the story's scope is a separate concern; bundling it makes review harder. (Story 5 in this curriculum will revisit this as one of the named recovery loops.)
@@ -227,4 +227,4 @@ The theme: each failure mode is *invisible* — the UI doesn't surface a warning
 
 You now know what makes the gate enforceable, what the lead reads for, and have a pinnable checklist artifact. **Lesson 5** turns to the moments when the contract bites — what to do when code drifts from the spec, when a story turns out to be too big, when two teammates' tools produce diverging conventions. Lesson 5 names **five recovery loops** and produces the team-rituals checklist as its concrete output.
 
-Before Lesson 5, take five minutes with the [lead-review checklist](../lead-review-checklist.md). Skim it now; you'll come back to it on real PRs after the capstone.
+Before Lesson 5, take five minutes with the [lead-review checklist](/source/training/lead-review-checklist.md). Skim it now; you'll come back to it on real PRs after the capstone.

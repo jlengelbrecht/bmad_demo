@@ -14,7 +14,7 @@ title: Working as a team
 - The single hardest distinction in this lesson: **Loop #1 vs Loop #5** — and why conflating them is the most common gate-time failure.
 - The **dual-role `AGENTS.md` + `.github/copilot-instructions.md`** pattern that makes per-repo conventions hold across multiple AI tools.
 
-This lesson produces the curriculum's second pinnable artifact: [`training/team-rituals-checklist.md`](../team-rituals-checklist.md) — a one-page reference your team can pin in your repo and refer back to when things go sideways.
+This lesson produces the curriculum's second pinnable artifact: [`training/team-rituals-checklist.md`](/source/training/team-rituals-checklist.md) — a one-page reference your team can pin in your repo and refer back to when things go sideways.
 
 ---
 
@@ -145,7 +145,7 @@ If you find your team running Loop #1 a lot, look upstream: you may be missing L
 
 1. **Decide where the convention belongs.**
    - If it's per-feature, capture it in the story (acceptance criteria or dev notes).
-   - If it's per-repo, capture it in [`AGENTS.md`](../../AGENTS.md) and [`.github/copilot-instructions.md`](../../.github/copilot-instructions.md) — the dual-role files described later in this lesson.
+   - If it's per-repo, capture it in [`AGENTS.md`](/source/AGENTS.md) and [`.github/copilot-instructions.md`](/source/.github/copilot-instructions.md) — the dual-role files described later in this lesson.
 2. **Update both files.** Drift between `AGENTS.md` and `.github/copilot-instructions.md` is itself a defect.
 3. **Re-run the divergent PR's tool against the updated context.** With the convention now captured, the tool should produce output that aligns.
 4. **Land the convention update before merging the original PRs.** Otherwise the convention is decided implicitly by whichever PR merges first.
@@ -210,7 +210,7 @@ If you can't tell, the answer is usually that the spec was ambiguous and the tea
 
 Loop #3's recovery procedure references two files at the repo root. This section explains them.
 
-[`AGENTS.md`](../../AGENTS.md) is read by Claude Code, Codex, and OpenCode (sometimes via a `CLAUDE.md` symlink). [`.github/copilot-instructions.md`](../../.github/copilot-instructions.md) is read by GitHub Copilot. Both files carry the same purpose: **per-repo conventions that should not be re-stated in every story** — build commands, framework version pins, testing rules, no-go zones.
+[`AGENTS.md`](/source/AGENTS.md) is read by Claude Code, Codex, and OpenCode (sometimes via a `CLAUDE.md` symlink). [`.github/copilot-instructions.md`](/source/.github/copilot-instructions.md) is read by GitHub Copilot. Both files carry the same purpose: **per-repo conventions that should not be re-stated in every story** — build commands, framework version pins, testing rules, no-go zones.
 
 Two files exist because Copilot, at the time of this curriculum's authoring, doesn't read `AGENTS.md` — it reads its own dotfile. (`AGENTS.md` is converging as a cross-tool standard. In late 2025 it was donated to the Agentic AI Foundation. Copilot may eventually read it natively; the dual-file pattern is the v1 reality.)
 
@@ -221,7 +221,7 @@ Two ways teams maintain sync:
 - **Symlink `AGENTS.md` to `.github/copilot-instructions.md`** (or vice versa). The strongest guarantee — the files cannot diverge. Caveat: some tools follow symlinks differently; verify with each tool you use.
 - **Comment in both files** stating they must stay in sync, with a CI check (or pre-commit hook) that fails when load-bearing constraints diverge. Less mechanical but works without symlinks.
 
-This portal uses [`AGENTS.md`](../../AGENTS.md) and [`.github/copilot-instructions.md`](../../.github/copilot-instructions.md) at the repo root. After the capstone, your bootstrapped repo will have them too — and the HANDOFF.md will tell your team's lead to fill in the project-specific load-bearing constraints.
+This portal uses [`AGENTS.md`](/source/AGENTS.md) and [`.github/copilot-instructions.md`](/source/.github/copilot-instructions.md) at the repo root. After the capstone, your bootstrapped repo will have them too — and the HANDOFF.md will tell your team's lead to fill in the project-specific load-bearing constraints.
 
 ---
 
@@ -243,6 +243,6 @@ The lesson here: **the contract pattern is what makes the recovery loops work, n
 
 ## What's next
 
-You now have the recovery loops named. The pinnable artifact at [`training/team-rituals-checklist.md`](../team-rituals-checklist.md) carries them as a one-page reference — print it, pin it in your repo, refer back to it when things go sideways.
+You now have the recovery loops named. The pinnable artifact at [`training/team-rituals-checklist.md`](/source/training/team-rituals-checklist.md) carries them as a one-page reference — print it, pin it in your repo, refer back to it when things go sideways.
 
 **Lesson 6** is short. It frames the **capstone** — the 90–120 minute synthesis exercise where you'll experience everything in this curriculum on a real artifact chain through your own AI tool. The lessons end at Lesson 6; the actual practice begins at the capstone.

@@ -11,7 +11,7 @@ title: Stories as tool-agnostic contract
 - Why the **per-story file** is the unit of work in BMAD, not the planning conversation.
 - The three layered artifacts that together make a story binding: the story file, `AGENTS.md`, and `.github/copilot-instructions.md`.
 - What separates a good story file from a vague one — the load-bearing fields and what each is for.
-- The canonical template at [`training/story-template.md`](../story-template.md) and how to use it.
+- The canonical template at [`training/story-template.md`](/source/training/story-template.md) and how to use it.
 
 This lesson is the curriculum's headline differentiator. Nothing else BMAD does matters if the story file isn't the contract.
 
@@ -37,7 +37,7 @@ Calling it "the story file" is a useful shorthand, but the actual contract is th
 
 ### 1. The per-story file (per-feature context)
 
-This is the unit of work. One story file = one PR. It contains everything the implementer needs to know about *this specific change* — the user story, the acceptance criteria, the dev notes lifted from the architecture, the tasks/subtasks. The story file is **per-feature**: it's specific to the change being made, not to the repo as a whole. You can see real ones in this repo under `_bmad-output/implementation-artifacts/` — for example [`3-3-mark-complete-ui.md`](../../_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md).
+This is the unit of work. One story file = one PR. It contains everything the implementer needs to know about *this specific change* — the user story, the acceptance criteria, the dev notes lifted from the architecture, the tasks/subtasks. The story file is **per-feature**: it's specific to the change being made, not to the repo as a whole. You can see real ones in this repo under `_bmad-output/implementation-artifacts/` — for example [`3-3-mark-complete-ui.md`](/source/_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md).
 
 ### 2. `AGENTS.md` at the repo root (per-repo context)
 
@@ -49,7 +49,7 @@ This is the unit of work. One story file = one PR. It contains everything the im
 
 GitHub Copilot does not (at the time of this curriculum's authoring) read `AGENTS.md`. It reads its own dotfile, `.github/copilot-instructions.md`. This file plays the same role as `AGENTS.md` for Copilot specifically. To make the contract hold across all four tools, the two files must carry **the same load-bearing constraints** — drift between them is a defect.
 
-You can see both files at the root of this repo (after Story 12.8 lands): [`AGENTS.md`](../../AGENTS.md), [`.github/copilot-instructions.md`](../../.github/copilot-instructions.md). A common community pattern is making one a symlink to the other so they cannot diverge; the curriculum doesn't mandate this but it's defensible.
+You can see both files at the root of this repo (after Story 12.8 lands): [`AGENTS.md`](/source/AGENTS.md), [`.github/copilot-instructions.md`](/source/.github/copilot-instructions.md). A common community pattern is making one a symlink to the other so they cannot diverge; the curriculum doesn't mandate this but it's defensible.
 
 The headline phrase — *story-as-tool-agnostic-contract* — compresses these three artifacts into one. In practice the contract is layered: stories carry per-feature context; `AGENTS.md` and `.github/copilot-instructions.md` carry per-repo context. Both layers must hold for the contract to bite.
 
@@ -103,7 +103,7 @@ Failure mode this prevents: the most common AI-assisted coding failure mode — 
 
 ## A worked example
 
-Open [`_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md`](../../_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md). This is the story that produced the "Mark complete" buttons you see at the bottom of every lesson page.
+Open [`_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md`](/source/_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md). This is the story that produced the "Mark complete" buttons you see at the bottom of every lesson page.
 
 Notice as you read:
 
@@ -118,7 +118,7 @@ This is what a good story looks like. It is not a haiku — it is dense — but 
 
 ## Where to find the canonical template
 
-The canonical BMAD story template lives at [`training/story-template.md`](../story-template.md). Use it when:
+The canonical BMAD story template lives at [`training/story-template.md`](/source/training/story-template.md). Use it when:
 
 - You are writing a story from scratch (which is rare — `bmad-create-story` does this for you).
 - You are reviewing a story to check it has the load-bearing fields.
@@ -130,6 +130,6 @@ The template ends with a complete worked example so you can see the format in ac
 
 ## What's next
 
-You now know what makes a story file the contract. **Lesson 4** turns the contract into something binding by introducing the **enforcement layer**: GitHub's CODEOWNERS file, branch protection rules, and the lead-approval gate. Lesson 4 also produces the [`training/lead-review-checklist.md`](../lead-review-checklist.md) — the pinnable checklist your team's lead can drop into your repo on Day 2 and use on real PRs.
+You now know what makes a story file the contract. **Lesson 4** turns the contract into something binding by introducing the **enforcement layer**: GitHub's CODEOWNERS file, branch protection rules, and the lead-approval gate. Lesson 4 also produces the [`training/lead-review-checklist.md`](/source/training/lead-review-checklist.md) — the pinnable checklist your team's lead can drop into your repo on Day 2 and use on real PRs.
 
-Before Lesson 4, take five minutes to skim one or two more stories under `_bmad-output/implementation-artifacts/` — try [`5-1-run-streaming-subprocess-primitive.md`](../../_bmad-output/implementation-artifacts/5-1-run-streaming-subprocess-primitive.md) or [`9-1-handoff-generator.md`](../../_bmad-output/implementation-artifacts/9-1-handoff-generator.md). Notice how different the *content* is across stories but how identical the *structure* is. That structural consistency is exactly what makes the format binding across people, tools, and time.
+Before Lesson 4, take five minutes to skim one or two more stories under `_bmad-output/implementation-artifacts/` — try [`5-1-run-streaming-subprocess-primitive.md`](/source/_bmad-output/implementation-artifacts/5-1-run-streaming-subprocess-primitive.md) or [`9-1-handoff-generator.md`](/source/_bmad-output/implementation-artifacts/9-1-handoff-generator.md). Notice how different the *content* is across stories but how identical the *structure* is. That structural consistency is exactly what makes the format binding across people, tools, and time.

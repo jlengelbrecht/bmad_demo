@@ -16,7 +16,7 @@ The three artifacts are real — they live in this repo. The three objections ar
 
 Open these three tabs:
 
-1. A real story file: [`_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md`](../_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md)
+1. A real story file: [`_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md`](/source/_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md)
 2. A live `CODEOWNERS` example (the one in this repo at `.github/CODEOWNERS` is the realistic shape; you can show any production team's CODEOWNERS file you have access to)
 3. A merged PR with a story-link in the description (any production PR works — the demo point is the *pattern*, not the specific PR)
 
@@ -26,7 +26,7 @@ The three artifacts together land the **contract → enforcement → propagation
 
 ## Artifact #1 — The story file (3 minutes)
 
-**Open:** [`_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md`](../_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md).
+**Open:** [`_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md`](/source/_bmad-output/implementation-artifacts/3-3-mark-complete-ui.md).
 
 **Say:** "This is the unit of work in BMAD. It's a markdown file in the repo. It has a user story, six numbered acceptance criteria in Given/When/Then form, dev notes lifted from the architecture, and a tasks/subtasks checklist. The implementer used an AI tool to produce the code that ships against this file. The reviewer compared the produced code against this file at the gate. **The file is the contract.**"
 
@@ -105,5 +105,5 @@ Everything else in this curriculum is teaching the team to internalize that tria
 ## Where to go after this
 
 - If you're sold on a pilot: route someone to [`/start-here`](/start-here) and have them complete the curriculum + capstone (~3 hours). Then the team runs one of the labs to share the muscle memory.
-- If you want a deeper architecture/governance dive before piloting: [`_bmad-output/planning-artifacts/architecture.md`](../_bmad-output/planning-artifacts/architecture.md) is the design doc behind this portal — including the no-egress threat model, the dual-role context-file pattern, and the paired-CI invariant.
-- If you want to read the original framing: [`_bmad-output/planning-artifacts/product-brief-bmad_demo.md`](../_bmad-output/planning-artifacts/product-brief-bmad_demo.md) is the brief that motivated this work.
+- If you want a deeper architecture/governance dive before piloting: [`_bmad-output/planning-artifacts/architecture.md`](/source/_bmad-output/planning-artifacts/architecture.md) is the design doc behind this portal — including the no-egress threat model, the dual-role context-file pattern, and the paired-CI invariant.
+- If you want to read the original framing: [`_bmad-output/planning-artifacts/product-brief-bmad_demo.md`](/source/_bmad-output/planning-artifacts/product-brief-bmad_demo.md) is the brief that motivated this work.

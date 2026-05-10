@@ -74,7 +74,7 @@ When the dev agent finishes, the implementer runs the team's quad gate (lint + t
 
 ### 4. Lead's gate review (15 min)
 
-The **lead** walks the [lead-review checklist](../lead-review-checklist.md) on the diff in front of the team. They do this **out loud** — narrating which checks pass, which surface concerns, which would block a merge.
+The **lead** walks the [lead-review checklist](/source/training/lead-review-checklist.md) on the diff in front of the team. They do this **out loud** — narrating which checks pass, which surface concerns, which would block a merge.
 
 This is the highest-value moment of the lab. Most teams have never watched a lead review out loud against a checklist. The narration is the practice; the team learns the cadence by hearing it.
 
@@ -114,5 +114,5 @@ In our experience facilitating this lab:
 - [Solo lab](/labs/solo) — same shape, one person.
 - [Async cross-team story-review lab](/labs/async-story-review) — cross-team review without live participation.
 - [Lesson 5 — Working as a team](/lessons/5-working-as-a-team)
-- [`training/lead-review-checklist.md`](../lead-review-checklist.md)
-- [`training/team-rituals-checklist.md`](../team-rituals-checklist.md)
+- [`training/lead-review-checklist.md`](/source/training/lead-review-checklist.md)
+- [`training/team-rituals-checklist.md`](/source/training/team-rituals-checklist.md)

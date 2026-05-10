@@ -38,8 +38,8 @@ The medium matters less than that everyone uses *the same* medium. Resist the ur
 ### Artifacts each team needs
 
 - **Team A:** access to a repo (the capstone repo is fine) + their AI tool of choice + 30 min focused time.
-- **Team B:** access to the same repo (or just the story file) + [`training/lead-review-checklist.md`](../lead-review-checklist.md) + 30 min focused time.
-- **Both teams:** [`training/story-template.md`](../story-template.md) for reference.
+- **Team B:** access to the same repo (or just the story file) + [`training/lead-review-checklist.md`](/source/training/lead-review-checklist.md) + 30 min focused time.
+- **Both teams:** [`training/story-template.md`](/source/training/story-template.md) for reference.
 
 ---
 
@@ -57,7 +57,7 @@ Team A picks a feature in their domain that's small enough for one PR but real e
 
 ### Phase 2 — Team B reviews (30 min, async)
 
-Team B reads the story cold. They walk the [lead-review checklist](../lead-review-checklist.md) — but instead of comparing code-vs-spec (there is no code), they ask:
+Team B reads the story cold. They walk the [lead-review checklist](/source/training/lead-review-checklist.md) — but instead of comparing code-vs-spec (there is no code), they ask:
 
 1. **Could I implement this without asking a clarifying question?** If no, write down which AC or section was unclear.
 2. **Is the scope clear?** Is there anything I'd be unsure whether to include or exclude?
@@ -109,5 +109,5 @@ The story file may or may not get implemented later — that's outside the lab's
 - [Sync lab](/labs/sync)
 - [Lesson 4 — CODEOWNERS and the gate](/lessons/4-codeowners-and-the-gate) — particularly the lead-review-checklist artifact this lab uses extensively.
 - [Lesson 5 — Working as a team](/lessons/5-working-as-a-team) — Loops #2 and #3 are the relevant ones for issues this lab surfaces.
-- [`training/lead-review-checklist.md`](../lead-review-checklist.md)
-- [`training/story-template.md`](../story-template.md)
+- [`training/lead-review-checklist.md`](/source/training/lead-review-checklist.md)
+- [`training/story-template.md`](/source/training/story-template.md)

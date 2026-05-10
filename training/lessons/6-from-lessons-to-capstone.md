@@ -50,7 +50,7 @@ The contract between phases is **the files on disk** — not the chat history. I
 When the capstone finishes, you have:
 
 - **A real BMAD repo** at the path you chose, with brief / PRD / architecture / epics+stories / ADR / story-1.1 produced — and Story 1.1's tests passing.
-- **A `HANDOFF.md`** with the full Day-2 checklist: how to push to your team's GitHub org, which `CODEOWNERS` placeholders to replace, what branch protection to apply, where to pin the [`team-rituals-checklist.md`](../team-rituals-checklist.md) and [`lead-review-checklist.md`](../lead-review-checklist.md) you've now seen referenced in Lessons 4 and 5.
+- **A `HANDOFF.md`** with the full Day-2 checklist: how to push to your team's GitHub org, which `CODEOWNERS` placeholders to replace, what branch protection to apply, where to pin the [`team-rituals-checklist.md`](/source/training/team-rituals-checklist.md) and [`lead-review-checklist.md`](/source/training/lead-review-checklist.md) you've now seen referenced in Lessons 4 and 5.
 - **A working mental model** for running BMAD natively from your terminal. The portal is a training tool; after the capstone, you'll never need it again to run BMAD — you invoke skills through your AI tool's normal interface, the same way you did during the capstone.
 
 ---
