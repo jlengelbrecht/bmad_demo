@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
 import { z } from "zod";
@@ -158,11 +158,12 @@ export async function POST(req: Request): Promise<Response> {
           artifactExists: true,
           artifactPath: "(test-gate phase — no artifact)",
           shapeValid: true,
-          missingSections: [],
+          candidates: [] as string[],
+          patternsTried: [] as string[],
         }
       : validatePhaseShape(phase, chosenDir, outputFolder, {
           existsSync,
-          readFileSync,
+          readdirSync,
           statSync,
         });
   let testGate: TestGateResult | undefined;

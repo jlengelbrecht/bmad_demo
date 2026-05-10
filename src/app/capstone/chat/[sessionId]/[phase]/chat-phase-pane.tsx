@@ -28,7 +28,9 @@ type PhaseDoneCheck =
       kind: "invalid";
       artifactExists: boolean;
       artifactPath: string;
-      missingSections: string[];
+      candidates: string[];
+      patternsTried: string[];
+      reason?: string;
     }
   | { kind: "error"; message: string };
 
@@ -98,7 +100,9 @@ export function ChatPhasePane({
           artifactExists: boolean;
           artifactPath: string;
           shapeValid: boolean;
-          missingSections: string[];
+          candidates?: string[];
+          patternsTried?: string[];
+          reason?: string;
         };
         error?: string;
       };
@@ -120,7 +124,9 @@ export function ChatPhasePane({
           kind: "invalid",
           artifactExists: body.validation.artifactExists,
           artifactPath: body.validation.artifactPath,
-          missingSections: body.validation.missingSections,
+          candidates: body.validation.candidates ?? [],
+          patternsTried: body.validation.patternsTried ?? [],
+          reason: body.validation.reason,
         });
       }
     } catch (err) {
@@ -367,29 +373,46 @@ function PhaseDoneSection({
       {phaseDone.kind === "invalid" ? (
         <>
           <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
-            ⚠ Phase artifact validation failed.
+            ⚠ Couldn&apos;t identify the phase artifact in{" "}
+            <code className="font-mono">{phaseDone.artifactPath}</code>.
           </p>
-          <ul className="ml-4 list-disc text-xs text-zinc-700 dark:text-zinc-300">
-            {!phaseDone.artifactExists ? (
-              <li>
-                Expected file not found:{" "}
-                <code className="font-mono">{phaseDone.artifactPath}</code>
-              </li>
-            ) : (
-              <>
-                <li>
-                  File exists at{" "}
-                  <code className="font-mono">{phaseDone.artifactPath}</code>{" "}
-                  but is missing required sections:
-                </li>
-                {phaseDone.missingSections.map((s) => (
-                  <li key={s} className="ml-4">
-                    <code className="font-mono">{s}</code>
+          {phaseDone.candidates.length > 0 ? (
+            <div className="text-xs text-zinc-700 dark:text-zinc-300">
+              <p className="mb-1">
+                Files we saw in that directory (none matched the expected
+                naming convention):
+              </p>
+              <ul className="ml-5 list-disc">
+                {phaseDone.candidates.map((c) => (
+                  <li key={c}>
+                    <code className="font-mono">{c}</code>
                   </li>
                 ))}
-              </>
-            )}
-          </ul>
+              </ul>
+            </div>
+          ) : (
+            <p className="text-xs text-zinc-700 dark:text-zinc-300">
+              No markdown files yet. The artifact this phase produces is
+              expected to land in the directory above.
+            </p>
+          )}
+          {phaseDone.patternsTried.length > 0 ? (
+            <details className="text-xs text-zinc-600 dark:text-zinc-400">
+              <summary className="cursor-pointer">
+                What we looked for (canonical filename patterns)
+              </summary>
+              <ul className="ml-5 mt-1 list-disc font-mono">
+                {phaseDone.patternsTried.map((p) => (
+                  <li key={p}>{p}</li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
+          {phaseDone.reason ? (
+            <p className="text-xs text-zinc-500 dark:text-zinc-500">
+              Detail: {phaseDone.reason}
+            </p>
+          ) : null}
           <div className="flex gap-2">
             <button
               type="button"
