@@ -56,6 +56,30 @@ export function TerminalPane({
     let cancelled = false;
     let disposed = false;
     let pendingFitFrame: number | null = null;
+
+    // xterm 5.x has a known race during `term.open()`: the Viewport
+    // schedules a setTimeout → requestAnimationFrame refresh that
+    // sometimes runs before the canvas renderer's async init resolves,
+    // throwing "Cannot read properties of undefined (reading
+    // 'dimensions')" out of Viewport._innerRefresh. Terminal continues
+    // working (renderer recovers; cols/rows correct), but Next.js's
+    // dev overlay surfaces it as a runtime error.
+    //
+    // Catch that one specific error during the terminal's lifetime and
+    // prevent it from propagating to the dev overlay. We deliberately
+    // gate the suppression on the stack containing "Viewport" so we
+    // don't accidentally swallow real bugs that happen to mention
+    // "dimensions".
+    const xtermInitErrorHandler = (ev: ErrorEvent) => {
+      const stack = ev.error?.stack ?? "";
+      const msg = ev.error?.message ?? ev.message ?? "";
+      if (msg.includes("dimensions") && stack.includes("Viewport")) {
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+      }
+    };
+    window.addEventListener("error", xtermInitErrorHandler, true);
+
     const term = new Terminal({
       convertEol: true,
       cursorBlink: true,
@@ -237,6 +261,7 @@ export function TerminalPane({
         cancelAnimationFrame(pendingFitFrame);
         pendingFitFrame = null;
       }
+      window.removeEventListener("error", xtermInitErrorHandler, true);
       window.removeEventListener("resize", onResize);
       dataDispose.dispose();
       resizeDispose.dispose();
@@ -280,7 +305,16 @@ export function TerminalPane({
     <div className="flex flex-col gap-3">
       <div
         ref={containerRef}
-        className="h-[560px] overflow-hidden rounded-md border border-zinc-300 bg-[#0a0a0a] p-2 dark:border-zinc-700"
+        // Right padding is wider than the rest (`pr-4` vs `pl-2`/`py-2`)
+        // because some platforms (Firefox/Linux with overlay-style
+        // scrollbars) render the xterm-viewport's vertical scrollbar
+        // ON TOP of content rather than reserving layout space — even
+        // with `scrollbar-gutter: stable`. Reserving 16px of padding on
+        // the right shrinks the xterm canvas (FitAddon picks up the
+        // narrower clientWidth and computes fewer cols), so the overlay
+        // scrollbar has empty padding to land on instead of clipping
+        // the rightmost column.
+        className="h-[560px] overflow-hidden rounded-md border border-zinc-300 bg-[#0a0a0a] py-2 pl-2 pr-4 dark:border-zinc-700"
       />
       <StatusLine status={status} />
     </div>

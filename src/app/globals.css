@@ -66,18 +66,42 @@ body {
 }
 
 /*
- * xterm internal scrollbar reservation.
+ * xterm internal scrollbar styling.
  *
  * When PTY output exceeds the visible terminal rows, xterm's
- * `.xterm-viewport` grows a vertical scrollbar. Without
- * `scrollbar-gutter: stable`, the scrollbar appears AFTER the FitAddon
- * has computed `cols` against the full container width — so the
- * rightmost column gets covered by the scrollbar and trailing chars get
- * clipped (surfaced during long codex/claude/copilot runs in Phase 4+).
+ * `.xterm-viewport` grows a vertical scrollbar. Three problems if we
+ * leave the default browser scrollbar alone:
+ *   1. Without `scrollbar-gutter: stable`, the scrollbar appears AFTER
+ *      the FitAddon has computed `cols` — the rightmost column gets
+ *      covered by the scrollbar and trailing chars clip.
+ *   2. The default scrollbar is platform-styled (light grey on
+ *      Linux/Firefox, etc.), which clashes with the dark terminal.
+ *   3. Default scrollbars are 14–17 px wide; even with a stable gutter,
+ *      the optical density of the bar covers a half-cell at the right
+ *      edge in some Firefox builds.
  *
- * Reserving the gutter proactively keeps the column count accurate
- * whether the buffer fits or scrolls.
+ * Fix: reserve the gutter (so cols are computed correctly) AND make
+ * the scrollbar thin + dark so it visually fits the terminal and can't
+ * cover content in the gutter.
  */
 .xterm-viewport {
   scrollbar-gutter: stable;
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(228, 228, 231, 0.25) transparent;
+}
+/* WebKit / Chromium */
+.xterm-viewport::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.xterm-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+.xterm-viewport::-webkit-scrollbar-thumb {
+  background: rgba(228, 228, 231, 0.25);
+  border-radius: 4px;
+}
+.xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: rgba(228, 228, 231, 0.4);
 }
