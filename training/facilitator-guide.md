@@ -32,9 +32,9 @@ The three lab formats serve different purposes; choose based on what your team n
 
 | Format | Best for | Time | Trade-off |
 |---|---|---|---|
-| [Solo](labs/solo.md) | Teams new to BMAD; want individual hands-on time | 60–90 min/person | Doesn't build shared muscle memory |
-| [Sync (full team)](labs/sync.md) | Teams that have completed the capstone individually and need shared cadence | 90 min one-time | Single-team only; no cross-team validation |
-| [Async cross-team](labs/async-story-review.md) | Two teams piloting BMAD together; want strongest validation | ~30+30+15 min spread async | Only works if a partner team is also piloting |
+| [Solo](/labs/solo) | Teams new to BMAD; want individual hands-on time | 60–90 min/person | Doesn't build shared muscle memory |
+| [Sync (full team)](/labs/sync) | Teams that have completed the capstone individually and need shared cadence | 90 min one-time | Single-team only; no cross-team validation |
+| [Async cross-team](/labs/async-story-review) | Two teams piloting BMAD together; want strongest validation | ~30+30+15 min spread async | Only works if a partner team is also piloting |
 
 **Recommendation for first-time workshops:** sync lab. The shared muscle memory it builds is the highest-leverage outcome of a one-day workshop. Solo and async work better as *follow-up* to a sync workshop, not as the workshop itself.
 
@@ -51,7 +51,7 @@ This schedule assumes attendees have completed the lessons but NOT the capstone 
 | 1:00 – 1:15 | Break | |
 | 1:15 – 2:45 | **Capstone (everyone runs in parallel)** | Each person on their own laptop, their own AI tool |
 | 2:45 – 3:00 | Break | |
-| 3:00 – 3:50 | **[Sync lab](labs/sync.md)** | Whole team, role-played, ~50 min compressed version |
+| 3:00 – 3:50 | **[Sync lab](/labs/sync)** | Whole team, role-played, ~50 min compressed version |
 | 3:50 – 4:00 | Closing + Day-2 commitments | What goes into the team's repo as a result |
 
 The two breaks matter. Capstone is intense; recovery time keeps the back-half attention.
@@ -67,7 +67,7 @@ The two breaks matter. Capstone is intense; recovery time keeps the back-half at
 | 1:30 – 1:45 | Break | |
 | 1:45 – 3:30 | **Capstone (in parallel)** | Full 90+ min |
 | 3:30 – 4:30 | Lunch | Don't skimp; capstone is mentally heavy |
-| 4:30 – 5:30 | **[Sync lab](labs/sync.md)** | Full 90 min version |
+| 4:30 – 5:30 | **[Sync lab](/labs/sync)** | Full 90 min version |
 | 5:30 – 5:45 | Break | |
 | 5:45 – 6:30 | Lesson 5 — five-recovery-loops drill | Live: pick three real PRs from your team's history; identify which loop each one was, in retrospect |
 | 6:30 – 7:00 | Day-2 commitments + workshop debrief | What changes go into the repo this week |
@@ -177,7 +177,7 @@ Without these three commitments, the workshop is a nice memory.
 
 ## See also
 
-- [`training/00-start-here.md`](00-start-here.md) — what attendees see before the workshop
-- [`training/stakeholder-demo-script.md`](stakeholder-demo-script.md) — for the leadership conversation that authorized the workshop
+- [`/start-here`](/start-here) — what attendees see before the workshop
+- [`/stakeholder`](/stakeholder) — for the leadership conversation that authorized the workshop
 - [`training/tools-reference.md`](tools-reference.md) — what to send attendees a few days before
 - [`_bmad-output/planning-artifacts/research/bmad-team-rituals.md`](../_bmad-output/planning-artifacts/research/bmad-team-rituals.md) — the underlying research the curriculum draws on; useful for "why does the lesson say X?" questions you can't answer in the moment

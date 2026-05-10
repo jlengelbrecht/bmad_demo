@@ -105,9 +105,9 @@ The story file may or may not get implemented later — that's outside the lab's
 
 ## See also
 
-- [Solo lab](solo.md)
-- [Sync lab](sync.md)
-- [Lesson 4 — CODEOWNERS and the gate](../lessons/4-codeowners-and-the-gate.md) — particularly the lead-review-checklist artifact this lab uses extensively.
-- [Lesson 5 — Working as a team](../lessons/5-working-as-a-team.md) — Loops #2 and #3 are the relevant ones for issues this lab surfaces.
+- [Solo lab](/labs/solo)
+- [Sync lab](/labs/sync)
+- [Lesson 4 — CODEOWNERS and the gate](/lessons/4-codeowners-and-the-gate) — particularly the lead-review-checklist artifact this lab uses extensively.
+- [Lesson 5 — Working as a team](/lessons/5-working-as-a-team) — Loops #2 and #3 are the relevant ones for issues this lab surfaces.
 - [`training/lead-review-checklist.md`](../lead-review-checklist.md)
 - [`training/story-template.md`](../story-template.md)

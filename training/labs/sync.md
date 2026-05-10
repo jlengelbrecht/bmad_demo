@@ -111,8 +111,8 @@ In our experience facilitating this lab:
 
 ## See also
 
-- [Solo lab](solo.md) — same shape, one person.
-- [Async cross-team story-review lab](async-story-review.md) — cross-team review without live participation.
-- [Lesson 5 — Working as a team](../lessons/5-working-as-a-team.md)
+- [Solo lab](/labs/solo) — same shape, one person.
+- [Async cross-team story-review lab](/labs/async-story-review) — cross-team review without live participation.
+- [Lesson 5 — Working as a team](/lessons/5-working-as-a-team)
 - [`training/lead-review-checklist.md`](../lead-review-checklist.md)
 - [`training/team-rituals-checklist.md`](../team-rituals-checklist.md)

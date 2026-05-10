@@ -86,7 +86,7 @@ git push -u origin feat/<short-slug>
 gh pr create --title "<title>" --body "<description with link to story file>"
 ```
 
-The PR description must link the story file (see [Lesson 4](../lessons/4-codeowners-and-the-gate.md) lead-review-checklist item: "story-link reference").
+The PR description must link the story file (see [Lesson 4](/lessons/4-codeowners-and-the-gate) lead-review-checklist item: "story-link reference").
 
 ### 5. Walk the lead-review checklist on yourself (10 min)
 
@@ -122,7 +122,7 @@ Keep your notes. They're the input for your team's next BMAD-adoption conversati
 
 ## See also
 
-- [Lesson 5 — Working as a team](../lessons/5-working-as-a-team.md) — recovery loops by name.
+- [Lesson 5 — Working as a team](/lessons/5-working-as-a-team) — recovery loops by name.
 - [`training/lead-review-checklist.md`](../lead-review-checklist.md) — what to walk on yourself before requesting review.
 - [`training/team-rituals-checklist.md`](../team-rituals-checklist.md) — pin this in your team's repo if you haven't already.
-- [Sync lab](sync.md) — same shape as this one, but with your team in the room.
+- [Sync lab](/labs/sync) — same shape as this one, but with your team in the room.

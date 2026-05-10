@@ -104,6 +104,6 @@ Everything else in this curriculum is teaching the team to internalize that tria
 
 ## Where to go after this
 
-- If you're sold on a pilot: route someone to [`training/00-start-here.md`](00-start-here.md) and have them complete the curriculum + capstone (~3 hours). Then the team runs one of the labs to share the muscle memory.
+- If you're sold on a pilot: route someone to [`/start-here`](/start-here) and have them complete the curriculum + capstone (~3 hours). Then the team runs one of the labs to share the muscle memory.
 - If you want a deeper architecture/governance dive before piloting: [`_bmad-output/planning-artifacts/architecture.md`](../_bmad-output/planning-artifacts/architecture.md) is the design doc behind this portal — including the no-egress threat model, the dual-role context-file pattern, and the paired-CI invariant.
 - If you want to read the original framing: [`_bmad-output/planning-artifacts/product-brief-bmad_demo.md`](../_bmad-output/planning-artifacts/product-brief-bmad_demo.md) is the brief that motivated this work.

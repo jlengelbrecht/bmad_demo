@@ -67,7 +67,7 @@ You'll pick one tool for the capstone. The lesson moment is that **the artifact 
 
 Three different argv shapes; three different terminals; **one identical BMAD skill** running inside each. The artifacts they produce are identical in shape. This is the "tool-agnostic contract" claim from Lesson 3, made physical: a teammate using a different tool than you would walk this same capstone, produce identical artifacts, and your two repos would be functionally indistinguishable on the file system.
 
-If you're curious about the other tools, run the capstone twice with different tool selections and compare the produced artifacts. (You can also try this in the **Solo lab** after the capstone — see [`labs/solo.md`](../labs/solo.md).)
+If you're curious about the other tools, run the capstone twice with different tool selections and compare the produced artifacts. (You can also try this in the **Solo lab** after the capstone — see [`/labs/solo`](/labs/solo).)
 
 ---
 

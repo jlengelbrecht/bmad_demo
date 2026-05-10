@@ -44,7 +44,7 @@ After the capstone, your team has a working BMAD repo, a HANDOFF.md with Day-2 i
 | Component | Time | Format |
 |---|---|---|
 | 6 in-app lessons | ~15 min each | Self-paced reading with links to this repo's own artifacts |
-| 3 labs (post-capstone) | 60–90 min each | [Solo](labs/solo.md) / [Sync (full team)](labs/sync.md) / [Async cross-team](labs/async-story-review.md) |
+| 3 labs (post-capstone) | 60–90 min each | [Solo](/labs/solo) / [Sync (full team)](/labs/sync) / [Async cross-team](/labs/async-story-review) |
 | 1 capstone | 90–120 min | The synthesis exercise — run the artifact chain on a fresh repo |
 
 Total: ~3 hours self-paced, or one half-day workshop. The labs are optional but high-leverage; pick the format that fits your team's situation.
@@ -75,8 +75,8 @@ The portal makes **zero cloud calls of its own.** Everything renders locally; ev
 
 If you're not primarily here as a trainee:
 
-- **Stakeholder** (you want a 15-minute walk through what BMAD does and what it costs your org) — see the [Stakeholder demo script](stakeholder-demo-script.md).
-- **Facilitator** (you'll run a workshop with your team) — see the [Facilitator workshop guide](facilitator-guide.md).
+- **Stakeholder** (you want a 15-minute walk through what BMAD does and what it costs your org) — see the [Stakeholder demo script](/stakeholder).
+- **Facilitator** (you'll run a workshop with your team) — see the [Facilitator workshop guide](/facilitator).
 
 Otherwise, when you're ready:
 
