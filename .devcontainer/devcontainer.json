@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
-  "name": "BMAD Demo",
+  "name": "AI Contribution Framework",
   "build": {
     "dockerfile": "Dockerfile"
   },
@@ -15,7 +15,7 @@
   "forwardPorts": [3000],
   "portsAttributes": {
     "3000": {
-      "label": "BMAD Demo dev server",
+      "label": "AI Contribution Framework dev server",
       "onAutoForward": "openBrowser"
     }
   },

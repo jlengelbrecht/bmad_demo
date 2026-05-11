@@ -1,4 +1,4 @@
-# Copilot Instructions — bmad_demo
+# Copilot Instructions — bmad_trainer (AI Contribution Framework)
 
 > **Companion to [`AGENTS.md`](../AGENTS.md).** Both files MUST stay in sync on every load-bearing constraint. Drift between them is a defect — when you change one, change the other in the same PR.
 

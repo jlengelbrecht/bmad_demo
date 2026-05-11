@@ -22,7 +22,7 @@ export function SiteHeader() {
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-3">
         <Link
           href="/"
-          aria-label="BMAD Demo home"
+          aria-label="AI Contribution Framework home"
           className="group inline-flex items-center gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
         >
           <Image
@@ -35,7 +35,7 @@ export function SiteHeader() {
           />
           <span aria-hidden className="hidden h-5 w-px bg-zinc-300 sm:block dark:bg-zinc-700" />
           <span className="hidden text-sm font-semibold tracking-tight text-zinc-700 group-hover:text-sky-700 sm:inline dark:text-zinc-300 dark:group-hover:text-sky-300">
-            BMAD Demo
+            AI Contribution Framework
           </span>
         </Link>
         <div className="flex items-center gap-3">

@@ -15,7 +15,7 @@ import { Markdown } from "@/lib/markdown/render";
 const TOOL_VALUES: ToolId[] = ["claude-code", "codex", "github-copilot"];
 
 export const metadata: Metadata = {
-  title: "Capstone setup — bootstrap complete · BMAD Demo",
+  title: "Capstone setup — bootstrap complete · AI Contribution Framework",
 };
 export const dynamic = "force-dynamic";
 

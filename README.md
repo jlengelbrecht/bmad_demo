@@ -1,10 +1,10 @@
-# BMAD Demo: Training Portal
+# AI Contribution Framework
 
-A runnable training resource that teaches teams how to adopt **BMAD** — a framework for spec-driven software development with AI agents — and how to govern AI-assisted contributions in a shared codebase. The portal teaches BMAD using *this repo's own* artifacts: its PRD, architecture document, stories, and `CODEOWNERS` file are the lesson material.
+A runnable training resource that teaches teams how to govern AI-assisted contributions in a shared codebase. The framework uses **BMAD** as its reference implementation — a spec-driven development methodology with AI agents — but the underlying principles (spec-as-contract, CODEOWNERS-gated review, cross-tool propagation, AI-and-non-AI contribution paths) apply regardless of which framework or tooling a team adopts. The portal teaches by example, using *this repo's own* artifacts: its PRD, architecture document, story specs, `CODEOWNERS`, and `CONTRIBUTING.md` are the lesson material.
 
 ## Maintainer
 
-Curriculum maintainer: **Devbox** ([@JoshuaEngelbrecht](https://github.com/JoshuaEngelbrecht)). Open an issue on this repo for questions, bugs, or content suggestions.
+Curriculum maintainer: **Joshua Engelbrecht** ([@JoshuaEngelbrecht](https://github.com/JoshuaEngelbrecht)). Open an issue on this repo for questions, bugs, or content suggestions.
 
 > **Bus-factor disclosure (v1):** this repo currently has a single curriculum maintainer. That is a known v1 limitation. The v1.1 maintainer-succession plan — co-maintainer onboarding, a documented hand-off ritual, and a contributor ladder — is a deliberate post-v1 follow-up tracked outside this README.
 
@@ -19,8 +19,8 @@ Requires **Node 20+** and **npm**.
 > **macOS users:** the native install path requires **Xcode Command Line Tools** because `node-pty` and `better-sqlite3` compile native modules during `npm install`. If you don't have them, run `xcode-select --install` first — `npm install` will otherwise fail with a `node-gyp` build error. **If you'd rather skip the native-build setup entirely, use the [devcontainer path below](#run-in-a-devcontainer-linux-macos-windows)** — it bakes the toolchain inside a Linux container so your host doesn't need it.
 
 ```bash
-git clone https://github.com/JoshuaEngelbrecht/bmad_demo.git
-cd bmad_demo
+git clone https://git.cglcloud.com/JoshuaEngelbrecht/bmad_trainer.git
+cd bmad_trainer
 npm install
 npm run dev
 ```
@@ -63,7 +63,7 @@ devcontainer up --workspace-folder .
 devcontainer exec --workspace-folder . npm run dev
 ```
 
-The repo bind-mounts at `/workspaces/bmad_demo` inside the container; edits on your host show up immediately, and vice versa.
+The repo bind-mounts at `/workspaces/bmad_trainer` inside the container; edits on your host show up immediately, and vice versa.
 
 **Authenticate your AI tool inside the container on first use:**
 
@@ -119,7 +119,7 @@ A team can mix tools across engineers — Lesson 5 covers how to keep BMAD coher
 ## Repo structure
 
 ```
-bmad_demo/
+bmad_trainer/
 ├── src/                                Next.js App Router source (pages, components)
 ├── public/                             Static assets vendored locally
 ├── training/                           Curriculum markdown (lessons, labs, audience guides)
@@ -147,13 +147,13 @@ The planning artifacts in `_bmad-output/planning-artifacts/` are the actual outp
 
 ## What's NOT in v1
 
-bmad_demo is intentionally narrow at v1 to keep the curriculum legible. The portal does **not** include:
+The AI Contribution Framework is intentionally narrow at v1 to keep the curriculum legible. The portal does **not** include:
 
 - **Authentication or user accounts.** The local user is trusted. Progress will persist to a local SQLite file once Epic 3 wires the storage layer.
 - **A SaaS deployment target.** The portal runs locally only — `npm run dev` for trainees, `npm run start` for production-mode local.
 - **Remote services or telemetry.** No analytics, no error reporters, no font CDNs, no external APIs.
 
-The full scope and non-capability list is the canonical concern of [`_bmad-output/planning-artifacts/prd.md`](_bmad-output/planning-artifacts/prd.md) — read that document if you are evaluating whether bmad_demo fits a particular adoption context.
+The full scope and non-capability list is the canonical concern of [`_bmad-output/planning-artifacts/prd.md`](_bmad-output/planning-artifacts/prd.md) — read that document if you are evaluating whether the framework fits a particular adoption context.
 
 ## License
 

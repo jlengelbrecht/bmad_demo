@@ -5,7 +5,7 @@ import { loadContent } from "@/lib/markdown/load-content";
 import { Markdown } from "@/lib/markdown/render";
 
 export const metadata: Metadata = {
-  title: "Facilitator — Workshop Guide · BMAD Demo",
+  title: "Facilitator — Workshop Guide · AI Contribution Framework",
 };
 
 export default async function FacilitatorPage() {

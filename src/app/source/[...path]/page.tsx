@@ -27,7 +27,7 @@ export async function generateMetadata({
   const { path: segs } = await params;
   const rel = (segs ?? []).join("/");
   return {
-    title: `${rel || "Source"} · BMAD Demo`,
+    title: `${rel || "Source"} · AI Contribution Framework`,
   };
 }
 

@@ -8,7 +8,7 @@ import type { CapstonePhase, ToolId } from "@/lib/capstone/adapters/types";
 import { ChatPhasePane } from "./chat-phase-pane";
 
 export const metadata: Metadata = {
-  title: "Capstone chat · BMAD Demo",
+  title: "Capstone chat · AI Contribution Framework",
 };
 export const dynamic = "force-dynamic";
 

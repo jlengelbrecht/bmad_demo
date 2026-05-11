@@ -19,8 +19,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BMAD Demo — Training Portal",
-  description: "Local-only training portal teaching BMAD adoption to engineering teams.",
+  title: "AI Contribution Framework",
+  description: "A self-contained framework that teaches engineering teams how to govern AI-assisted contributions in a shared codebase. The portal teaches by example, using its own PRD, architecture, story specs, CODEOWNERS, and CONTRIBUTING.md as the lesson material.",
 };
 
 export default function RootLayout({

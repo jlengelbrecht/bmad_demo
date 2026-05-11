@@ -4,7 +4,7 @@
 # Date: 2026-05-07T19:51:18.341Z
 
 user_name: Devbox
-project_name: bmad_demo
+project_name: bmad_trainer
 communication_language: English
 document_output_language: English
 output_folder: "{project-root}/_bmad-output"

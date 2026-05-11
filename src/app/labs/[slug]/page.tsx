@@ -24,10 +24,10 @@ export async function generateMetadata({
   params: Promise<LabPageParams>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  if (!isKnownSlug(slug)) return { title: "Lab not found · BMAD Demo" };
+  if (!isKnownSlug(slug)) return { title: "Lab not found · AI Contribution Framework" };
 
   const content = loadContent(`training/labs/${slug}.md`);
-  if (!content) return { title: "Lab not found · BMAD Demo" };
+  if (!content) return { title: "Lab not found · AI Contribution Framework" };
 
   let title = `Lab — ${slug}`;
   try {
@@ -38,7 +38,7 @@ export async function generateMetadata({
   } catch {
     // Bad YAML — fall back to the slug-derived title rather than 500 the route.
   }
-  return { title: `${title} · BMAD Demo` };
+  return { title: `${title} · AI Contribution Framework` };
 }
 
 export default async function LabPage({

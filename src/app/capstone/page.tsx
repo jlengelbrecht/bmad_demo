@@ -13,7 +13,7 @@ import { CAPSTONE_SESSION_ID } from "@/lib/db/schemas";
 import { StartCapstoneButton } from "./start-capstone-button";
 
 export const metadata: Metadata = {
-  title: "Capstone · BMAD Demo",
+  title: "Capstone · AI Contribution Framework",
 };
 
 // Next.js 15+ exposes `searchParams` as `Promise<{ key?: string | string[] }>`.

@@ -11,7 +11,7 @@ import { CAPSTONE_SESSION_ID } from "@/lib/db/schemas";
 import { GenerateHandoffButton } from "./generate-handoff-button";
 
 export const metadata: Metadata = {
-  title: "Capstone handoff · BMAD Demo",
+  title: "Capstone handoff · AI Contribution Framework",
 };
 export const dynamic = "force-dynamic";
 

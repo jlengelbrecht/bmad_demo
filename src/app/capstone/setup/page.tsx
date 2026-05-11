@@ -9,7 +9,7 @@ import { runPreflightChecks } from "@/lib/capstone/preflight/checks";
 import { CAPSTONE_SESSION_ID } from "@/lib/db/schemas";
 
 export const metadata: Metadata = {
-  title: "Capstone setup — Phase 0/0.5 · BMAD Demo",
+  title: "Capstone setup — Phase 0/0.5 · AI Contribution Framework",
 };
 export const dynamic = "force-dynamic";
 

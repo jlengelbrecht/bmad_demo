@@ -55,17 +55,17 @@ test.describe("audience-entry routes (Story 2.3)", () => {
     {
       path: "/start-here",
       h1: "Trainee — Start Here",
-      title: "Trainee — Start Here · BMAD Demo",
+      title: "Trainee — Start Here · AI Contribution Framework",
     },
     {
       path: "/stakeholder",
       h1: "Stakeholder demo",
-      title: "Stakeholder demo · BMAD Demo",
+      title: "Stakeholder demo · AI Contribution Framework",
     },
     {
       path: "/facilitator",
       h1: "Facilitator — Workshop Guide",
-      title: "Facilitator — Workshop Guide · BMAD Demo",
+      title: "Facilitator — Workshop Guide · AI Contribution Framework",
     },
   ]) {
     test(`${path} renders with the expected h1 and title`, async ({

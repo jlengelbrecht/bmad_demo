@@ -5,7 +5,7 @@ import { loadContent } from "@/lib/markdown/load-content";
 import { Markdown } from "@/lib/markdown/render";
 
 export const metadata: Metadata = {
-  title: "Trainee — Start Here · BMAD Demo",
+  title: "Trainee — Start Here · AI Contribution Framework",
 };
 
 export default async function StartHerePage() {

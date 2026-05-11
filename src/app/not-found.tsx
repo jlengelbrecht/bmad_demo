@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Not found · BMAD Demo",
+  title: "Not found · AI Contribution Framework",
   robots: { index: false, follow: false },
 };
 

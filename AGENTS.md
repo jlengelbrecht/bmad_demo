@@ -1,4 +1,4 @@
-# AGENTS.md — bmad_demo
+# AGENTS.md — bmad_trainer (AI Contribution Framework)
 
 This file is the **shared contract** for any AI tool (Claude Code, Codex, OpenCode, or others reading the AGENTS.md cross-tool standard) opening this repo. The Copilot-specific companion is at [`.github/copilot-instructions.md`](./.github/copilot-instructions.md) — **the two files MUST stay in sync on every load-bearing constraint below; drift is a defect.**
 

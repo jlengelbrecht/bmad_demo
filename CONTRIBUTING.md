@@ -1,4 +1,4 @@
-# Contributing to bmad_demo
+# Contributing to bmad_trainer (AI Contribution Framework)
 
 The portal teaches BMAD by example — including how to govern AI-assisted contributions in a shared codebase. This file is the human-readable companion to [`.github/CODEOWNERS`](.github/CODEOWNERS) and applies to every change to this repo, AI-assisted or not.
 
@@ -20,7 +20,7 @@ If any gate is failing, the PR isn't ready for merge. Reviewers point at this se
 
 ## Contributing with BMAD (default path)
 
-Most contributions go through the BMAD ceremony chain. Skills install under `.claude/skills/` (or your tool's equivalent under `.agents/skills/`). The full curriculum lives at [`/start-here`](https://github.com/JoshuaEngelbrecht/bmad_demo/tree/main/training/lessons) — read at least Lessons 1–4 before your first PR.
+Most contributions go through the BMAD ceremony chain. Skills install under `.claude/skills/` (or your tool's equivalent under `.agents/skills/`). The full curriculum lives at [`/start-here`](https://git.cglcloud.com/JoshuaEngelbrecht/bmad_trainer/-/tree/main/training/lessons) — read at least Lessons 1–4 before your first PR.
 
 1. **Pick a story.** The next story to work on is in [`_bmad-output/implementation-artifacts/sprint-status.yaml`](_bmad-output/implementation-artifacts/sprint-status.yaml). If your change isn't on the backlog, run `bmad-create-story` to author one from the relevant epic in [`_bmad-output/planning-artifacts/epics.md`](_bmad-output/planning-artifacts/epics.md).
 2. **Implement.** Run `bmad-dev-story` to execute against the spec. The agent reads `_bmad/` configs, `AGENTS.md`, and the per-story file.
@@ -82,8 +82,8 @@ Until these are enabled, this CONTRIBUTING.md and CODEOWNERS describe the *inten
 ## Repo setup before your first contribution
 
 ```bash
-git clone https://github.com/JoshuaEngelbrecht/bmad_demo.git
-cd bmad_demo
+git clone https://git.cglcloud.com/JoshuaEngelbrecht/bmad_trainer.git
+cd bmad_trainer
 npm install
 npm run dev
 ```

@@ -35,9 +35,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const lesson = getLessonBySlug(slug);
-  if (!lesson) return { title: "Lesson not found · BMAD Demo" };
+  if (!lesson) return { title: "Lesson not found · AI Contribution Framework" };
   return {
-    title: `Lesson ${lesson.number} — ${lesson.title} · BMAD Demo`,
+    title: `Lesson ${lesson.number} — ${lesson.title} · AI Contribution Framework`,
   };
 }
 
