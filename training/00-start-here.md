@@ -14,13 +14,13 @@ This page is your map. The work itself is in the lessons, labs, and capstone lin
 
 ## Who this is for
 
-Anyone on a team that's adopting (or thinking about adopting) AI coding assistants. Specifically:
+**Engineers who write code and want to use AI tools more rigorously on shared codebases.** This is engineering practice, not a no-code workflow. BMAD doesn't replace your judgment, your ability to read and reason about code, your debugging instincts, or your responsibility for what ships under your name — it adds discipline and shared structure to AI-assisted work so a team can trust the output. Specifically:
 
-- **Engineers** of any seniority, using any AI tool — Claude Code, Codex, GitHub Copilot, OpenCode, or whichever comes next.
-- **Product managers, designers, and tech leads** who'll set context for the team's adoption — even if they don't write code themselves.
-- **Mixed-experience teams** where some teammates are deep in AI tooling and others are new to it.
+- **Engineers** of any seniority, using any AI tool — Claude Code, Codex, GitHub Copilot, OpenCode, or whichever comes next. The expectation is that you can read the produced code, push back on it, fix it when it's wrong, and own the result.
+- **Tech leads** running team-wide adoption of AI tooling — the same engineering skills, plus the team-rituals layer this curriculum makes explicit.
+- **Mixed-experience teams** where some teammates are deep in AI tooling and others are new to it. The story-as-contract pattern (Lesson 3) is what keeps a mixed team coherent.
 
-The curriculum is **coding-skill-neutral.** The conceptual material does not assume you write code; the labs and capstone do but only at the level of running an AI tool through a guided workflow.
+**Stakeholders, product managers, designers, and other non-engineering roles** are welcome to read along — Lessons 1, 2, 4, and 5 give a concrete picture of what AI-assisted engineering work looks like with proper guardrails. But the practitioner work (labs, capstone) assumes you're shipping code; if you don't write code, you'll get more value from the [stakeholder tour](/stakeholder) or by pairing with an engineer through the labs.
 
 ---
 

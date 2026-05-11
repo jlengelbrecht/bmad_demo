@@ -218,12 +218,14 @@ This is the single most load-bearing section of the file. Reviewers should be ab
 The default contributor path. Spell out the BMAD ceremony chain concretely:
 
 1. Pick a story from the sprint plan (or run `bmad-create-story` to author one from the relevant epic).
-2. Implement with `bmad-dev-story`.
+2. Implement with `bmad-dev-story` — the dev agent drafts code against the spec; **you read the diff, push back where it's wrong, and iterate.** The skill produces a starting point, not a finished change.
 3. Self-review with `bmad-code-review` before opening the PR.
 4. Open the PR; CODEOWNERS auto-requests reviewers.
 5. Address review.
 
 Reference the *actual* skill names installed in your repo's `.claude/skills/` (or `.agents/skills/`). Don't list skills you don't have. Don't invent skill names.
+
+**The engineering work doesn't disappear with BMAD.** AI drafts code; you read it, debug it when it's wrong, refactor it when the dev agent took a left turn, and own the result on the PR. Treat the BMAD path as engineering-with-a-faster-typist, not engineering-on-autopilot.
 
 ### 3. The "Contributing without AI" door
 

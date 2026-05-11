@@ -4,7 +4,9 @@ title: What is BMAD
 
 # Lesson 1 — What is BMAD
 
-> **Reading time:** ~15 minutes. **Audience:** anyone on a team — engineer, PM, designer, lead. No coding required.
+> **Reading time:** ~15 minutes. **Audience:** engineers using AI tools on shared codebases. PMs/designers/leads can read along for context.
+
+> **This is engineering practice, not a no-code workflow.** BMAD doesn't replace your ability to read code, debug it, push back on it, or own what ships under your name. It adds discipline and shared structure so AI-assisted work clears the same review bar as anything else your team merges. If you're hoping AI will let your team ship without engineering judgment, this curriculum will disappoint you (and so will the result on real PRs).
 
 ## What you'll learn
 

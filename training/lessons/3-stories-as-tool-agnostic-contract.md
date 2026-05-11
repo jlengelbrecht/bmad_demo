@@ -116,6 +116,18 @@ This is what a good story looks like. It is not a haiku — it is dense — but 
 
 ---
 
+## What the contract DOESN'T do
+
+Worth naming explicitly so this isn't read as a no-code framing: the story file is the *spec*, not the *work*. An engineer still:
+
+- **Reads the produced code.** The dev agent writes against the spec, but the resulting diff is yours to review, push back on, refactor, or rewrite. The story file doesn't stop bad code from landing; the engineer reading the diff does.
+- **Debugs when things go sideways.** AI-produced code fails for the same reasons human code fails — wrong assumptions, missed edge cases, framework quirks. Tracing the failure, fixing it, and re-running tests is engineering work that no contract substitutes for.
+- **Owns the result.** Whatever ships under your name has your judgment behind it, regardless of which tool typed the keystrokes. The story-as-contract pattern makes review and accountability *easier*; it doesn't transfer them to the AI.
+
+If the story is the contract, the engineer is the principal. That's the relationship to internalize before Lesson 4 (the gate) makes the contract enforceable.
+
+---
+
 ## Where to find the canonical template
 
 The canonical BMAD story template lives at [`training/story-template.md`](/source/training/story-template.md). Use it when:
