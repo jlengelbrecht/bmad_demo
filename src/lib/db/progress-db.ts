@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Database, Statement } from "better-sqlite3";
+import type { DatabaseSync, StatementSync } from "node:sqlite";
 
 import { CAPSTONE_STEP_NAMES, type CapstoneStepName } from "./schemas";
 
@@ -45,19 +45,20 @@ export type ProgressRecord = {
 };
 
 // Cache prepared statements per-connection so we don't re-parse SQL on
-// every call. better-sqlite3's perf win comes from this.
+// every call. Same perf win pattern under node:sqlite (was the major
+// reason we picked better-sqlite3 originally; carries over post-swap).
 type PreparedCache = {
-  upsert: Statement;
-  get: Statement;
-  listCompleted: Statement;
-  getRecentCapstone: Statement;
-  getCapstoneById: Statement;
-  isCapstoneActive: Statement;
-  markCapstoneComplete: Statement;
+  upsert: StatementSync;
+  get: StatementSync;
+  listCompleted: StatementSync;
+  getRecentCapstone: StatementSync;
+  getCapstoneById: StatementSync;
+  isCapstoneActive: StatementSync;
+  markCapstoneComplete: StatementSync;
 };
-const stmtCache = new WeakMap<Database, PreparedCache>();
+const stmtCache = new WeakMap<DatabaseSync, PreparedCache>();
 
-function statements(db: Database): PreparedCache {
+function statements(db: DatabaseSync): PreparedCache {
   const cached = stmtCache.get(db);
   if (cached) return cached;
   const prepared: PreparedCache = {
@@ -109,10 +110,10 @@ function statements(db: Database): PreparedCache {
  *  - `completed: true`  → `completed_at = <fresh ISO 8601 UTC>`
  *  - `completed: false` → `completed_at = NULL`
  *
- * Synchronous (better-sqlite3 is sync). Server Components and Route
+ * Synchronous (node:sqlite is sync). Server Components and Route
  * Handlers can call this directly without `await`.
  */
-export function upsertProgress(entry: ProgressEntry, db: Database = getDb()): void {
+export function upsertProgress(entry: ProgressEntry, db: DatabaseSync = getDb()): void {
   const completedAt = entry.completed ? new Date().toISOString() : null;
   statements(db).upsert.run(entry.kind, entry.id, completedAt);
 }
@@ -124,7 +125,7 @@ export function upsertProgress(entry: ProgressEntry, db: Database = getDb()): vo
 export function getProgress(
   kind: ProgressKind,
   id: string,
-  db: Database = getDb(),
+  db: DatabaseSync = getDb(),
 ): ProgressRecord | null {
   const row = statements(db).get.get(kind, id) as ProgressRecord | undefined;
   return row ?? null;
@@ -137,7 +138,7 @@ export function getProgress(
  */
 export function listCompleted(
   kind: ProgressKind,
-  db: Database = getDb(),
+  db: DatabaseSync = getDb(),
 ): ReadonlySet<string> {
   const rows = statements(db).listCompleted.all(kind) as { id: string }[];
   return new Set(rows.map((r) => r.id));
@@ -154,7 +155,7 @@ export type CapstoneSessionRow = {
  * chronological. Used by `/capstone` overview (Story 4.3).
  */
 export function getRecentCapstoneSession(
-  db: Database = getDb(),
+  db: DatabaseSync = getDb(),
 ): CapstoneSessionRow | null {
   const row = statements(db).getRecentCapstone.get() as
     | CapstoneSessionRow
@@ -168,7 +169,7 @@ export function getRecentCapstoneSession(
  */
 export function getCapstoneSessionById(
   sessionId: string,
-  db: Database = getDb(),
+  db: DatabaseSync = getDb(),
 ): CapstoneSessionRow | null {
   const row = statements(db).getCapstoneById.get(sessionId) as
     | CapstoneSessionRow
@@ -188,7 +189,7 @@ export function getCapstoneSessionById(
  */
 export function isCapstoneSessionActive(
   sessionId: string,
-  db: Database = getDb(),
+  db: DatabaseSync = getDb(),
 ): boolean {
   return statements(db).isCapstoneActive.get(sessionId) !== undefined;
 }
@@ -204,7 +205,7 @@ export function isCapstoneSessionActive(
  */
 export function completedStepsForSession(
   sessionId: string,
-  db: Database = getDb(),
+  db: DatabaseSync = getDb(),
 ): ReadonlySet<CapstoneStepName> {
   // Defensive guards: the empty session id would build prefix `'/'` and
   // over-match `/<step>` rows; a session id containing `/` would create
@@ -248,7 +249,7 @@ export function completedStepsForSession(
  */
 export function markCapstoneSessionComplete(
   sessionId: string,
-  db: Database = getDb(),
+  db: DatabaseSync = getDb(),
 ): { updated: boolean } {
   const completedAt = new Date().toISOString();
   const result = statements(db).markCapstoneComplete.run(completedAt, sessionId);
@@ -270,7 +271,7 @@ export type CapstoneSessionStatus = "in-progress" | "completed" | "aborted";
  */
 export function getCapstoneSessionStatus(
   sessionId: string,
-  db: Database = getDb(),
+  db: DatabaseSync = getDb(),
 ): CapstoneSessionStatus | null {
   const row = statements(db).getCapstoneById.get(sessionId) as
     | { id: string; completedAt: string | null }
@@ -289,7 +290,7 @@ export function getCapstoneSessionStatus(
  */
 export function markCapstoneSessionAborted(
   sessionId: string,
-  db: Database = getDb(),
+  db: DatabaseSync = getDb(),
 ): { updated: boolean } {
   const sentinel = `aborted-${new Date().toISOString()}`;
   const existing = statements(db).getCapstoneById.get(sessionId) as
@@ -316,7 +317,7 @@ export function markCapstoneSessionAborted(
 export function recordCapstoneTargetDir(
   sessionId: string,
   chosenDir: string,
-  db: Database = getDb(),
+  db: DatabaseSync = getDb(),
 ): void {
   statements(db).upsert.run("capstone-target", sessionId, chosenDir);
 }
@@ -326,7 +327,7 @@ export function recordCapstoneTargetDir(
  */
 export function getCapstoneTargetDir(
   sessionId: string,
-  db: Database = getDb(),
+  db: DatabaseSync = getDb(),
 ): string | null {
   const row = statements(db).get.get("capstone-target", sessionId) as
     | ProgressRecord
@@ -340,14 +341,14 @@ export function getCapstoneTargetDir(
 export function recordCapstoneTool(
   sessionId: string,
   toolId: string,
-  db: Database = getDb(),
+  db: DatabaseSync = getDb(),
 ): void {
   statements(db).upsert.run("capstone-tool", sessionId, toolId);
 }
 
 export function getCapstoneTool(
   sessionId: string,
-  db: Database = getDb(),
+  db: DatabaseSync = getDb(),
 ): string | null {
   const row = statements(db).get.get("capstone-tool", sessionId) as
     | ProgressRecord

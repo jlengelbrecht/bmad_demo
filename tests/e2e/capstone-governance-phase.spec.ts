@@ -5,7 +5,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 import { test, expect } from "@playwright/test";
 
 const TARGET_DIR = "/tmp/e2e-governance-target";
@@ -18,7 +18,7 @@ function cleanFs() {
 }
 
 function seedSession(sessionId: string, tool: string) {
-  const db = new Database(DB_PATH);
+  const db = new DatabaseSync(DB_PATH);
   const schemaPath = path.resolve("src", "db", "schema.sql");
   db.exec(readFileSync(schemaPath, "utf8"));
   const upsert = db.prepare(
@@ -32,7 +32,7 @@ function seedSession(sessionId: string, tool: string) {
 }
 
 function clearSession(sessionId: string) {
-  const db = new Database(DB_PATH);
+  const db = new DatabaseSync(DB_PATH);
   db.prepare(
     "DELETE FROM progress WHERE id = ? AND kind IN ('capstone-session', 'capstone-target', 'capstone-tool', 'capstone-step')",
   ).run(sessionId);

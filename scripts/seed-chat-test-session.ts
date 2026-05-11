@@ -17,7 +17,7 @@
 // (look for `_bmad/` and `.claude/skills/`). If you haven't bootstrapped
 // it yet, run `npx bmad-method install --directory <path> --tools claude-code`.
 
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
@@ -59,7 +59,7 @@ if (!/^\d{8}T\d{6}Z$/.test(sessionId)) {
 
 const dbPath = path.resolve("data", "progress.sqlite");
 mkdirSync(path.dirname(dbPath), { recursive: true });
-const db = new Database(dbPath);
+const db = new DatabaseSync(dbPath);
 db.pragma("journal_mode = WAL");
 // Apply schema idempotently — does not drop existing rows.
 db.exec(readFileSync(path.resolve("src", "db", "schema.sql"), "utf8"));

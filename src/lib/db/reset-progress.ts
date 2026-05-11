@@ -2,7 +2,7 @@ import { unlinkSync } from "node:fs";
 import path from "node:path";
 
 /**
- * Sidecar suffixes better-sqlite3 may produce alongside the main DB file.
+ * Sidecar suffixes node:sqlite may produce alongside the main DB file.
  *  - `-journal`: legacy rollback journal (default journal mode)
  *  - `-wal` / `-shm`: WAL-mode write-ahead log + shared-memory map
  * `connection.ts` enables WAL on the production path, so any subset of
