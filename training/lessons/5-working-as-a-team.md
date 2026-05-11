@@ -248,3 +248,5 @@ You now have the recovery loops named. The pinnable artifact at [`training/team-
 **Lesson 6** surveys the BMAD ecosystem and the installer's options — what modules and tools BMAD ships, and what each install prompt is asking. Worth reading before the capstone so you can answer the prompts deliberately when you bring BMAD home to your team.
 
 **Lesson 7** frames the **capstone** — the 90–120 minute synthesis exercise where you'll experience everything in this curriculum on a real artifact chain through your own AI tool. The lessons end at Lesson 7; the actual practice begins at the capstone.
+
+**In the capstone:** the **governance phase** (the final phase, after `dev-story-1.1`) is where you turn the ceremonies and recovery loops named here into a `CONTRIBUTING.md` for the project you just bootstrapped. Your AI tool asks you which ceremonies the team commits to, whether to leave the door open for non-AI contributors, and which branch-protection rule makes the gate enforceable — then writes the file to disk. [Open the capstone →](/capstone)

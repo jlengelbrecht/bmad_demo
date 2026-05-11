@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
+import { XTERM_ERROR_FILTER_SCRIPT } from "@/components/xterm-error-filter";
 import {
   ThemeProvider,
   THEME_INIT_SCRIPT,
@@ -46,6 +47,16 @@ export default function RootLayout({
         */}
         <script
           dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+        />
+        {/*
+          xterm 5.x init-race suppression — must run BEFORE Next.js's
+          dev runtime registers its error-overlay listener. Inline-head
+          injection is the only reliable spot; loading it from the
+          dynamic-imported terminal-pane module is too late. See
+          XTERM_ERROR_FILTER_SCRIPT in terminal-pane.tsx for the source.
+        */}
+        <script
+          dangerouslySetInnerHTML={{ __html: XTERM_ERROR_FILTER_SCRIPT }}
         />
       </head>
       <body className="min-h-full flex flex-col">

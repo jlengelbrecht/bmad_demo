@@ -1,3 +1,4 @@
+import { governancePromptTemplate } from "../governance/prompt-template";
 import type { CapstonePhase, ToolId } from "../adapters/types";
 
 /**
@@ -53,6 +54,10 @@ const BMAD_SKILLS: Record<CapstonePhase, string | null> = {
   "implementation-readiness": "/bmad-check-implementation-readiness",
   "sprint-planning": "/bmad-sprint-planning",
   "dev-story-1.1": "/bmad-create-story",
+  // Governance has no shipped BMAD skill. The phase substitutes a
+  // multi-paragraph templated prompt (see governancePromptTemplate())
+  // for the slash command — same launch shape, different payload.
+  governance: null,
 };
 
 /**
@@ -84,23 +89,51 @@ const SUPPORTS_INITIAL_PROMPT_ARGV: Record<ToolId, boolean> = {
   "github-copilot": true,
 };
 
+/**
+ * For phases without a BMAD skill, the portal substitutes a templated
+ * prompt as the initial-prompt argv. The governance phase is the only
+ * such phase today; future ones can extend this map.
+ *
+ * The preview surface trims the prompt to a single short label so the
+ * trainee doesn't see a wall of text in the "What the portal will run"
+ * pre-block — the full prompt is what the AI receives, not what we
+ * teach the trainee to type.
+ */
+const PORTAL_PROMPTS: Partial<
+  Record<CapstonePhase, { fullPrompt: () => string; previewLabel: string }>
+> = {
+  governance: {
+    fullPrompt: governancePromptTemplate,
+    previewLabel: "<governance prompt — drives CODEOWNERS + CONTRIBUTING.md authoring>",
+  },
+};
+
 /** Resolve the launch command for a given (tool, phase) pair. */
 export function getLaunchCommand(
   tool: ToolId,
   phase: CapstonePhase,
 ): LaunchCommand {
   const bmadInvocation = BMAD_SKILLS[phase];
+  const portalPrompt = PORTAL_PROMPTS[phase];
+  // Effective initial-prompt payload: the BMAD slash command for skill
+  // phases, OR the portal-templated prompt for skill-less phases.
+  const initialPrompt = bmadInvocation ?? portalPrompt?.fullPrompt() ?? null;
   const autoRun =
-    SUPPORTS_INITIAL_PROMPT_ARGV[tool] && bmadInvocation !== null;
+    SUPPORTS_INITIAL_PROMPT_ARGV[tool] && initialPrompt !== null;
+  // What we render in the preview block. For BMAD-skill phases this is
+  // the slash command itself; for portal-templated phases this is the
+  // shorter previewLabel so we don't dump the whole prompt on screen.
+  const previewPayload =
+    bmadInvocation ?? portalPrompt?.previewLabel ?? null;
 
   if (tool === "claude-code") {
     const args: string[] = ["--dangerously-skip-permissions"];
-    if (autoRun && bmadInvocation) args.push(bmadInvocation);
+    if (autoRun && initialPrompt) args.push(initialPrompt);
     return {
       cmd: "claude",
       args,
       preview: (cd) =>
-        `cd ${cd}\nclaude --dangerously-skip-permissions${autoRun ? ` "${bmadInvocation!}"` : ""}`,
+        `cd ${cd}\nclaude --dangerously-skip-permissions${autoRun && previewPayload ? ` "${previewPayload}"` : ""}`,
       bmadInvocation,
       autoRun,
     };
@@ -112,12 +145,12 @@ export function getLaunchCommand(
     // (long, named, scary), same effect (no per-action approval prompt).
     // The positional `[PROMPT]` rides along as the agent's first message.
     const args: string[] = ["--dangerously-bypass-approvals-and-sandbox"];
-    if (autoRun && bmadInvocation) args.push(bmadInvocation);
+    if (autoRun && initialPrompt) args.push(initialPrompt);
     return {
       cmd: "codex",
       args,
       preview: (cd) =>
-        `cd ${cd}\ncodex --dangerously-bypass-approvals-and-sandbox${autoRun ? ` "${bmadInvocation!}"` : ""}`,
+        `cd ${cd}\ncodex --dangerously-bypass-approvals-and-sandbox${autoRun && previewPayload ? ` "${previewPayload}"` : ""}`,
       bmadInvocation,
       autoRun,
     };
@@ -128,12 +161,12 @@ export function getLaunchCommand(
   // documented as "Start interactive mode and automatically execute a
   // prompt" — exactly what we want for the BMAD launch.
   const args: string[] = ["--allow-all-tools"];
-  if (autoRun && bmadInvocation) args.push("-i", bmadInvocation);
+  if (autoRun && initialPrompt) args.push("-i", initialPrompt);
   return {
     cmd: "copilot",
     args,
     preview: (cd) =>
-      `cd ${cd}\ncopilot --allow-all-tools${autoRun ? ` -i "${bmadInvocation!}"` : ""}`,
+      `cd ${cd}\ncopilot --allow-all-tools${autoRun && previewPayload ? ` -i "${previewPayload}"` : ""}`,
     bmadInvocation,
     autoRun,
   };
@@ -148,4 +181,5 @@ export const PHASE_DISPLAY_NAMES: Record<CapstonePhase, string> = {
   "implementation-readiness": "Implementation Readiness",
   "sprint-planning": "Sprint Planning",
   "dev-story-1.1": "Dev Story 1.1",
+  governance: "Governance",
 };

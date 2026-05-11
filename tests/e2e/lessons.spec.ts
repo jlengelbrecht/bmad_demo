@@ -26,7 +26,7 @@ test.describe("lesson route (Story 2.2)", () => {
     await expect(prev).toBeVisible();
     await expect(prev).toHaveAttribute("href", "/lessons/2-the-artifact-chain");
 
-    const next = page.getByLabel("Next: Lesson 4 — CODEOWNERS and the gate").first();
+    const next = page.getByLabel("Next: Lesson 4 — CODEOWNERS, CONTRIBUTING.md, and the gate").first();
     await expect(next).toBeVisible();
     await expect(next).toHaveAttribute("href", "/lessons/4-codeowners-and-the-gate");
   });

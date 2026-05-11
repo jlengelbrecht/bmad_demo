@@ -7,23 +7,19 @@ import { isPathAllowed } from "@/lib/capstone/bootstrap/path-allowlist";
 import { getLaunchCommand } from "@/lib/capstone/phases/launch-commands";
 import * as ptyRegistry from "@/lib/capstone/pty/session-registry";
 import { getCapstoneTargetDir } from "@/lib/db/progress-db";
+import { CAPSTONE_PHASE_NAMES } from "@/lib/db/schemas";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const TOOL_VALUES = ["claude-code", "codex", "github-copilot"] as const;
-const PHASE_VALUES = [
-  "brief",
-  "prd",
-  "architecture",
-  "epics-and-stories",
-  "adr",
-  "dev-story-1.1",
-] as const;
 
 const RequestSchema = z.object({
   tool: z.enum(TOOL_VALUES),
-  phase: z.enum(PHASE_VALUES),
+  // Single source of truth — drift between this route and CapstonePhase
+  // produced bugs when phases were added (the local enum still listed
+  // `adr` and was missing `implementation-readiness` / `sprint-planning`).
+  phase: z.enum(CAPSTONE_PHASE_NAMES),
 });
 
 /**

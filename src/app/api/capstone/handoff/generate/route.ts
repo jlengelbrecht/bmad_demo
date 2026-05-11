@@ -33,11 +33,15 @@ const TOOL_DISPLAY_NAMES: Record<string, string> = {
 
 /**
  * Per-phase artifact lookup for the HANDOFF.md "What was produced"
- * section. Each entry has either:
+ * section. Each entry has one of three shapes:
  *   - `rel`: a fixed relative path under outputFolder, OR
- *   - `dir` + `pattern`: a directory glob — the first matching file is
- *     used. Used for phases whose canonical filename includes a date
- *     (readiness report) or otherwise varies.
+ *   - `dir` + `pattern`: a directory glob (under outputFolder) — the
+ *     first matching file is used. Used for phases whose canonical
+ *     filename includes a date (readiness report) or otherwise varies.
+ *   - `repoRoot: true` with `candidates`: an ordered list of
+ *     repo-root-relative paths to probe. Used for the governance phase,
+ *     whose files (CODEOWNERS, CONTRIBUTING.md) live at repo root or
+ *     under `.github/`, NOT under outputFolder.
  *
  * Brief uses a glob too because BMAD writes
  * `product-brief-<project_name>.md` parameterized by project name,
@@ -45,7 +49,8 @@ const TOOL_DISPLAY_NAMES: Record<string, string> = {
  */
 type ArtifactLookup =
   | { phase: string; rel: string }
-  | { phase: string; dir: string; pattern: RegExp };
+  | { phase: string; dir: string; pattern: RegExp }
+  | { phase: string; repoRoot: true; candidates: readonly string[] };
 
 const ARTIFACT_PATHS: ArtifactLookup[] = [
   {
@@ -65,6 +70,20 @@ const ARTIFACT_PATHS: ArtifactLookup[] = [
     phase: "sprint-planning",
     dir: "implementation-artifacts",
     pattern: /^sprint-status\.ya?ml$/,
+  },
+  {
+    // Governance writes to repo root, not outputFolder. The two files
+    // are listed as separate phase entries so HANDOFF.md surfaces them
+    // independently — partial production (e.g., CODEOWNERS exists but
+    // CONTRIBUTING.md doesn't) renders as one ✓ + one *(not produced)*.
+    phase: "governance:codeowners",
+    repoRoot: true,
+    candidates: [".github/CODEOWNERS", "CODEOWNERS"],
+  },
+  {
+    phase: "governance:contributing",
+    repoRoot: true,
+    candidates: [".github/CONTRIBUTING.md", "CONTRIBUTING.md"],
   },
 ];
 
@@ -128,6 +147,24 @@ export async function POST(req: Request): Promise<Response> {
 
   const artifactLines: string[] = [];
   for (const lookup of ARTIFACT_PATHS) {
+    // Repo-root lookups (governance) — probe candidates at chosenDir,
+    // NOT under outputFolder. The displayed path is the repo-rel path
+    // verbatim, no outputFolder prefix.
+    if ("repoRoot" in lookup) {
+      const hit = lookup.candidates.find((rel) =>
+        existsSync(path.join(chosenDir, rel)),
+      );
+      if (hit) {
+        const size = statSync(path.join(chosenDir, hit)).size;
+        artifactLines.push(
+          `- **${lookup.phase}** — \`${hit}\` (${formatSize(size)})`,
+        );
+      } else {
+        artifactLines.push(`- **${lookup.phase}** — *(not produced)*`);
+      }
+      continue;
+    }
+
     let resolvedRel: string | null = null;
     if ("rel" in lookup) {
       const abs = path.join(chosenDir, outputFolder, lookup.rel);

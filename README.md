@@ -4,7 +4,7 @@ A runnable training resource that teaches teams how to adopt **BMAD** — a fram
 
 ## Maintainer
 
-Curriculum maintainer: **Devbox** ([@jlengelbrecht](https://github.com/jlengelbrecht)). Open an issue on this repo for questions, bugs, or content suggestions.
+Curriculum maintainer: **Devbox** ([@JoshuaEngelbrecht](https://github.com/JoshuaEngelbrecht)). Open an issue on this repo for questions, bugs, or content suggestions.
 
 > **Bus-factor disclosure (v1):** this repo currently has a single curriculum maintainer. That is a known v1 limitation. The v1.1 maintainer-succession plan — co-maintainer onboarding, a documented hand-off ritual, and a contributor ladder — is a deliberate post-v1 follow-up tracked outside this README.
 
@@ -16,8 +16,10 @@ Two paths. Pick whichever matches your machine.
 
 Requires **Node 20+** and **npm**.
 
+> **macOS users:** the native install path requires **Xcode Command Line Tools** because `node-pty` and `better-sqlite3` compile native modules during `npm install`. If you don't have them, run `xcode-select --install` first — `npm install` will otherwise fail with a `node-gyp` build error. **If you'd rather skip the native-build setup entirely, use the [devcontainer path below](#run-in-a-devcontainer-linux-macos-windows)** — it bakes the toolchain inside a Linux container so your host doesn't need it.
+
 ```bash
-git clone https://github.com/jlengelbrecht/bmad_demo.git
+git clone https://github.com/JoshuaEngelbrecht/bmad_demo.git
 cd bmad_demo
 npm install
 npm run dev
@@ -27,18 +29,43 @@ The dev server starts on `http://localhost:3000` (Next.js falls back to the next
 
 You'll also need at least one of the supported AI-tool CLIs installed and authenticated on your host: **Claude Code**, **Codex**, or **GitHub Copilot CLI**. Per-tool install + auth notes live in [`training/tools-reference.md`](training/tools-reference.md).
 
-### Run in a devcontainer (any OS, including Windows)
+### Run in a devcontainer (Linux, macOS, Windows)
 
-The portal ships a devcontainer config that produces a Linux dev environment with Node, the native-build toolchain (`node-pty`, `better-sqlite3`), and the Codex + Claude Code CLIs pre-installed. Use this if you're on Windows, or if you want to skip per-OS native-module pain on macOS.
+> **Recommended for macOS and Windows trainees.** Devcontainer is the lowest-friction path on these OSes because it skips the native-build toolchain setup (Xcode CLT on Mac, Visual Studio Build Tools on Windows). Linux users can still pick whichever path they prefer.
 
-Requires Docker (or Podman) and a devcontainer-aware editor — VS Code (with the "Dev Containers" extension), Cursor, GitHub Codespaces, JetBrains Gateway, or the standalone [devcontainer CLI](https://github.com/devcontainers/cli).
+The portal ships a devcontainer config (`.devcontainer/Dockerfile` + `.devcontainer/devcontainer.json`) that produces a Linux dev environment with Node 22, the native-build toolchain (`build-essential`, `python3` — what `node-pty` and `better-sqlite3` need), `git`, `gh`, `sqlite3`, and the **Claude Code + Codex** CLIs pre-installed. Use this if you're on Windows, or if you want to skip per-OS native-module pain on macOS.
 
-1. Open the repo in your editor.
-2. Trigger "Reopen in Container" (VS Code: Cmd/Ctrl-Shift-P → "Dev Containers: Reopen in Container"). The image builds on first launch (~2 min).
-3. The editor forwards port 3000; you'll get a notification with a clickable URL.
-4. Run `npm run dev` in the container's terminal.
+**Prerequisites:**
 
-Authenticate your AI tool inside the container on first use:
+- Docker Desktop, OrbStack, or Podman
+- One of:
+  - **VS Code** with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+  - **GitHub Codespaces** (the repo's `.devcontainer/` is honored automatically)
+  - **JetBrains Gateway**
+  - The standalone [devcontainer CLI](https://github.com/devcontainers/cli) (no editor required)
+
+**Open the repo in a container:**
+
+VS Code:
+
+1. Open the repo folder in VS Code.
+2. Cmd/Ctrl-Shift-P → "Dev Containers: Reopen in Container". First build is ~2–3 min; subsequent opens are seconds.
+3. The editor forwards port 3000 and shows a notification with the URL.
+4. In the container's integrated terminal, run `npm run dev`.
+
+Standalone CLI (no editor):
+
+```bash
+# Build + start the container (one-time)
+devcontainer up --workspace-folder .
+
+# Run the dev server inside the container
+devcontainer exec --workspace-folder . npm run dev
+```
+
+The repo bind-mounts at `/workspaces/bmad_demo` inside the container; edits on your host show up immediately, and vice versa.
+
+**Authenticate your AI tool inside the container on first use:**
 
 ```bash
 # Claude Code
@@ -47,21 +74,35 @@ claude /login
 # Codex
 codex login
 
-# GitHub Copilot CLI (requires GitHub auth first)
+# GitHub Copilot CLI (gh auth must come BEFORE the extension install)
 gh auth login
 gh extension install github/gh-copilot
 ```
 
-Tokens persist in the container's named volume across restarts — sign in once, rebuild the image without losing auth.
+Tokens land under `~/.claude/`, `~/.codex/`, `~/.config/gh/` inside the container's home directory, which the devcontainer convention persists across container restarts — sign in once, rebuild the image without losing auth.
 
-**Why a devcontainer?** This is a training tool meant to work cross-OS. Native installs of `node-pty` and `better-sqlite3` surface platform-specific build pain (Xcode CLT on macOS, Visual Studio Build Tools on Windows). Pushing the runtime into a Linux container makes the install path uniform regardless of host OS. Native install still works on Linux/macOS for developers who prefer it.
+**Rebuilding after Dockerfile changes:**
+
+If you edit `.devcontainer/Dockerfile` or `devcontainer.json`, rebuild the image so the change takes effect.
+
+- VS Code: Cmd/Ctrl-Shift-P → "Dev Containers: Rebuild Container"
+- CLI: `devcontainer up --workspace-folder . --remove-existing-container`
+
+**Troubleshooting:**
+
+- **Port 3000 already forwarded to another container.** Stop the other container or change the forwarded port in `.devcontainer/devcontainer.json` (`forwardPorts`).
+- **`npm install` fails on `better-sqlite3` / `node-pty`.** This shouldn't happen in the container — the toolchain is baked in. If it does, rebuild the image (above).
+- **Claude / Codex `command not found`.** The image installs them as the `node` user; PATH includes `/home/node/.local/bin`. Open a fresh shell in the container after install completes.
+- **Capstone wants to write to a path on your host.** The trainee's chosen capstone directory must be a path **inside the container** (`/workspaces/...` or `/home/node/...`). Paths from your host won't be reachable.
+
+**Why a devcontainer?** This is a training tool meant to work cross-OS. Native installs of `node-pty` and `better-sqlite3` surface platform-specific build pain (Xcode CLT on macOS, Visual Studio Build Tools on Windows). Pushing the runtime into a Linux container makes the install path uniform. Native install still works on Linux/macOS for developers who prefer it.
 
 ## Pick your path
 
 The portal home page presents three audience-entry cards. You can also navigate by route or read the markdown sources directly:
 
 - **Trainee — Start Here** · route `/start-here` · markdown [`training/00-start-here.md`](training/00-start-here.md) — six lessons, three labs, ~3 hours self-paced. Ends with a capstone that produces a real BMAD artifact set.
-- **Stakeholder — 15-minute Demo** · route `/stakeholder` · markdown `training/stakeholder-demo-script.md` *(coming in a future release)* — a timed walkthrough of what BMAD looks like in practice and the trade-offs it makes, with explicit objections and answers.
+- **Stakeholder — 10-minute guided tour** · route `/stakeholder` — a six-panel interactive walkthrough designed for a screen-share demo. Each panel deep-links into THIS repo's real artifacts (PRD, architecture, story specs, CODEOWNERS, CONTRIBUTING.md) so stakeholders see what BMAD actually produces, not abstractions. The original markdown script lives at [`training/stakeholder-demo-script.md`](training/stakeholder-demo-script.md) for facilitators who want a read-aloud version.
 - **Facilitator — Workshop Guide** · route `/facilitator` · markdown `training/facilitator-guide.md` *(coming in a future release)* — timing, prompts, and rituals to run a half-day or full-day BMAD workshop with your team.
 
 ## Supported AI tooling
@@ -98,8 +139,10 @@ The planning artifacts in `_bmad-output/planning-artifacts/` are the actual outp
 
 ## Platforms and constraints
 
-- **Operating systems:** macOS, Linux, and Windows via WSL2.
-- **Runtime floor:** Node **20+** (declared in `package.json` `engines.node` and `.nvmrc`). Node 22 LTS works without re-pinning.
+- **Operating systems:**
+  - **Native install:** macOS and Linux.
+  - **Devcontainer:** any OS with Docker — macOS, Linux, Windows (with or without WSL2).
+- **Runtime floor:** Node **20+** (declared in `package.json` `engines.node` and `.nvmrc`). Node 22 LTS works without re-pinning. The devcontainer pins Node 22.
 - **Package manager:** npm only for v1. Yarn / pnpm support is post-v1.
 
 ## What's NOT in v1

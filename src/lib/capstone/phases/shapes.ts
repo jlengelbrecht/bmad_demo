@@ -90,13 +90,36 @@ export const PHASE_SHAPES: Record<CapstonePhase, PhaseShape> = {
     minSizeBytes: 20,
   },
   "dev-story-1.1": {
-    // The dev-story-1.1 phase's gate is a green test run, not a
-    // planning artifact. The phase-done route bypasses validatePhaseShape
-    // for this phase entirely — these settings are placeholders kept
-    // only so the keyed Record<CapstonePhase, ...> remains exhaustive.
+    // `bmad-create-story` writes the per-story implementation spec to
+    // `{implementation_artifacts}/<epic>-<story>-<slug>.md` (per the
+    // skill's customize.toml). The `<story>` segment can carry a letter
+    // suffix (e.g., `11-1b-...`); the `<epic>` segment can too
+    // (`7a-1-...`). The trailing `bmad-dev-story` skill writes code in
+    // the trainee's repo + updates the spec file's Dev Agent Record;
+    // either way, the phase's deliverable file is the spec on disk.
+    //
+    // Pattern ordering: canonical numeric-with-optional-letter prefix
+    // first, broad markdown fallback after, so a permissive match
+    // doesn't shadow a stricter one when both are present.
     searchSubdir: "implementation-artifacts",
-    artifactPatterns: [/.+/],
-    minSizeBytes: 0,
+    artifactPatterns: [
+      /^[\dA-Za-z]+-[\dA-Za-z]+-[a-z0-9-]+\.md$/i,
+      /.+\.md$/,
+    ],
+    minSizeBytes: 400,
+  },
+  governance: {
+    // The governance phase requires BOTH `.github/CODEOWNERS` (or
+    // `CODEOWNERS` at repo root) AND `CONTRIBUTING.md` (or
+    // `.github/CONTRIBUTING.md`). The phase-done route bypasses
+    // validatePhaseShape for governance entirely and calls
+    // validateGovernancePhaseShape (sibling fn), which understands the
+    // multi-file gate. These settings are placeholders kept only so the
+    // keyed Record<CapstonePhase, ...> remains exhaustive — the real
+    // shape lives in src/lib/capstone/governance/validate.ts.
+    searchSubdir: ".",
+    artifactPatterns: [/^(\.github\/)?CODEOWNERS$/, /^(\.github\/)?CONTRIBUTING\.md$/],
+    minSizeBytes: 400,
   },
 };
 
@@ -228,6 +251,7 @@ export const PHASE_ORDER: CapstonePhase[] = [
   "implementation-readiness",
   "sprint-planning",
   "dev-story-1.1",
+  "governance",
 ];
 
 export function nextPhase(phase: CapstonePhase): CapstonePhase | null {

@@ -23,6 +23,21 @@ describe("renderHandoff", () => {
     expect(out).not.toMatch(/{{[^}]+}}/);
   });
 
+  it("includes the branch-protection reminder section", () => {
+    const out = renderHandoff({
+      projectName: "demo",
+      chosenDir: "/tmp/demo",
+      toolDisplayName: "Codex",
+      artifactList: "- whatever",
+      gitLogOutput: "abc",
+      bmadVersion: "6.6.0",
+      date: "2026-05-10",
+    });
+    expect(out).toMatch(/Branch protection reminder/);
+    expect(out).toMatch(/Require review from Code Owners/);
+    expect(out).toMatch(/documentation only/);
+  });
+
   it("renders <unknown> for missing fields", () => {
     const out = renderHandoff({
       projectName: "",

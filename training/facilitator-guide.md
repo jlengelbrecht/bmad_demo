@@ -84,7 +84,7 @@ For each lesson, the most useful facilitator move:
 
 **Common questions:**
 
-- *"How is this different from Spec Kit / Cursor Rules / [other-thing]?"* — They're complementary. BMAD is the team-rituals layer; the others are tools. The point is the contract pattern, not the framework.
+- *"How is this different from Spec Kit / [other framework]?"* — They're complementary. BMAD is the team-rituals layer; the others are tools. The point is the contract pattern, not the framework.
 - *"Why six named agents?"* — They're not load-bearing for trainees. Don't dwell.
 
 **Facilitator move:** open the [bmadcode.com](https://bmadcode.com/) tab live. Stakeholders sometimes need to see attribution preserved.

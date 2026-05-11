@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 
 import {
   getLaunchCommand,
@@ -217,6 +217,8 @@ export function ChatPhasePane({
             {launch.preview(chosenDir)}
           </pre>
 
+          <TrustPromptNotice tool={tool} />
+
           {launch.autoRun && launch.bmadInvocation ? (
             <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
               ✨ The portal passes{" "}
@@ -228,6 +230,17 @@ export function ChatPhasePane({
               </code>{" "}
               skill on launch and drop you straight into the{" "}
               {PHASE_DISPLAY_NAMES[phase]} workflow.
+            </p>
+          ) : launch.autoRun && !launch.bmadInvocation ? (
+            <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
+              ✨ This phase has no shipped BMAD skill — the portal sends{" "}
+              {TOOL_DISPLAY_NAMES[tool]} a templated multi-paragraph prompt that
+              drives the four governance decisions (ownership routing, team
+              ceremonies, AI-vs-non-AI contribution path, branch protection)
+              and asks the AI to write{" "}
+              <code className="font-mono">.github/CODEOWNERS</code> +{" "}
+              <code className="font-mono">CONTRIBUTING.md</code> when your
+              decisions are settled.
             </p>
           ) : launch.bmadInvocation ? (
             <>
@@ -276,11 +289,19 @@ export function ChatPhasePane({
               Target: <code className="font-mono">{chosenDir}</code>
             </p>
           </div>
+          <TrustPromptNotice tool={tool} />
           {launch.autoRun && launch.bmadInvocation ? (
             <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
               ✨ Running{" "}
               <code className="font-mono">{launch.bmadInvocation}</code> for you
               on launch.
+            </p>
+          ) : launch.autoRun && !launch.bmadInvocation ? (
+            <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
+              ✨ Driving the governance prompt — the AI will ask you the four
+              decisions, then write{" "}
+              <code className="font-mono">.github/CODEOWNERS</code> +{" "}
+              <code className="font-mono">CONTRIBUTING.md</code>.
             </p>
           ) : launch.bmadInvocation ? (
             <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
@@ -374,10 +395,26 @@ function PhaseDoneSection({
 
       {phaseDone.kind === "valid" && continueHref ? (
         <>
-          <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
-            ✓ Artifact found and valid:{" "}
-            <code className="font-mono">{phaseDone.artifactPath}</code>
-          </p>
+          {phaseDone.artifactPath.includes(" + ") ? (
+            // Governance phase produces TWO files; render each on its
+            // own line for clarity rather than collapsing the joined
+            // string into one code block.
+            <div className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
+              <p className="mb-1">✓ Both governance files found and valid:</p>
+              <ul className="ml-4 list-disc">
+                {phaseDone.artifactPath.split(" + ").map((p) => (
+                  <li key={p}>
+                    <code className="font-mono">{p}</code>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
+              ✓ Artifact found and valid:{" "}
+              <code className="font-mono">{phaseDone.artifactPath}</code>
+            </p>
+          )}
           <Link
             href={continueHref}
             className="w-fit rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
@@ -507,6 +544,90 @@ function PhaseDoneSection({
  * The portal is a teaching tool — without this panel we'd be telling
  * trainees to click a button without saying why.
  */
+/**
+ * Trust-prompt warning for codex / copilot. Both CLIs intercept
+ * invocations with a "do you trust the contents of this folder?"
+ * dialog before letting any commands (including the BMAD slash command
+ * we passed) run. Trainees who don't expect this dialog often try to
+ * interact with it as if it were the BMAD workflow asking them a
+ * question.
+ *
+ * Per-tool behavior:
+ *   - **Codex** has no "remember this folder" affordance — the prompt
+ *     fires on EVERY phase spawn. Trainee presses Enter every time.
+ *   - **GitHub Copilot** offers a "Yes, and remember this folder" option
+ *     that suppresses the prompt for the rest of the capstone. We
+ *     surface that affordance so trainees can opt out after phase 3.
+ *   - **Claude Code** does NOT show this prompt at all
+ *     (`--dangerously-skip-permissions` bypasses the equivalent step).
+ */
+function TrustPromptNotice({ tool }: { tool: ToolId }) {
+  if (tool === "codex") {
+    return (
+      <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+        ⚠ <strong>Trust prompt every phase.</strong> Codex asks you to
+        confirm you trust this directory before running anything — and it
+        re-asks on every phase (no &ldquo;remember this folder&rdquo;
+        option). Press <strong>Enter</strong> to accept the highlighted{" "}
+        <strong>&ldquo;Yes, continue&rdquo;</strong> each time. Don&apos;t
+        mistake it for the BMAD skill asking a question — the BMAD
+        conversation begins after you accept.
+      </p>
+    );
+  }
+  if (tool === "github-copilot") {
+    return (
+      <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+        ⚠ <strong>First-launch trust prompt.</strong> GitHub Copilot asks
+        you to confirm you trust this directory before running anything.
+        On the first phase, press <strong>↓ then Enter</strong> to pick{" "}
+        <strong>&ldquo;Yes, and remember this folder for future sessions&rdquo;</strong>{" "}
+        — that opts you out of the prompt for the rest of the capstone. (If
+        you press Enter on the default <strong>&ldquo;Yes&rdquo;</strong>{" "}
+        you&apos;ll see this prompt again on every later phase; either
+        works.) The BMAD conversation begins after you accept.
+      </p>
+    );
+  }
+  return null;
+}
+
+/**
+ * Tiny inline-markdown renderer for the teaching primer text. Handles
+ * just two patterns: ``code`` → <code>, *emphasis* → <em>. The teaching
+ * primers are authored as plain strings, but the authors use markdown-
+ * style emphasis to highlight key terms — without this helper those
+ * markers render as literal asterisks/backticks. We deliberately do
+ * NOT pull in a real markdown parser; the surface is small and the
+ * patterns are stable.
+ */
+function renderInlineMd(text: string, keyPrefix: string): ReactNode {
+  // Split on either `…` or *…*. Backticks are matched first to avoid a
+  // backtick-wrapped string containing asterisks getting double-parsed.
+  const parts = text.split(/(`[^`]+`|\*[^*\s][^*]*[^*\s]\*|\*[^*\s]\*)/g);
+  return parts.map((part, i) => {
+    const key = `${keyPrefix}-${i}`;
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return (
+        <code
+          key={key}
+          className="font-mono text-xs rounded bg-zinc-900 px-1 py-0.5 text-zinc-100 dark:bg-zinc-800"
+        >
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+      return (
+        <em key={key} className="italic">
+          {part.slice(1, -1)}
+        </em>
+      );
+    }
+    return <span key={key}>{part}</span>;
+  });
+}
+
 function PhaseTeachingPanel({ phase }: { phase: CapstonePhase }) {
   const primer = PHASE_TEACHING_PRIMERS[phase];
   return (
@@ -522,7 +643,7 @@ function PhaseTeachingPanel({ phase }: { phase: CapstonePhase }) {
           📚 What this phase is for
         </h2>
         <p className="text-sm text-sky-900 dark:text-sky-100">
-          {primer.goal}
+          {renderInlineMd(primer.goal, "goal")}
         </p>
       </header>
 
@@ -532,20 +653,7 @@ function PhaseTeachingPanel({ phase }: { phase: CapstonePhase }) {
             What the BMAD skill does
           </h3>
           <p className="text-sm text-zinc-800 dark:text-zinc-200">
-            {primer.skillDoes
-              .split(/(`[^`]+`)/g)
-              .map((part, i) =>
-                part.startsWith("`") && part.endsWith("`") ? (
-                  <code
-                    key={i}
-                    className="font-mono text-xs rounded bg-zinc-900 px-1 py-0.5 text-zinc-100 dark:bg-zinc-800"
-                  >
-                    {part.slice(1, -1)}
-                  </code>
-                ) : (
-                  <span key={i}>{part}</span>
-                ),
-              )}
+            {renderInlineMd(primer.skillDoes, "skillDoes")}
           </p>
         </div>
 
@@ -555,7 +663,7 @@ function PhaseTeachingPanel({ phase }: { phase: CapstonePhase }) {
           </h3>
           <ul className="ml-4 list-disc text-sm text-zinc-800 dark:text-zinc-200">
             {primer.whatToExpect.map((bullet, i) => (
-              <li key={i}>{bullet}</li>
+              <li key={i}>{renderInlineMd(bullet, `bullet-${i}`)}</li>
             ))}
           </ul>
         </div>
@@ -566,7 +674,7 @@ function PhaseTeachingPanel({ phase }: { phase: CapstonePhase }) {
           Why this phase exists in the chain
         </h3>
         <p className="text-sm text-zinc-800 dark:text-zinc-200">
-          {primer.whyThisMatters}
+          {renderInlineMd(primer.whyThisMatters, "whyThisMatters")}
         </p>
       </div>
 

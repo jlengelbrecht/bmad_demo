@@ -312,7 +312,7 @@ If Epic 11's polish nails this loop, the portal feels like a craft tool engineer
 
 ### 2.2 User Mental Model
 
-Engineering trainees come in with strong priors from ChatGPT, Claude.ai, Cursor, and Copilot Chat:
+Engineering trainees come in with strong priors from ChatGPT, Claude.ai, and Copilot Chat:
 
 **They expect:**
 
@@ -342,7 +342,7 @@ Five testable criteria for the loop:
 
 | Aspect | Pattern | Status |
 |---|---|---|
-| Streaming chat with token-by-token paint | Established | Adopt — ChatGPT/Claude/Cursor pattern |
+| Streaming chat with token-by-token paint | Established | Adopt — ChatGPT/Claude pattern |
 | User input textarea with Cmd+Enter submit | Established | Adopt |
 | Cancel-in-flight button | Established | Adopt |
 | Inline tool-call cards | Novel-ish | Innovate — most chat UIs hide tool calls; we expose them as deliberate pedagogy |

@@ -1,20 +1,13 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
-import { loadContent } from "@/lib/markdown/load-content";
-import { Markdown } from "@/lib/markdown/render";
+import { StakeholderTour } from "./stakeholder-tour";
 
 export const metadata: Metadata = {
-  title: "Stakeholder — 15-minute Demo · BMAD Demo",
+  title: "Stakeholder demo · BMAD Demo",
+  description:
+    "A guided 10-minute tour for stakeholders evaluating BMAD adoption — real artifacts from this repo, no LLM in the live demo path.",
 };
 
-export default async function StakeholderPage() {
-  const content = loadContent("training/stakeholder-demo-script.md");
-  if (!content) notFound();
-
-  return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
-      <Markdown source={content.source} sourcePath={content.sourcePath} />
-    </main>
-  );
+export default function StakeholderPage() {
+  return <StakeholderTour />;
 }

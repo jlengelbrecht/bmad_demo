@@ -125,7 +125,7 @@ describe("github-copilot.detectAuthenticated", () => {
     await writeConfig(
       JSON.stringify({
         firstLaunchAt: "2026-05-09T19:33:38.343Z",
-        lastLoggedInUser: { host: "https://github.com", login: "jlengelbrecht" },
+        lastLoggedInUser: { host: "https://github.com", login: "JoshuaEngelbrecht" },
       }),
     );
     expect(await copilot.detectAuthenticated()).toBe(true);
@@ -140,7 +140,7 @@ describe("github-copilot.detectAuthenticated", () => {
         "// This file is managed automatically.",
         JSON.stringify({
           firstLaunchAt: "2026-05-09T19:33:38.343Z",
-          lastLoggedInUser: { login: "jlengelbrecht" },
+          lastLoggedInUser: { login: "JoshuaEngelbrecht" },
         }),
       ].join("\n"),
     );

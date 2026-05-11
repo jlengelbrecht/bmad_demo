@@ -159,10 +159,11 @@ describe("nextPhase", () => {
     expect(nextPhase("epics-and-stories")).toBe("implementation-readiness");
     expect(nextPhase("implementation-readiness")).toBe("sprint-planning");
     expect(nextPhase("sprint-planning")).toBe("dev-story-1.1");
+    expect(nextPhase("dev-story-1.1")).toBe("governance");
   });
 
-  it("returns null after the final phase", () => {
-    expect(nextPhase("dev-story-1.1")).toBe(null);
+  it("returns null after the final phase (governance)", () => {
+    expect(nextPhase("governance")).toBe(null);
   });
 });
 
@@ -183,6 +184,68 @@ describe("validatePhaseShape — implementation-readiness", () => {
     expect(r.artifactExists).toBe(true);
     expect(r.shapeValid).toBe(true);
     expect(r.artifactPath).toMatch(/implementation-readiness-report-2026-05-08\.md$/);
+  });
+});
+
+describe("validatePhaseShape — dev-story-1.1", () => {
+  function mkImplArtifactsDir(cd: string): string {
+    const dir = path.join(cd, "_bmad-output", "implementation-artifacts");
+    mkdirSync(dir, { recursive: true });
+    return dir;
+  }
+
+  it("matches the canonical <epic>-<story>-<slug>.md filename", () => {
+    const cd = mkChosen();
+    writeFileSync(
+      path.join(mkImplArtifactsDir(cd), "1-1-scaffold-nextjs-app.md"),
+      "x".repeat(500),
+    );
+    const r = validatePhaseShape("dev-story-1.1", cd, "_bmad-output", REAL_FS);
+    expect(r.artifactExists).toBe(true);
+    expect(r.shapeValid).toBe(true);
+    expect(r.artifactPath).toMatch(/1-1-scaffold-nextjs-app\.md$/);
+  });
+
+  it("matches a story file with letter-suffixed epic/story segments (e.g., 7a-1, 11-1b)", () => {
+    const cd = mkChosen();
+    writeFileSync(
+      path.join(mkImplArtifactsDir(cd), "7a-1-chat-page-shell.md"),
+      "x".repeat(500),
+    );
+    const r = validatePhaseShape("dev-story-1.1", cd, "_bmad-output", REAL_FS);
+    expect(r.artifactExists).toBe(true);
+    expect(r.shapeValid).toBe(true);
+  });
+
+  it("respects the trainee's custom output_folder via the outputFolder argument", () => {
+    const cd = mkdtempSync(path.join(tmpdir(), "phase-custom-"));
+    cleanups.push(cd);
+    const customDir = path.join(cd, "docs-bmad", "implementation-artifacts");
+    mkdirSync(customDir, { recursive: true });
+    writeFileSync(path.join(customDir, "1-1-foo.md"), "x".repeat(500));
+    const r = validatePhaseShape("dev-story-1.1", cd, "docs-bmad", REAL_FS);
+    expect(r.artifactExists).toBe(true);
+    expect(r.shapeValid).toBe(true);
+    expect(r.artifactPath).toContain("docs-bmad/implementation-artifacts/1-1-foo.md");
+  });
+
+  it("rejects a too-small spec file", () => {
+    const cd = mkChosen();
+    writeFileSync(
+      path.join(mkImplArtifactsDir(cd), "1-1-tiny.md"),
+      "TODO\n",
+    );
+    const r = validatePhaseShape("dev-story-1.1", cd, "_bmad-output", REAL_FS);
+    expect(r.artifactExists).toBe(true);
+    expect(r.shapeValid).toBe(false);
+    expect(r.reason).toMatch(/too small/);
+  });
+
+  it("reports artifact missing when implementation-artifacts is empty", () => {
+    const cd = mkChosen();
+    mkImplArtifactsDir(cd);
+    const r = validatePhaseShape("dev-story-1.1", cd, "_bmad-output", REAL_FS);
+    expect(r.artifactExists).toBe(false);
   });
 });
 

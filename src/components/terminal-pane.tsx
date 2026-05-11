@@ -12,6 +12,12 @@ type Status =
   | { kind: "exited"; exitCode: number; signal: number | null }
   | { kind: "error"; message: string };
 
+// xterm 5.x init-race error filter is injected at module load via
+// inline `<head>` script in src/app/layout.tsx. See
+// src/components/xterm-error-filter.ts for the script source and the
+// explanation of why inline-head is the only spot that beats Next.js's
+// dev runtime to the punch.
+
 export function TerminalPane({
   ptyId,
   spawnUrl,
@@ -57,35 +63,9 @@ export function TerminalPane({
     let disposed = false;
     let pendingFitFrame: number | null = null;
 
-    // xterm 5.x has a known race during `term.open()`: the Viewport
-    // schedules a setTimeout → requestAnimationFrame refresh that
-    // sometimes runs before the canvas renderer's async init resolves,
-    // throwing "Cannot read properties of undefined (reading
-    // 'dimensions')" from Viewport._innerRefresh. Terminal continues
-    // working (renderer recovers; cols/rows correct), but Next.js's
-    // dev overlay surfaces it as a runtime error.
-    //
-    // Catch that one specific error during the terminal's lifetime and
-    // prevent it from propagating to the dev overlay. The raw
-    // ev.error.stack does NOT include the "Viewport" class qualifier
-    // (that's only the source-mapped pretty-printed form the dev
-    // overlay shows); the stable markers in the raw stack are the
-    // method names `_innerRefresh` + `_refreshAnimationFrame`. Gating on
-    // both `dimensions` (in the message) and `_innerRefresh` (in the
-    // stack) keeps the filter precise enough that we won't accidentally
-    // swallow a real bug that happens to mention "dimensions".
-    const xtermInitErrorHandler = (ev: ErrorEvent) => {
-      const stack = ev.error?.stack ?? "";
-      const msg = ev.error?.message ?? ev.message ?? "";
-      if (
-        msg.includes("dimensions") &&
-        (stack.includes("_innerRefresh") || stack.includes("Viewport"))
-      ) {
-        ev.preventDefault();
-        ev.stopImmediatePropagation();
-      }
-    };
-    window.addEventListener("error", xtermInitErrorHandler, true);
+    // xterm init-race error filter is installed at module load (see
+    // installXtermInitErrorFilter above) so the listener is present
+    // before this useEffect ever runs. Nothing to register here.
 
     const term = new Terminal({
       convertEol: true,
@@ -268,7 +248,9 @@ export function TerminalPane({
         cancelAnimationFrame(pendingFitFrame);
         pendingFitFrame = null;
       }
-      window.removeEventListener("error", xtermInitErrorHandler, true);
+      // The xterm init-race error filter is installed at module scope
+      // and intentionally NOT removed on unmount — it's idempotent and
+      // a remount of TerminalPane would just re-trigger the race.
       window.removeEventListener("resize", onResize);
       dataDispose.dispose();
       resizeDispose.dispose();

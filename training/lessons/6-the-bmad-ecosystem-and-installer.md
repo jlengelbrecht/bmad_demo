@@ -50,16 +50,15 @@ You can always add modules later. Skipping today doesn't lock you in.
 
 When BMAD installs, it asks which AI tool(s) you'll use it with — and copies skills + agents into the directory each tool expects. Run `npx bmad-method install --list-tools` to see the full list (~42 tools at the time of this curriculum's authoring). They group into roughly four buckets:
 
-### The four BMAD recommends (starred in `--list-tools`)
+### The three the portal capstone supports
 
 | Tool | Skills land at | Notes |
 |---|---|---|
 | **Claude Code** | `.claude/skills/` | Anthropic's CLI. The reference implementation BMAD's documentation tracks first. |
 | **Codex (OpenAI CLI)** | `.agents/skills/` | OpenAI's CLI. Works well with BMAD; uses the cross-tool `.agents/skills/` convention. |
-| **Cursor** | `.agents/skills/` | The Cursor IDE / CLI, both. Same skill location as Codex. |
 | **GitHub Copilot CLI** | `.agents/skills/` | Note: Copilot in the IDE reads `.github/copilot-instructions.md` instead — see Lesson 5 on the dual-role pattern. |
 
-These are the tools the portal's capstone supports. They've each been validated end-to-end against the BMAD artifact chain.
+These three have each been validated end-to-end against the BMAD artifact chain. BMAD's installer supports many more (see the next section); these three are the portal's first-class set.
 
 ### Cross-tool standard tools (`.agents/skills/`)
 
@@ -71,7 +70,7 @@ You don't need to memorize this list. The point is: **if your team uses an AI CL
 
 ### Why this matters
 
-When two engineers on the same team use different tools, the *contract* between them is the per-story file (Lesson 3). What BMAD's installer ensures is that **both tools see the same skill set** — they read from different directories on disk, but the skills themselves are bit-identical copies. Mira on Claude Code and Jordan on Cursor both run `/bmad-create-story` and get identical workflow guidance.
+When two engineers on the same team use different tools, the *contract* between them is the per-story file (Lesson 3). What BMAD's installer ensures is that **both tools see the same skill set** — they read from different directories on disk, but the skills themselves are bit-identical copies. Mira on Claude Code and Jordan on Codex both run `/bmad-create-story` and get identical workflow guidance.
 
 ---
 

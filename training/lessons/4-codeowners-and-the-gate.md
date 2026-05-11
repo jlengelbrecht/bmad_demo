@@ -1,16 +1,17 @@
 ---
-title: CODEOWNERS and the gate
+title: CODEOWNERS, CONTRIBUTING.md, and the gate
 ---
 
-# Lesson 4 — CODEOWNERS and the gate
+# Lesson 4 — CODEOWNERS, CONTRIBUTING.md, and the gate
 
-> **Reading time:** ~20 minutes. **Prerequisites:** Lessons 1, 2, and 3.
+> **Reading time:** ~25 minutes. **Prerequisites:** Lessons 1, 2, and 3.
 
 ## What you'll learn
 
 - Why **CODEOWNERS** is the enforcement layer for the story-as-contract pattern — and why it's only enforceable when paired with branch protection.
 - How CODEOWNERS, branch protection, and required status checks fit together (and the order in which to wire them).
 - The four CODEOWNERS rules that catch teams in production — last-match-wins, silent-skip on missing teams, draft-PR behavior, and the markdown-trap pattern-precedence example.
+- Why **CONTRIBUTING.md** is the *human-readable* sibling to CODEOWNERS — what goes in it, why the AI-vs-non-AI contribution door matters, and how the two files compose at PR-review time.
 - What the **lead reads for at the gate** — concrete, repeatable items rather than narrative platitudes.
 
 This lesson is the densest in the curriculum and produces the curriculum's most pinnable artifact: [`training/lead-review-checklist.md`](/source/training/lead-review-checklist.md), a one-page checklist your team's lead can drop into your repo on Day 2 and use on real PRs.
@@ -189,6 +190,94 @@ This is the kind of CODEOWNERS the capstone's HANDOFF.md will tell your team's l
 
 ---
 
+## CONTRIBUTING.md — the human-readable sibling
+
+CODEOWNERS is the *machine gate*. It tells GitHub who must approve a PR. It says nothing to a human about *how* to author a change in the first place.
+
+Most teams pair CODEOWNERS with a `CONTRIBUTING.md` at the repo root — the *human path*. GitHub auto-surfaces it in the PR-creation flow ("By contributing to this repo you agree to..."), and reviewers reach for it the same way they reach for CODEOWNERS at PR time. The two files are complements:
+
+| File | Audience | What it answers |
+|---|---|---|
+| `.github/CODEOWNERS` | GitHub | "Who must review this change?" |
+| `CONTRIBUTING.md` | Humans | "How do I propose a change in the first place?" |
+
+A useful CONTRIBUTING.md for a BMAD-driven team has five sections.
+
+### 1. The three governance gates
+
+Lead with the gates every contribution must pass — same regardless of who wrote the code:
+
+> 1. A story spec exists in `<implementation_artifacts>/<epic>-<story>-<slug>.md` describing the change.
+> 2. The PR is approved by the owners listed in `.github/CODEOWNERS`.
+> 3. All required status checks (tests, linters) are green.
+
+This is the single most load-bearing section of the file. Reviewers should be able to point at it when rejecting a PR that skips a step.
+
+### 2. The "Contributing with BMAD" path
+
+The default contributor path. Spell out the BMAD ceremony chain concretely:
+
+1. Pick a story from the sprint plan (or run `bmad-create-story` to author one from the relevant epic).
+2. Implement with `bmad-dev-story`.
+3. Self-review with `bmad-code-review` before opening the PR.
+4. Open the PR; CODEOWNERS auto-requests reviewers.
+5. Address review.
+
+Reference the *actual* skill names installed in your repo's `.claude/skills/` (or `.agents/skills/`). Don't list skills you don't have. Don't invent skill names.
+
+### 3. The "Contributing without AI" door
+
+This is the section most teams forget — and the most important one for inclusive governance.
+
+> **You do not need to use BMAD or any AI tool to contribute. The governance gates are the same; only the authoring method differs.**
+
+A contributor who isn't using BMAD still needs a story spec, still needs CODEOWNERS approval, still needs green tests. What changes is *how the spec gets authored*. Document the manual path:
+
+1. **Write the story spec by hand.** Create a markdown file under your `implementation_artifacts` directory, mirroring the format of an existing one. Include context, ACs, scope/non-scope, test plan.
+2. **Open a precursor PR for spec review.** Land the story file *before* the implementation. CODEOWNERS auto-requests the same approvers. This catches scope and AC disagreements early — same as the lead-review checklist's "spec-vs-code faithfulness" step (see below).
+3. **Implement with whatever tools you prefer.** The diff is reviewed against the story, not against how it was produced.
+4. **Same governance gates, same review bar.**
+
+Why this section matters: a CONTRIBUTING.md that says "use BMAD" without an off-ramp excludes contractors, security reviewers, dependabot-style bots, and any teammate who hasn't onboarded yet. Adopting BMAD for AI work shouldn't make non-AI work impossible. The *spec-as-contract* pattern is tool-agnostic by design (Lesson 3); CONTRIBUTING.md should reflect that.
+
+### 4. Team ceremonies
+
+A short table summarizing the cadences your team commits to: story grooming, sprint planning, retrospective trigger, code-review SLA. Keep it concrete (e.g., "Code review SLA: 1 business day"), keep it short. The full team-rituals expansion lives in `training/team-rituals-checklist.md` (Lesson 5).
+
+### 5. The branch-protection prerequisite
+
+Every CONTRIBUTING.md should remind the contributor — and the repo admin — that **`CODEOWNERS` is documentation only without branch protection**. List the four required-review settings from the section above so the contributor knows what governance assumes is in place.
+
+> If any of these settings is off, the gates this file describes are advisory, not enforced. A repo admin should turn them on before this file's claims are true.
+
+---
+
+## CONTRIBUTING.md placement and naming
+
+GitHub looks for `CONTRIBUTING.md` in three places, in order:
+
+1. `.github/CONTRIBUTING.md`
+2. `CONTRIBUTING.md` (repo root)
+3. `docs/CONTRIBUTING.md`
+
+The first one found is what GitHub surfaces in the PR creation flow. Most teams put it at repo root because it's discoverable for anyone running `ls`. Put it under `.github/` only if you're keeping all governance docs together and you're sure your contributors know to look there.
+
+---
+
+## How CODEOWNERS and CONTRIBUTING.md compose at review time
+
+A reviewer opening a PR looks at three things in order:
+
+1. **The PR description** — what the contributor says they did.
+2. **The story spec** — what the contributor *should* have done.
+3. **The diff** — what they actually did.
+
+CODEOWNERS routed the PR to the right reviewer; CONTRIBUTING.md set the contributor's expectation about what was required. If the diff doesn't tie back to a story, the reviewer rejects with "see CONTRIBUTING.md, gate #1." If the diff touches a path with multiple owners, both must approve — and both can point at CONTRIBUTING.md to explain why.
+
+The two files together turn governance from "the lead's tribal knowledge" into "two checked-in docs anyone can read on their first PR."
+
+---
+
 ## What the lead reads for at the gate
 
 CODEOWNERS routes the PR to the right human. Branch protection makes that human's approval load-bearing. But what is the human actually *doing*?
@@ -228,3 +317,5 @@ The theme: each failure mode is *invisible* — the UI doesn't surface a warning
 You now know what makes the gate enforceable, what the lead reads for, and have a pinnable checklist artifact. **Lesson 5** turns to the moments when the contract bites — what to do when code drifts from the spec, when a story turns out to be too big, when two teammates' tools produce diverging conventions. Lesson 5 names **five recovery loops** and produces the team-rituals checklist as its concrete output.
 
 Before Lesson 5, take five minutes with the [lead-review checklist](/source/training/lead-review-checklist.md). Skim it now; you'll come back to it on real PRs after the capstone.
+
+**In the capstone:** the **governance phase** (after you ship `dev-story-1.1`) is the moment you author your own `CODEOWNERS` *and* `CONTRIBUTING.md` for the project you just bootstrapped. Your AI tool first researches your repo's actual layout (so the file paths it references are real, not hallucinated), then walks you through the four decision points — ownership routing, team ceremonies, the AI-vs-non-AI contribution path, and branch protection — and writes both `.github/CODEOWNERS` and `CONTRIBUTING.md` to disk so you can `git add` them and push. [Open the capstone →](/capstone)

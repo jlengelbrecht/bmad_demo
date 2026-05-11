@@ -1688,7 +1688,7 @@ So that my team has explicit guidance on which BMAD changes (PRD, architecture, 
 
 As a trainee on macOS or Windows-via-WSL2 who wants to run the portal without wrestling with native-build tooling on my host,
 I want a devcontainer config that produces a Linux container with Node, the build toolchain, and the supported AI-tool CLIs baked in,
-So that I can open the repo in a devcontainer-aware editor (VS Code, Cursor, Codespaces, JetBrains Gateway, etc.), click "Reopen in Container," and have the portal running without per-OS install steps.
+So that I can open the repo in a devcontainer-aware editor (VS Code, Codespaces, JetBrains Gateway, etc.), click "Reopen in Container," and have the portal running without per-OS install steps.
 
 **Acceptance Criteria:**
 
@@ -1727,3 +1727,114 @@ So that I can open the repo in a devcontainer-aware editor (VS Code, Cursor, Cod
 **Given** an existing Linux native-install workflow
 **When** a developer who's not using a devcontainer pulls the repo
 **Then** nothing about the existing `npm install && npm run dev` flow regresses — the devcontainer is opt-in via editor reopen, not something native users need to know about
+
+---
+
+## Epic 14: Capstone Governance Phase — CODEOWNERS + CONTRIBUTING.md
+
+**Status:** authored 2026-05-10. One-story epic; separable from Epic 12 (curriculum content) and Epic 13 (distribution). Targets the gap surfaced in the post-2026-05-10 walkthrough: the capstone produces planning artifacts and a first commit, but **zero team-governance scaffolding** for the trainee's repo.
+
+**Why now:** Lessons 4 and 5 teach CODEOWNERS gating and team rituals as the BMAD-team adoption pattern, but the capstone never asks the trainee to author either for their own repo. They walk away with `prd.md`, `architecture.md`, `epics.md`, `sprint-status.yaml`, a first shipped story, and `HANDOFF.md` — and nothing that says "this is how the team will work together going forward." Without CODEOWNERS, nothing actually gates merges to the trainee's repo; without CONTRIBUTING.md, the team's BMAD ceremonies live only in tribal memory.
+
+**Why CODEOWNERS + CONTRIBUTING.md as a pair:** they're git-native siblings reviewers see together at PR time. CODEOWNERS is the *machine* gate (mandatory review routing); CONTRIBUTING.md is the *human* path (how to propose a change). Authoring them as one phase reflects how a real PR review encounters them.
+
+**Why at the end (after `dev-story-1.1`):** the trainee has now lived through every BMAD phase. CONTRIBUTING.md can describe the workflow they *just executed* concretely ("we draft stories with `bmad-create-story`, we sprint-plan with `bmad-sprint-planning`, we ship with `bmad-dev-story`, all PRs require CODEOWNERS approval per `.github/CODEOWNERS`") instead of abstractly. Putting it earlier would force the trainee to describe a flow they hadn't yet experienced.
+
+**Why the non-AI door matters:** a CONTRIBUTING.md that says "use BMAD agents to author stories, then ..." excludes contractors, security reviewers, dependabot-style bots, and any teammate who hasn't onboarded yet. The framing is **governance is the gate; AI is one optional path through it.** Non-AI contributors still must satisfy CODEOWNERS approval, story-exists, and tests-green — but they don't need to use BMAD to get there. This gives Cargill an honest "AI-augmented but not AI-required" story that survives auditors.
+
+### Story 14.1: Capstone governance phase — author CODEOWNERS + CONTRIBUTING.md
+
+As a capstone trainee who's just shipped my first BMAD story and now needs to codify how my team will collaborate on this repo going forward,
+I want a guided "governance" phase that walks me through decisions about ownership routing, team ceremonies, and the AI-vs-non-AI contribution paths — and writes a `CODEOWNERS` file plus a `CONTRIBUTING.md` to my repo when we're done,
+So that the capstone produces real, git-native team-governance artifacts I can `git add` and merge — not just a planning bundle that lives in `_bmad-output/`.
+
+**Sequencing:** This phase lands AFTER `dev-story-1.1` and BEFORE the HANDOFF page. New phase order: `pre-flight → tool-selection → setup-wizard → bootstrap → brief → prd → architecture → epics-and-stories → implementation-readiness → sprint-planning → dev-story-1.1 → governance → (handoff page on completion)`.
+
+**Implementation approach:** portal-side guided prompt-flow rather than a new BMAD skill. The phase reuses the existing PTY chat-phase plumbing and launches the trainee's chosen AI tool with a templated opening prompt that drives a Socratic discovery conversation through the four governance decision points (ownership, ceremonies, AI-vs-non-AI path, branch protection). Once the AI has enough material, it writes `CODEOWNERS` (or `.github/CODEOWNERS`) and `CONTRIBUTING.md` to the trainee's chosen directory. The AI-co-authoring conversation IS the trainee's review step — same trust model as HANDOFF.md, which already writes to the repo root.
+
+**Acceptance Criteria:**
+
+**Given** the `CapstonePhase` union in `src/lib/capstone/adapters/types.ts`
+**When** I read it
+**Then** the union includes a new `"governance"` member, slotted between `"dev-story-1.1"` and any future phases
+**And** the existing six phases retain their identifiers unchanged
+
+**Given** the `PHASE_ORDER` array in `src/lib/capstone/phases/shapes.ts`
+**When** I read it
+**Then** the array is `["brief", "prd", "architecture", "epics-and-stories", "implementation-readiness", "sprint-planning", "dev-story-1.1", "governance"]` in that order
+**And** `nextPhase("dev-story-1.1")` returns `"governance"`
+**And** `nextPhase("governance")` returns `null` (terminal phase before HANDOFF)
+
+**Given** the `PHASE_SHAPES` record in `src/lib/capstone/phases/shapes.ts`
+**When** I read the `governance` entry
+**Then** the entry's `searchSubdir` is `"."` (repo root, not under `_bmad-output/`)
+**And** the `artifactPatterns` matches both `CODEOWNERS` files (regex `/^(\.github\/)?CODEOWNERS$/`) and `CONTRIBUTING.md` (regex `/^(\.github\/)?CONTRIBUTING\.md$/`)
+**And** the gate logic in the phase-done route is extended to require BOTH files present (not just one) before the phase completes — this is the only phase with a multi-file gate; the existing single-pattern flow remains the default
+**And** the soft `minSizeBytes` is `400` for each file (governance docs that are too short are likely placeholders)
+
+**Given** the `PHASE_TEACHING_PRIMERS` record in `src/lib/capstone/phases/teaching-primers.ts`
+**When** I read the `governance` entry
+**Then** the `goal` is one sentence framing governance as "codifying how your team will work together on this repo — both the machine gate (CODEOWNERS) and the human path (CONTRIBUTING.md)"
+**And** the `skillDoes` describes the portal-driven prompt-flow (no BMAD slash command — it's a templated conversation the portal launches the trainee's AI tool with)
+**And** `whatToExpect` lists 4–5 beats: ownership routing decisions → team ceremony decisions → AI-vs-non-AI contribution path → branch-protection summary → write both files
+**And** `whyThisMatters` explains the team-rituals thesis: planning artifacts in `_bmad-output/` describe *what* you'll build; governance files describe *how the team will build it together* — both are needed for the BMAD adoption to survive past the trainee leaving
+**And** `artifactPath` is `"CODEOWNERS + CONTRIBUTING.md (at repo root or under .github/)"`
+
+**Given** the `ARTIFACT_PATHS` array in `src/app/api/capstone/handoff/generate/route.ts`
+**When** I read it
+**Then** a new entry exists for the `governance` phase with `dir: "."` and a pattern that matches CODEOWNERS, with a SECOND new entry for CONTRIBUTING.md (so HANDOFF.md lists both files separately under "What was produced")
+**And** the existing six entries are unchanged
+**And** the lookup gracefully degrades when only one of the two files exists (lists what's there, marks the other "(not produced)")
+
+**Given** the `launch-commands.ts` shape registry
+**When** I add the `governance` phase
+**Then** the launch command for each tool injects a templated opening prompt rather than a BMAD slash command — the prompt instructs the AI to conduct a four-decision-point discovery (ownership, ceremonies, AI-vs-non-AI path, branch protection) and then write both files
+**And** the prompt template lives in a new module `src/lib/capstone/governance/prompt-template.ts` so it's testable and editable without touching launch-commands wiring
+**And** the prompt template explicitly tells the AI: "the user may want non-AI contributors — ask them; if yes, the CONTRIBUTING.md must describe a path that does NOT require BMAD or any AI tool, only the same governance gates (CODEOWNERS approval, story exists, tests green)"
+**And** the prompt template instructs the AI to write CODEOWNERS to `.github/CODEOWNERS` (preferred) or `CODEOWNERS` at repo root, and CONTRIBUTING.md to repo root
+
+**Given** a unit test for the prompt template
+**When** the test reads the exported template
+**Then** it asserts the template names all four decision points
+**And** it asserts the template explicitly references both `.github/CODEOWNERS` and `CONTRIBUTING.md` as write targets
+**And** it asserts the template includes the "non-AI contribution path" framing verbatim
+
+**Given** the capstone overview page
+**When** I render it for a session that has reached the `governance` phase
+**Then** the phase appears in the phase list with the same UI affordances as `dev-story-1.1` (launch button, teaching primer above the terminal, phase-done check)
+**And** the phase's "completed" state shows links to both files via the existing `/source/[...path]` viewer (using `chosenDir`-relative paths)
+**And** the existing seven phases continue to render unchanged
+
+**Given** the `HANDOFF.md` template (`src/lib/capstone/handoff/render.ts` or wherever the template lives)
+**When** I read it
+**Then** the "What was produced" section lists CODEOWNERS and CONTRIBUTING.md alongside the planning artifacts
+**And** the "Push instructions" section reminds the trainee to enable branch protection on the default branch with "require review from CODEOWNERS" turned on (since the file alone doesn't enforce review without that branch-protection setting)
+**And** the existing template content for the seven prior phases is unchanged
+
+**Given** Lesson 4 (CODEOWNERS) and Lesson 5 (team rituals)
+**When** the curriculum mentions the capstone
+**Then** both lessons are updated to point at the new governance phase as the moment trainees author these files for their own repo (one short paragraph each, with a link to `/capstone`)
+**And** no other curriculum content changes
+
+**Given** the `tests/e2e` Playwright suite
+**When** a new `capstone-governance-phase.spec.ts` runs
+**Then** it seeds a session through `dev-story-1.1`, navigates to the governance phase, asserts the teaching primer renders, asserts the launch button is present, and (using the existing PTY fixture pattern from `tests/fixtures/pty-fake-chat-phase.mjs`) verifies the spawn route forwards the right tool + chosenDir + the templated prompt
+**And** a follow-up assertion creates fake `.github/CODEOWNERS` + `CONTRIBUTING.md` files in a tmp chosenDir, then verifies the phase-done gate flips to passed (both files required)
+**And** removing either file flips the gate back to failed with a clear "still need: <filename>" reason
+
+**Given** the existing 436 unit tests + lint + e2e (excluding the 5 known pre-existing failures)
+**When** Story 14.1 lands
+**Then** all existing tests continue to pass
+**And** the 5 known pre-existing e2e failures (capstone-overview, 3× capstone-chat-phase-pty, capstone-bootstrap-pty) remain unchanged — Story 14.1 is not in scope for those
+
+**Given** a Linux trainee who completes the new governance phase end-to-end
+**When** they inspect their chosen directory
+**Then** `.github/CODEOWNERS` exists with concrete ownership rules they decided in the conversation (not placeholder `* @your-org/your-team` text)
+**And** `CONTRIBUTING.md` exists at repo root, describes the team's ceremonies in concrete terms ("we run `bmad-create-story` for each new spec; we require CODEOWNERS approval before merge"), and includes a clearly-labeled "Contributing without AI" section if the trainee answered yes to the AI-vs-non-AI question
+**And** both files are valid for `git add` (no leftover prompt scaffolding, no `<placeholder>` strings)
+
+**Out of scope for Story 14.1 (deferred):**
+- Auto-creating `.github/branch-protection.yml` or driving GitHub's branch-protection API (CONTRIBUTING.md mentions it; the actual config is the trainee's responsibility because it requires repo admin auth the portal doesn't have).
+- Authoring proper BMAD skills (`bmad-create-codeowners` / `bmad-create-contributing`) and shipping them upstream — option (b) from the design discussion. Revisit if the portal-side prompt-flow proves out and Cargill or BMAD-core wants the skill packaged.
+- Re-running the governance phase to update existing files (v1 is single-shot; trainees who want to iterate edit the files directly).
+- Translating the prompt template — v1 is English-only, matching the rest of the capstone.

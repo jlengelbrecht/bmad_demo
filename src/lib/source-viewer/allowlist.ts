@@ -23,6 +23,7 @@ const ALLOWED_ROOTS = [
 const ALLOWED_FILES = [
   "AGENTS.md",
   "README.md",
+  "CONTRIBUTING.md",
   ".github/copilot-instructions.md",
   ".github/CODEOWNERS",
   "training/lead-review-checklist.md",

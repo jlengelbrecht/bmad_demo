@@ -15,13 +15,17 @@ Recent commit history:
 
 ## What this means for your team
 
-This repo is now a working, BMAD-bootstrapped team repo. To adopt:
+This repo is now a working, BMAD-bootstrapped team repo with team-governance scaffolding (`CODEOWNERS` + `CONTRIBUTING.md`) authored by you in the governance phase. To adopt:
 
-1. **Fill in CODEOWNERS placeholders.** Open `.github/CODEOWNERS`. Replace the placeholder team handles (`@your-engineers`, etc.) with your team's actual GitHub team handles. The portal's Lesson 4 explained why this matters; revisit if needed.
-2. **Apply branch-protection notes.** See `.github/branch-protection-notes.md` — apply the recommended branch-protection rules to this repo's `main` branch via your GitHub org's settings.
+1. **Review the governance files you authored.** Open `CODEOWNERS` (or `.github/CODEOWNERS`) and `CONTRIBUTING.md` — confirm the ownership routing, ceremonies, and contribution paths reflect your team's actual decisions. Edit before push if anything needs sharpening.
+2. **Enable branch protection (see "Branch protection reminder" below).** This is the load-bearing step that turns `CODEOWNERS` from documentation into an enforced gate.
 3. **Pin the team-rituals checklist.** Save the team-rituals checklist from the portal's training in your team's wiki or onboarding docs.
 4. **Push to your team's GitHub org.** See "Pushing to your team's remote" below.
 5. **Run BMAD natively from this point.** From now on, you don't need the portal — invoke BMAD via your AI tool's normal interface. Story 1.1's tests pass; pick up Story 1.2 next, OR start fresh with `bmad-create-story` in your tool.
+
+## Branch protection reminder
+
+**Important:** `CODEOWNERS` only enforces mandatory review when your repo's branch protection rules require it. After pushing, go to **Settings → Branches → Branch protection rules → Add rule** for your default branch and enable **"Require a pull request before merging"** + **"Require review from Code Owners."** Without this, `CODEOWNERS` is documentation only — anyone with write access can merge without review.
 
 ## Pushing to your team's remote
 

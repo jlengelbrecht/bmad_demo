@@ -25,7 +25,7 @@ describe("lesson sequence", () => {
   it("hydrates titles from frontmatter", () => {
     const sequence = getLessonSequence();
     expect(sequence[0].title).toBe("What is BMAD");
-    expect(sequence[3].title).toBe("CODEOWNERS and the gate");
+    expect(sequence[3].title).toBe("CODEOWNERS, CONTRIBUTING.md, and the gate");
     expect(sequence[5].title).toBe("The BMAD ecosystem and installer");
   });
 });

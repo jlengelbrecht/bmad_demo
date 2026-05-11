@@ -1,0 +1,78 @@
+# bmad_demo — CODEOWNERS
+#
+# Routes mandatory review for every PR. The portal teaches governance,
+# so the portal practices what it teaches: every path touched by a PR
+# auto-routes to one or more code owners who must approve before merge.
+# Branch protection on `main` must have "Require review from Code
+# Owners" enabled for these rules to enforce; without it, this file is
+# documentation only. See CONTRIBUTING.md for the full gate wiring.
+#
+# Routing model (mix of individual + team handles for clarity in
+# stakeholder demos):
+#   - @JoshuaEngelbrecht         — current maintainer, single human point
+#                                  of contact for repo-wide decisions.
+#   - @IAM/lead-engineers        — leads who own infra, governance,
+#                                  config, and architectural decisions.
+#                                  Required on changes that shape how
+#                                  the team works (CI, CODEOWNERS, etc.).
+#   - @IAM/engineers             — broader engineering group; reviews
+#                                  application code and curriculum.
+#   - @IAM/product-team          — product owners; required on planning
+#                                  artifacts (PRD, architecture, epics)
+#                                  where scope decisions live.
+#
+# Two-owner rules use AND semantics in GitHub: BOTH owners must approve
+# before the gate is satisfied. Use sparingly — every additional owner
+# slows review.
+#
+# Ordering: last matching pattern wins. Catch-all on top, more specific
+# rules below override it.
+
+# Catch-all — anything not matched by a more specific rule.
+# Maintainer + leads as the safety net for unowned paths.
+*                               @JoshuaEngelbrecht @IAM/lead-engineers
+
+# Application code (Next.js + Express handlers + adapters).
+# Engineers own day-to-day code; maintainer also routed for v1 oversight.
+/src/                           @JoshuaEngelbrecht @IAM/engineers
+
+# Curriculum content (lessons, labs, audience guides, checklists).
+# Lead-reviewed because curriculum shapes how teams adopt BMAD.
+/training/                      @JoshuaEngelbrecht @IAM/lead-engineers
+
+# Implementation artifacts (per-story specs, retros, sprint status).
+# Engineers + maintainer own these — same shape as the code they spec.
+/_bmad-output/implementation-artifacts/   @JoshuaEngelbrecht @IAM/engineers
+
+# Planning artifacts (PRD, architecture, epics, brief, ux-design).
+# Product team is mandatory here — scope and product decisions live in
+# these files and need a product owner's sign-off.
+/_bmad-output/planning-artifacts/         @JoshuaEngelbrecht @IAM/lead-engineers @IAM/product-team
+
+# BMAD framework install (skills, scripts, configs). Changes here are
+# rare but high-blast-radius; leads-only.
+/_bmad/                         @JoshuaEngelbrecht @IAM/lead-engineers
+
+# Devcontainer / build / runtime infra. Changes here affect every
+# trainee's first-run experience — leads-only.
+/.devcontainer/                 @JoshuaEngelbrecht @IAM/lead-engineers
+/.github/                       @JoshuaEngelbrecht @IAM/lead-engineers
+/.github/CODEOWNERS             @JoshuaEngelbrecht @IAM/lead-engineers
+/scripts/                       @JoshuaEngelbrecht @IAM/lead-engineers
+
+# Top-level config that shapes the whole app — leads-only.
+/next.config.ts                 @JoshuaEngelbrecht @IAM/lead-engineers
+/tsconfig.json                  @JoshuaEngelbrecht @IAM/lead-engineers
+/tailwind.config.ts             @JoshuaEngelbrecht @IAM/lead-engineers
+/postcss.config.mjs             @JoshuaEngelbrecht @IAM/lead-engineers
+/eslint.config.mjs              @JoshuaEngelbrecht @IAM/lead-engineers
+/playwright.config.ts           @JoshuaEngelbrecht @IAM/lead-engineers
+/vitest.config.ts               @JoshuaEngelbrecht @IAM/lead-engineers
+/package.json                   @JoshuaEngelbrecht @IAM/lead-engineers
+/package-lock.json              @JoshuaEngelbrecht @IAM/lead-engineers
+
+# Trainee-facing docs (governance docs are leads-only because they
+# shape contributor expectations).
+/README.md                      @JoshuaEngelbrecht @IAM/lead-engineers
+/CONTRIBUTING.md                @JoshuaEngelbrecht @IAM/lead-engineers
+/AGENTS.md                      @JoshuaEngelbrecht @IAM/lead-engineers

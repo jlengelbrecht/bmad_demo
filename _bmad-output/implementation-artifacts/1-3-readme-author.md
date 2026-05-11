@@ -31,7 +31,7 @@ So that I can decide what to do next within 30 seconds of opening the repo.
 ## Tasks/Subtasks
 
 - [x] **Task 1 — Replace stale draft (AC1, AC2, AC3)** — README.md fully rewritten; fictional dirs removed; "create an account" deleted; replaced with actual `src/`-rooted Next.js layout.
-- [x] **Task 2 — Maintainer block (AC1)** — `Devbox` named, `@jlengelbrecht` linked from LICENSE; GitHub issues as contact path; email withheld (public file).
+- [x] **Task 2 — Maintainer block (AC1)** — `Devbox` named, `@JoshuaEngelbrecht` linked from LICENSE; GitHub issues as contact path; email withheld (public file).
 - [x] **Task 3 — Audience routes match Story 1.2 (AC1)** — Each audience entry shows the route AND the markdown source path; markdown paths for stakeholder/facilitator are flagged as "authored in Epic 6" since those files don't exist yet.
 - [x] **Task 4 — Bus-factor + v1.1 forward reference (AC1)** — Quote-block disclosure naming the v1 limitation and the v1.1 maintainer-succession plan elements (co-maintainer onboarding, hand-off ritual, contributor ladder).
 - [x] **Task 5 — Platforms, Node, npm-only (AC2)** — Dedicated "Platforms and constraints" section: macOS / Linux / Windows-via-WSL2; Node 20+ floor with cross-reference to `engines.node` and `.nvmrc`; npm-only-for-v1 with post-v1 note.
@@ -45,7 +45,7 @@ So that I can decide what to do next within 30 seconds of opening the repo.
 - [x] [Review][Patch] **Dropped `npm run start` reference** — Quickstart now only documents `npm run dev`; production-mode mention removed.
 - [x] [Review][Patch] **SQLite reframed as future-tense** — "Progress will persist to a local SQLite file once Epic 3 wires the storage layer." No current-capability misclaim.
 - [x] [Review][Patch] **`lib/` removed from `src/` description** — repo-structure block now says `(pages, components)`.
-- [x] [Review][Patch] **`<repo-url>` placeholder replaced** with `https://github.com/jlengelbrecht/bmad_demo.git` (verified GitHub user exists per edge-hunter check).
+- [x] [Review][Patch] **`<repo-url>` placeholder replaced** with `https://github.com/JoshuaEngelbrecht/bmad_demo.git` (verified GitHub user exists per edge-hunter check).
 - [x] [Review][Patch] **Audience-route URLs now relative** (`route /start-here` rather than `http://localhost:3000/start-here`) and a port-collision note added to the Quickstart paragraph.
 - [x] [Review][Patch] **Audience markdown paths consistent** — all three use bare backtick code; the trainee one keeps the live markdown link in addition (it exists), while stakeholder/facilitator are code-styled with `*(coming in a future release)*` (replacing the internal "Epic 6" jargon).
 
@@ -75,7 +75,7 @@ So that I can decide what to do next within 30 seconds of opening the repo.
 
 **Maintainer identity sources:**
 - `_bmad/bmm/config.yaml` → `user_name: Devbox`
-- `LICENSE` → `Copyright (c) 2026 jlengelbrecht`
+- `LICENSE` → `Copyright (c) 2026 JoshuaEngelbrecht`
 - The README is a public file; do not include the maintainer's email address.
 
 **v1 non-capability source:**
@@ -97,14 +97,14 @@ README is content. Validation = (a) every in-repo link resolves to a real file/r
 - Existing README was tracked-but-modified from before Story 1.1; the new version replaces it whole-cloth.
 - Curriculum maintainer identity reconciled across three sources:
   - `_bmad/bmm/config.yaml` `user_name: Devbox`
-  - `LICENSE` `Copyright (c) 2026 jlengelbrecht`
+  - `LICENSE` `Copyright (c) 2026 JoshuaEngelbrecht`
   - User memory `dudeitsdallyboy@gmail.com` (private — withheld from public README)
-  Final disclosure uses `Devbox (@jlengelbrecht)` + GitHub issues as the contact path.
+  Final disclosure uses `Devbox (@JoshuaEngelbrecht)` + GitHub issues as the contact path.
 
 ### Completion Notes
 
 **ACs satisfied:**
-- AC1: orientation paragraph at top; maintainer named with `@jlengelbrecht` GitHub handle; install path shown verbatim with `localhost:3000`; three audience entry points each with route AND markdown path; bus-factor disclosure as a quote block with explicit forward reference to v1.1 maintainer-succession plan.
+- AC1: orientation paragraph at top; maintainer named with `@JoshuaEngelbrecht` GitHub handle; install path shown verbatim with `localhost:3000`; three audience entry points each with route AND markdown path; bus-factor disclosure as a quote block with explicit forward reference to v1.1 maintainer-succession plan.
 - AC2: MIT linked to `LICENSE`; macOS / Linux / Windows-via-WSL2 stated; Node 20+ with cross-reference to `engines.node` and `.nvmrc`; npm-only-for-v1 stated.
 - AC3: three v1 non-capabilities listed (no auth, no SaaS deployment, no remote services / telemetry) plus pointer to `_bmad-output/planning-artifacts/prd.md` for canonical scope.
 

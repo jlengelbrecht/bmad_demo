@@ -102,7 +102,7 @@ Per audience, one concrete signal each:
 
 - Not a BMAD reference manual (official docs cover that).
 - Not a tool-specific tutorial — agnostic by design.
-- No coverage of agentic tools beyond the four named (Cursor, Aider, Continue, etc., are out).
+- No coverage of agentic tools beyond the named ones (Aider, Continue, etc., are out).
 - Not hosted/SaaS — local-only forever; no SSO, no audit-log SaaS, no central training server.
 
 ## Why Now

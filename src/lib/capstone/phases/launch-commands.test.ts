@@ -14,6 +14,8 @@ const PHASES: CapstonePhase[] = [
   "epics-and-stories",
   "dev-story-1.1",
 ];
+const SKILL_PHASES = PHASES;
+const PORTAL_PROMPT_PHASES: CapstonePhase[] = ["governance"];
 
 describe("getLaunchCommand", () => {
   it("for claude-code, appends the BMAD slash command as positional argv (autoRun)", () => {
@@ -68,12 +70,9 @@ describe("getLaunchCommand", () => {
   });
 
   it.each(TOOLS)(
-    "every CapstonePhase has a non-null BMAD skill (no skill-less phases after the ADR drop)",
+    "every BMAD-skill phase has a non-null bmadInvocation",
     (tool) => {
-      // Post-ADR-removal: every phase in the chain has a backing BMAD
-      // skill. If a future phase ships without one, add a test that
-      // explicitly covers the null case.
-      for (const phase of PHASES) {
+      for (const phase of SKILL_PHASES) {
         expect(
           getLaunchCommand(tool, phase).bmadInvocation,
           `phase=${phase} should have a BMAD skill`,
@@ -81,6 +80,44 @@ describe("getLaunchCommand", () => {
       }
     },
   );
+
+  it.each(TOOLS)(
+    "portal-prompt phases (governance) have a null bmadInvocation but still autoRun",
+    (tool) => {
+      for (const phase of PORTAL_PROMPT_PHASES) {
+        const cmd = getLaunchCommand(tool, phase);
+        expect(cmd.bmadInvocation).toBeNull();
+        // The portal supplies a templated prompt; the AI tool still
+        // gets an initial-prompt argv, so autoRun stays true.
+        expect(cmd.autoRun).toBe(true);
+      }
+    },
+  );
+
+  it.each(TOOLS)(
+    "governance launch argv carries the four decision points + write targets verbatim",
+    (tool) => {
+      const cmd = getLaunchCommand(tool, "governance");
+      // The args array's last element is the prompt payload (positional
+      // for claude/codex; behind `-i` for copilot).
+      const promptArg = cmd.args[cmd.args.length - 1];
+      expect(promptArg).toMatch(/Ownership routing/);
+      expect(promptArg).toMatch(/Team ceremonies/);
+      expect(promptArg).toMatch(/AI-vs-non-AI/);
+      expect(promptArg).toMatch(/Branch protection/);
+      expect(promptArg).toContain(".github/CODEOWNERS");
+      expect(promptArg).toContain("CONTRIBUTING.md");
+      expect(promptArg).toContain("Contributing without AI");
+    },
+  );
+
+  it("governance preview surfaces a SHORT label, not the full prompt", () => {
+    const cmd = getLaunchCommand("claude-code", "governance");
+    const preview = cmd.preview("/tmp/r");
+    // Preview must NOT dump the entire multi-paragraph prompt.
+    expect(preview.length).toBeLessThan(500);
+    expect(preview).toContain("governance prompt");
+  });
 
   it("dev-story phase points at /bmad-create-story (the first of the two-step workflow)", () => {
     expect(getLaunchCommand("claude-code", "dev-story-1.1").bmadInvocation).toBe(

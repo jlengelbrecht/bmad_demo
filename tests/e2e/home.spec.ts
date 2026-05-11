@@ -59,8 +59,8 @@ test.describe("audience-entry routes (Story 2.3)", () => {
     },
     {
       path: "/stakeholder",
-      h1: "Stakeholder — 15-minute Demo",
-      title: "Stakeholder — 15-minute Demo · BMAD Demo",
+      h1: "Stakeholder demo",
+      title: "Stakeholder demo · BMAD Demo",
     },
     {
       path: "/facilitator",
@@ -68,7 +68,7 @@ test.describe("audience-entry routes (Story 2.3)", () => {
       title: "Facilitator — Workshop Guide · BMAD Demo",
     },
   ]) {
-    test(`${path} renders its markdown via <Markdown> with the expected h1 and title`, async ({
+    test(`${path} renders with the expected h1 and title`, async ({
       page,
     }) => {
       const response = await page.goto(path);

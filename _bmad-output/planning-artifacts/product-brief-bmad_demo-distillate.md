@@ -37,7 +37,7 @@ purpose: "Token-efficient context for downstream PRD creation"
 - Tool notes carry a "verified against versions X" header, dated; quarterly review owner named at v1.
 
 ## Rejected ideas (do not re-propose)
-- **Cursor, Aider, Continue, and other agents beyond the four** — explicitly out of scope; coverage is bounded to keep Lesson 5 (mixed-tool teams) tractable.
+- **Aider, Continue, and other agents beyond the named ones** — explicitly out of scope; coverage is bounded to keep Lesson 5 (mixed-tool teams) tractable.
 - **BMAD reference manual** — official BMAD docs cover this; portal is complementary, not competing.
 - **Tool-specific tutorial** — BMAD is positioned as tool-agnostic via story-as-contract.
 - **Hosted / SaaS / SSO / RBAC / audit-log SaaS** — local-only forever; the local-clone choice is *deliberate* (no procurement, no migration, no data leaves the org). Treat as a feature, not a deficiency.
@@ -82,8 +82,8 @@ purpose: "Token-efficient context for downstream PRD creation"
 - Internal moment: POC team already authorized; org wants to get ahead of AI code challenges before practice ossifies.
 
 ## Competitive landscape (deep dive — keep for PRD differentiator section)
-- **BMAD Method (official)** — open-source SDD framework, 46k+ stars, 5.4k forks; v6.6 cross-platform agent teams (Claude/Cursor/Codex). Has Udemy courses. **Gap:** targets individual practitioners; no opinionated team-governance layer; no runnable self-referential teaching artifact. Positioning rule: read as complementary, never competing.
-- **GitHub Spec Kit** — GitHub-blessed SDD toolkit (v0.1.4, Feb 2026); spec/plan/task primitives; 30+ agents (Copilot, Claude Code, Gemini, Cursor, Windsurf). **Gap:** code drifts from spec in practice; no team-rituals or governance pattern; no training scaffolding. Don't compete on raw SDD tooling — losing fight.
+- **BMAD Method (official)** — open-source SDD framework, 46k+ stars, 5.4k forks; v6.6 cross-platform agent teams (Claude/Codex). Has Udemy courses. **Gap:** targets individual practitioners; no opinionated team-governance layer; no runnable self-referential teaching artifact. Positioning rule: read as complementary, never competing.
+- **GitHub Spec Kit** — GitHub-blessed SDD toolkit (v0.1.4, Feb 2026); spec/plan/task primitives; 30+ agents (Copilot, Claude Code, Gemini, Windsurf). **Gap:** code drifts from spec in practice; no team-rituals or governance pattern; no training scaffolding. Don't compete on raw SDD tooling — losing fight.
 - **AWS Kiro / Tessl / OpenSpec** — Kiro is a dedicated SDD IDE (multimodal, AWS-backed); Tessl pushes spec-as-source; OpenSpec is lightweight change-management for brownfield. **Gap:** tool-centric not team-centric; vendor lock-in breaks mixed-tooling premise; no governance-via-GitHub story.
 - **Vibe-coding enterprise guides** (trick77, linesNcircles, Superblocks, Opsima) — markdown playbooks/SaaS marketing on the governance gap. **Gap:** read-only prose; no runnable repo, no exercises, no teach-by-cloning artifact; treat governance as policy memo not executable team ritual.
 - **Vibe Coding Academy / Udemy BMAD courses / VibeKode conf** — paid videos, conferences. **Gap:** individual-skill framing; no GitHub-native governance content; passive video not hands-on repo-as-tutorial.
@@ -126,7 +126,7 @@ purpose: "Token-efficient context for downstream PRD creation"
 
 ## Scope signals — quick reference
 - **In v1 (everything together):** 3 entry-point docs, 6 lessons, 3 labs, capstone, team-rituals checklist, tools-reference notes (4 tools, dated), CODEOWNERS + branch protection + PR template at `.github/`, working Next.js+Express+SQLite app, E2E tests.
-- **Out:** non-named tools (Cursor/Aider/Continue/etc.), reference manual content, tool-specific tutorials, hosted/SaaS, SSO/RBAC, audit-log SaaS, central training server.
+- **Out:** non-named tools (Aider/Continue/etc.), reference manual content, tool-specific tutorials, hosted/SaaS, SSO/RBAC, audit-log SaaS, central training server.
 - **Deferred (post-v1, post-POC validation):** spread to team #2 mechanics beyond the fork pattern, advanced reinforcement loops, two-POC-profile support, lead-backup-gate design, baseline-measurement instrumentation if not added in v1.
 
 ## Quotable framings (preserve voice for PRD/PR copy)

@@ -141,12 +141,31 @@ export const PHASE_TEACHING_PRIMERS: Record<CapstonePhase, PhaseTeachingPrimer> 
       "Without `sprint-status.yaml` the next phase (`bmad-create-story`) doesn't know which story to start with — it stalls and asks you to run sprint-planning first. This is also where teams running BMAD natively track their work-in-flight across multiple PRs.",
   },
 
+  governance: {
+    goal: "Codify how your team will work together on this repo — both the *machine gate* (CODEOWNERS, which routes mandatory reviewers) and the *human path* (CONTRIBUTING.md, which tells anyone — AI-using or not — how to propose a change).",
+    skillDoes:
+      "This phase is portal-driven (no BMAD slash command — BMAD core ships no `bmad-create-codeowners` or `bmad-create-contributing` skill). The portal launches your AI tool with a four-step templated prompt: research (read your `_bmad/` config + actual repo layout + installed skills), Socratic discovery across four decision points (ownership / ceremonies / AI-vs-non-AI / branch protection), self-verification (every path it wrote gets checked against the filesystem), then it writes both files.",
+    artifactPath:
+      "CODEOWNERS + CONTRIBUTING.md (at repo root or under .github/)",
+    whatToExpect: [
+      "**First: research, not questions.** The AI starts by reading `_bmad/bmm/config.yaml`, listing your top-level directories, and discovering which BMAD skills are actually installed. It tells you what it found before asking anything — this grounds every later answer in YOUR repo's reality, not generic placeholders.",
+      "Then ownership-routing questions, walking through the actual top-level directories it discovered — who owns `_bmad/`, your real planning_artifacts and implementation_artifacts paths, each code/infra area.",
+      "Team ceremonies — story grooming, sprint planning, retro trigger, code-review SLA. References the actual installed BMAD skills it found, not invented names.",
+      "It asks explicitly whether the team accepts contributions from people who don't use BMAD or any AI tool. If yes, CONTRIBUTING.md gets a 'Contributing without AI' section that satisfies the same governance gates without requiring an AI tool.",
+      "Branch-protection summary — CODEOWNERS only enforces review when your repo's branch protection is configured to require it; that's a step you'll do yourself in GitHub settings.",
+      "**Verify pass.** Before writing, the AI walks every path + skill name in its draft and confirms each one against the filesystem. It tells you what it corrected.",
+      "It writes `.github/CODEOWNERS` (or `CODEOWNERS` at repo root) and `CONTRIBUTING.md` at repo root, then ends.",
+    ],
+    whyThisMatters:
+      "Planning artifacts in `_bmad-output/` describe *what* you'll build; governance files describe *how the team will build it together*. Without CODEOWNERS, nothing actually gates merges; without CONTRIBUTING.md, the team's BMAD ceremonies live only in tribal memory. Both are needed for the BMAD adoption to survive past you. The research-first prompt grounds the result in your repo's actual layout so you don't get back a CONTRIBUTING.md full of paths that don't exist.",
+  },
+
   "dev-story-1.1": {
     goal: "Pick story 1.1 (Epic 1, Story 1) off the backlog, expand it into an implementation-ready spec, then write the code that makes it ship.",
     skillDoes:
-      "Two BMAD skills run back-to-back here. `/bmad-create-story` reads `sprint-status.yaml` + `epics.md`, picks the first todo story, and expands its summary-level entry from `epics.md` into a comprehensive per-story file at `_bmad-output/implementation-artifacts/<epic>-<story>-<slug>.md` — the implementation spec the dev agent will execute against. Then `/bmad-dev-story` reads that spec, writes the code, runs the test suite, and updates the story's Dev Agent Record with what shipped.",
+      "Two BMAD skills run back-to-back here. `/bmad-create-story` reads `sprint-status.yaml` + `epics.md`, picks the first todo story, and expands its summary-level entry from `epics.md` into a comprehensive per-story file at `<output_folder>/implementation-artifacts/<epic>-<story>-<slug>.md` — the implementation spec the dev agent will execute against. Then `/bmad-dev-story` reads that spec, writes the code, runs the test suite, and updates the story's Dev Agent Record with what shipped.",
     artifactPath:
-      "_bmad-output/implementation-artifacts/<epic>-<story>-<slug>.md (+ code in your repo)",
+      "<output_folder>/implementation-artifacts/<epic>-<story>-<slug>.md (+ code in your repo)",
     whatToExpect: [
       "`/bmad-create-story` runs first: it picks story 1.1 from the backlog and expands it into a 100–300 line spec with full Given/When/Then ACs, dev notes lifted from architecture, and a tasks/subtasks checklist.",
       "Review the expanded story — request changes if anything looks wrong.",
@@ -156,6 +175,6 @@ export const PHASE_TEACHING_PRIMERS: Record<CapstonePhase, PhaseTeachingPrimer> 
       "Halts only on a HALT condition (red tests after retry, missing tooling) or when the story is fully implemented.",
     ],
     whyThisMatters:
-      "This is the moment Lesson 3's *story-as-tool-agnostic-contract* becomes physical. The expanded story file is what your team's lead will read at the gate to compare against the produced code. The same file works whether the implementer used Claude Code, Codex, or GitHub Copilot — that's the whole point.",
+      "This is the moment Lesson 3's *story-as-tool-agnostic-contract* becomes physical. The expanded story file is what your team's lead will read at the gate to compare against the produced code. The same file works whether the implementer used Claude Code, Codex, or GitHub Copilot — that's the whole point. The phase-done check looks for the spec file on disk; if you customized BMAD's `output_folder` during install, the check follows that choice.",
   },
 };

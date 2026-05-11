@@ -26,14 +26,51 @@ test.describe("lab route (Story 2.3)", () => {
   });
 });
 
-test.describe("/stakeholder excludes lesson navigation (AC2)", () => {
-  test("renders no LessonNav region (structural guard, not text-based)", async ({ page }) => {
+test.describe("/stakeholder — guided tour", () => {
+  test("renders the tour shell + first panel + tour-nav controls", async ({ page }) => {
     await page.goto("/stakeholder");
-    // Structural guard: LessonNav exposes itself via aria-label="Lesson navigation (top|bottom)".
+    // No lesson-nav chrome — tour is its own surface.
     await expect(page.getByRole("navigation", { name: /Lesson navigation/ })).toHaveCount(0);
-    // Belt-and-suspenders: the position indicator's literal label string is also absent.
     await expect(page.getByText(/^Lesson \d+ of \d+$/)).toHaveCount(0);
-    // Sanity: page rendered.
-    await expect(page.locator("h1")).toContainText("Stakeholder — 15-minute Demo");
+    // Page heading + first-panel content.
+    await expect(page.locator("h1")).toContainText("Stakeholder demo");
+    await expect(page.getByText(/01 \/ The problem/i)).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /AI-generated code is shipping/ }),
+    ).toBeVisible();
+    // Tour-nav controls.
+    await expect(page.getByRole("button", { name: /← Previous/ })).toBeDisabled();
+    await expect(page.getByRole("button", { name: /Next →/ })).toBeEnabled();
+    await expect(page.getByRole("navigation", { name: /Tour navigation/ })).toBeVisible();
+  });
+
+  test("Next advances panels; End key jumps to last panel; CTA visible on the final panel", async ({ page }) => {
+    await page.goto("/stakeholder");
+    const next = page.getByRole("button", { name: /Next →/ });
+    const prev = page.getByRole("button", { name: /← Previous/ });
+    await next.click();
+    await expect(page.getByText(/02 \/ The contract/i)).toBeVisible();
+    await expect(prev).toBeEnabled();
+    await page.keyboard.press("End");
+    await expect(page.getByText(/06 \/ Adoption/i)).toBeVisible();
+    await expect(next).toBeDisabled();
+    await expect(page.getByRole("link", { name: /Open the capstone/ })).toBeVisible();
+  });
+
+  test("governance panel deep-links point at real /source/ paths in this repo", async ({ page }) => {
+    await page.goto("/stakeholder");
+    await page.keyboard.press("4");
+    const codeownersLink = page.getByRole("link", { name: /\.github\/CODEOWNERS/ });
+    await expect(codeownersLink).toBeVisible();
+    await expect(codeownersLink).toHaveAttribute(
+      "href",
+      "/source/.github/CODEOWNERS",
+    );
+    const contributingLink = page.getByRole("link", { name: /CONTRIBUTING\.md/ });
+    await expect(contributingLink).toBeVisible();
+    await expect(contributingLink).toHaveAttribute(
+      "href",
+      "/source/CONTRIBUTING.md",
+    );
   });
 });

@@ -36,6 +36,7 @@ export const CAPSTONE_STEP_NAMES = [
   "dev-story-1.1",
   "implementation-readiness",
   "sprint-planning",
+  "governance",
 ] as const;
 
 export type CapstoneStepName = (typeof CAPSTONE_STEP_NAMES)[number];
@@ -67,6 +68,10 @@ export const CAPSTONE_STEP_ID = new RegExp(
  *    capstone jumped from epics-and-stories straight to dev-story-1.1,
  *    skipping the readiness gate (3-solutioning) and sprint init
  *    (4-implementation) that BMAD's manifest marks `required`.
+ *  - `governance` added (Epic 14 / Story 14.1) — terminal phase that
+ *    authors `.github/CODEOWNERS` + `CONTRIBUTING.md` so the trainee
+ *    walks away with real, git-native team-governance scaffolding, not
+ *    just a planning bundle.
  */
 export const CAPSTONE_PHASE_NAMES = [
   "brief",
@@ -76,6 +81,7 @@ export const CAPSTONE_PHASE_NAMES = [
   "implementation-readiness",
   "sprint-planning",
   "dev-story-1.1",
+  "governance",
 ] as const;
 
 export type CapstonePhaseName = (typeof CAPSTONE_PHASE_NAMES)[number];

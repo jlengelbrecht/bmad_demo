@@ -22,7 +22,7 @@ workflow_completed: true
 
 **Goals:**
 
-1. Surface hard unknowns — per-tool chat-proxy mechanics (which of the 30+ supported tools have programmatic chat-piping? Claude Code, Codex, GitHub Copilot, Cursor, OpenCode each are different), tool detection (sniff PATH vs. ask), graceful degradation for tools with no chat-piping interface.
+1. Surface hard unknowns — per-tool chat-proxy mechanics (which of the 30+ supported tools have programmatic chat-piping? Claude Code, Codex, GitHub Copilot, OpenCode each are different), tool detection (sniff PATH vs. ask), graceful degradation for tools with no chat-piping interface.
 2. Pin setup-phase UX — path picker, "existing dir conflicts" handling, question shape (single form vs. multi-step wizard), defaults strategy, validation.
 3. Clarify pedagogy beats — moment-to-moment trainee experience; portal-driving vs. tool-driving boundary; "I'm done, now what?" handoff moment.
 4. Pin threat-model expansion — portal now writes outside its own tree and spawns subprocesses against trainee-chosen paths. Confirmation, sandboxing, "are you sure" gates.
@@ -70,7 +70,7 @@ Approach: AI-Recommended Techniques.
 
 - **[Q-Tech-1]:** Does Claude Code expose a programmatic / non-interactive invocation surface? (CLI flag for primer prompt, IPC socket, file-based protocol?) — *answer determines whether `claude` is pipe-able*.
 - **[Q-Tech-2]:** Same question for Codex, OpenCode, gemini-cli.
-- **[Q-Tech-3]:** Which tools are IDE-only (Cursor, GitHub Copilot in VS Code) and CAN'T be piped from a separate UI without an extension? — *answer determines our v1-supported tool list*.
+- **[Q-Tech-3]:** Which tools are IDE-only (e.g., GitHub Copilot in VS Code) and CAN'T be piped from a separate UI without an extension? — *answer determines our v1-supported tool list*.
 - **[Q-Tech-4]:** Does `node-pty` work cleanly on Mac + Linux? Performance per session?
 - **[Q-Tech-5]:** Long-running subprocess vs. spawn-per-message — what's the right pattern?
 - **[Q-Tech-6]:** Streaming protocol portal-to-browser — SSE, WebSocket, or Next.js `Response` streaming?
