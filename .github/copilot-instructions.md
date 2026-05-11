@@ -17,8 +17,8 @@ This is a Next.js + Express + SQLite training portal that teaches teams to adopt
 
 ## Tech stack
 
-- Node >= 20, Next.js 16 (Turbopack dev), TypeScript, ESLint
-- better-sqlite3 (DB), Zod (validation), Tailwind + Typography (style)
+- Node >= 24 (required for stable `node:sqlite`), Next.js 16 (Turbopack dev), TypeScript, ESLint
+- node:sqlite (DB), Zod (validation), Tailwind + Typography (style)
 - unified + remark-* + rehype-* + rehype-pretty-code (markdown pipeline)
 - Vitest (unit), Playwright (e2e)
 - node-pty + xterm (interactive PTY for capstone phase chat)

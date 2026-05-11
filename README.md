@@ -16,7 +16,9 @@ Two paths. Pick whichever matches your machine.
 
 Requires **Node 20+** and **npm**.
 
-> **macOS users:** the native install path requires **Xcode Command Line Tools** because `node-pty` and `better-sqlite3` compile native modules during `npm install`. If you don't have them, run `xcode-select --install` first — `npm install` will otherwise fail with a `node-gyp` build error. **If you'd rather skip the native-build setup entirely, use the [devcontainer path below](#run-in-a-devcontainer-linux-macos-windows)** — it bakes the toolchain inside a Linux container so your host doesn't need it.
+Requires **Node 24+** (for stable `node:sqlite`).
+
+> **macOS users:** the native install path requires **Xcode Command Line Tools** because `node-pty` compiles a native module during `npm install`. If you don't have them, run `xcode-select --install` first — `npm install` will otherwise fail with a `node-gyp` build error. **If you'd rather skip the native-build setup entirely, use the [devcontainer path below](#run-in-a-devcontainer-linux-macos-windows)** — it bakes the toolchain inside a Linux container so your host doesn't need it.
 
 ```bash
 git clone https://git.cglcloud.com/JoshuaEngelbrecht/bmad_trainer.git
@@ -33,7 +35,7 @@ You'll also need at least one of the supported AI-tool CLIs installed and authen
 
 > **Recommended for macOS and Windows trainees.** Devcontainer is the lowest-friction path on these OSes because it skips the native-build toolchain setup (Xcode CLT on Mac, Visual Studio Build Tools on Windows). Linux users can still pick whichever path they prefer.
 
-The portal ships a devcontainer config (`.devcontainer/Dockerfile` + `.devcontainer/devcontainer.json`) that produces a Linux dev environment with Node 22, the native-build toolchain (`build-essential`, `python3` — what `node-pty` and `better-sqlite3` need), `git`, `gh`, `sqlite3`, and the **Claude Code + Codex** CLIs pre-installed. Use this if you're on Windows, or if you want to skip per-OS native-module pain on macOS.
+The portal ships a devcontainer config (`.devcontainer/Dockerfile` + `.devcontainer/devcontainer.json`) that produces a Linux dev environment with Node 24, the native-build toolchain (`build-essential`, `python3` — what `node-pty` needs), `git`, `gh`, `sqlite3`, and the **Claude Code + Codex** CLIs pre-installed. Use this if you're on Windows, or if you want to skip per-OS native-module pain on macOS.
 
 **Prerequisites:**
 
@@ -91,11 +93,11 @@ If you edit `.devcontainer/Dockerfile` or `devcontainer.json`, rebuild the image
 **Troubleshooting:**
 
 - **Port 3000 already forwarded to another container.** Stop the other container or change the forwarded port in `.devcontainer/devcontainer.json` (`forwardPorts`).
-- **`npm install` fails on `better-sqlite3` / `node-pty`.** This shouldn't happen in the container — the toolchain is baked in. If it does, rebuild the image (above).
+- **`npm install` fails on `node-pty`.** This shouldn't happen in the container — the toolchain is baked in. If it does, rebuild the image (above).
 - **Claude / Codex `command not found`.** The image installs them as the `node` user; PATH includes `/home/node/.local/bin`. Open a fresh shell in the container after install completes.
 - **Capstone wants to write to a path on your host.** The trainee's chosen capstone directory must be a path **inside the container** (`/workspaces/...` or `/home/node/...`). Paths from your host won't be reachable.
 
-**Why a devcontainer?** This is a training tool meant to work cross-OS. Native installs of `node-pty` and `better-sqlite3` surface platform-specific build pain (Xcode CLT on macOS, Visual Studio Build Tools on Windows). Pushing the runtime into a Linux container makes the install path uniform. Native install still works on Linux/macOS for developers who prefer it.
+**Why a devcontainer?** This is a training tool meant to work cross-OS. Native installs of `node-pty` surface platform-specific build pain (Xcode CLT on macOS, Visual Studio Build Tools on Windows). Pushing the runtime into a Linux container makes the install path uniform. Native install still works on Linux/macOS for developers who prefer it.
 
 ## Pick your path
 
@@ -142,7 +144,7 @@ The planning artifacts in `_bmad-output/planning-artifacts/` are the actual outp
 - **Operating systems:**
   - **Native install:** macOS and Linux.
   - **Devcontainer:** any OS with Docker — macOS, Linux, Windows (with or without WSL2).
-- **Runtime floor:** Node **20+** (declared in `package.json` `engines.node` and `.nvmrc`). Node 22 LTS works without re-pinning. The devcontainer pins Node 22.
+- **Runtime floor:** Node **24+** (declared in `package.json` `engines.node`). Required for stable `node:sqlite` — the portal uses Node's built-in SQLite client (no external native deps for the database layer). The devcontainer pins Node 24.
 - **Package manager:** npm only for v1. Yarn / pnpm support is post-v1.
 
 ## What's NOT in v1

@@ -2,9 +2,7 @@ import "server-only";
 
 import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-
-import Database from "better-sqlite3";
-import type { Database as DatabaseType } from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 
 const REPO_ROOT = path.resolve(process.cwd());
 const DATA_DIR = path.join(REPO_ROOT, "data");
@@ -31,15 +29,22 @@ const SCHEMA_PATH = import.meta.dirname
 // Cache on globalThis so the singleton survives Next.js dev HMR reloads —
 // otherwise every edit reopens a second file handle and orphans the previous
 // one (on Windows, the WAL lock can also block the new handle).
-type GlobalDbCache = { __progressDb?: DatabaseType | null };
+type GlobalDbCache = { __progressDb?: DatabaseSync | null };
 const globalCache = globalThis as unknown as GlobalDbCache;
 
 /**
- * Open a fresh better-sqlite3 connection at `filename` and apply the
+ * Open a fresh `node:sqlite` connection at `filename` and apply the
  * `progress` schema idempotently. Used both by the production singleton
  * (default `./data/progress.sqlite`) and by Vitest fixtures (in-memory).
+ *
+ * Migrated from `better-sqlite3` to Node's built-in `node:sqlite` (stable
+ * in Node 24+) to drop the deprecated `prebuild-install` transitive dep
+ * + zero native-build dependency. API surface is a strict subset of
+ * better-sqlite3 — `prepare/run/get/all/exec/close` work the same.
+ * `pragma()` is the one method that didn't carry over: we route those
+ * through `exec("PRAGMA ...")` instead.
  */
-export function createDb(filename: string): DatabaseType {
+export function createDb(filename: string): DatabaseSync {
   if (filename !== ":memory:") {
     // Defensive — production path may not have the data/ dir yet on a
     // fresh clone (committed via `data/.gitkeep`), but mkdirSync({recursive})
@@ -47,12 +52,13 @@ export function createDb(filename: string): DatabaseType {
     mkdirSync(path.dirname(filename), { recursive: true });
   }
 
-  const db = new Database(filename);
+  const db = new DatabaseSync(filename);
   try {
     if (filename !== ":memory:") {
       // WAL gives concurrent-read sanity for Server Components; in-memory
-      // doesn't support journal_mode = WAL.
-      db.pragma("journal_mode = WAL");
+      // doesn't support journal_mode = WAL. node:sqlite has no `.pragma()`
+      // convenience — we run PRAGMA via exec().
+      db.exec("PRAGMA journal_mode = WAL");
     }
 
     const schema = readFileSync(SCHEMA_PATH, "utf8");
@@ -71,7 +77,7 @@ export function createDb(filename: string): DatabaseType {
  * Components and Route Handlers should call this rather than constructing
  * their own connection.
  */
-export function getDb(): DatabaseType {
+export function getDb(): DatabaseSync {
   if (globalCache.__progressDb) return globalCache.__progressDb;
   globalCache.__progressDb = createDb(DEFAULT_DB_PATH);
   return globalCache.__progressDb;

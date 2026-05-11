@@ -208,6 +208,6 @@ describe("reset-progress CLI source-string contract (AC4 + AC5)", () => {
   it("does NOT import the Next.js runtime", () => {
     expect(source).not.toContain("next/server");
     expect(source).not.toContain('from "next"');
-    expect(source).not.toContain("better-sqlite3");
+    expect(source).not.toContain("node:sqlite");
   });
 });
