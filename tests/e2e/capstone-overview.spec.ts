@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { DatabaseSync } from "node:sqlite";
+import Database from "better-sqlite3";
 import { expect, test } from "@playwright/test";
 
 // Direct DB access for state seeding/cleanup. The e2e SQLite is isolated
@@ -11,7 +11,7 @@ const E2E_DB_PATH = path.resolve(process.cwd(), "data", "e2e-progress.sqlite");
 const SCHEMA_PATH = path.resolve(process.cwd(), "src", "db", "schema.sql");
 
 function withDb<T>(fn: (db: Database.Database) => T): T {
-  const db = new DatabaseSync(E2E_DB_PATH);
+  const db = new Database(E2E_DB_PATH);
   try {
     db.exec(readFileSync(SCHEMA_PATH, "utf8"));
     return fn(db);

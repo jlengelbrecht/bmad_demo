@@ -1,12 +1,11 @@
-# AI Contribution Framework — devcontainer base image.
+# BMAD Demo — devcontainer base image.
 #
 # Goal: a single Linux dev environment that runs the portal cross-OS
 # (macOS / Linux / Windows-via-WSL2) without the host needing to deal
 # with platform-specific node-gyp / node-pty / native-build pain.
 #
 # What gets baked in:
-#   - Node 24 (matches the portal's `engines: node >=24`, required for
-#     stable `node:sqlite`).
+#   - Node 22 (matches the portal's `engines: node >=20`).
 #   - The build toolchain node-pty needs (build-essential + python3).
 #   - The `gh` CLI (used by GitHub Copilot CLI install).
 #   - Three AI-tool CLIs the capstone supports: Claude Code, Codex,
@@ -24,7 +23,7 @@
 #     against THEIR chosenDir during the capstone; the portal's repo
 #     stays as-is.
 
-FROM node:24-bookworm-slim
+FROM node:22-bookworm-slim
 
 # Native build deps + tools the AI-tool CLIs and capstone need.
 # - build-essential, python3: node-pty's native compile.

@@ -1,6 +1,6 @@
 import { mkdirSync, rmSync } from "node:fs";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import Database from "better-sqlite3";
 import { test, expect } from "@playwright/test";
 
 const TARGET_DIR = "/tmp/e2e-pty-target";
@@ -14,7 +14,7 @@ function cleanFs() {
 }
 
 function clearSessionRows() {
-  const db = new DatabaseSync(DB_PATH);
+  const db = new Database(DB_PATH);
   db.prepare(
     "DELETE FROM progress WHERE id = ? AND kind IN ('capstone-session', 'capstone-target', 'capstone-tool')",
   ).run(SESSION_ID);
@@ -22,7 +22,7 @@ function clearSessionRows() {
 }
 
 function readSessionRows(): Array<{ kind: string; completed_at: string | null }> {
-  const db = new DatabaseSync(DB_PATH);
+  const db = new Database(DB_PATH);
   const rows = db
     .prepare(
       "SELECT kind, completed_at FROM progress WHERE id = ? ORDER BY kind",

@@ -34,11 +34,11 @@ These constraints are the contract this repo promises. Violating them is a defec
 
 | Layer | Tool | Version pin |
 |---|---|---|
-| Runtime | Node | >= 24 (required for stable `node:sqlite`) |
+| Runtime | Node | >= 20 |
 | Framework | Next.js | 16.x — **breaking changes vs. your training data; heed deprecations** |
 | Build | Turbopack (dev), Next build (prod) | per `next` |
 | API surface | Express (mounted) + Next Route Handlers | per `next` |
-| Database | node:sqlite | per `package.json` |
+| Database | better-sqlite3 | per `package.json` |
 | Validation | Zod | runtime + types |
 | Markdown | unified + remark-parse + remark-gfm + remark-rehype + rehype-* + rehype-pretty-code | server-side, request-time |
 | Tests (unit) | Vitest | invoked via `npm run test:unit` |
@@ -111,7 +111,7 @@ No-go zones (do not modify without explicit story authorization):
 
 ### Database access
 
-- All SQLite reads/writes go through `src/lib/db/` modules. Do not import `node:sqlite` directly elsewhere.
+- All SQLite reads/writes go through `src/lib/db/` modules. Do not import `better-sqlite3` directly elsewhere.
 - The DB path is configurable via `BMAD_DATABASE_PATH` env var; default is `./data/progress.sqlite`.
 - Test runs use `./data/e2e-progress.sqlite` (set via `playwright.config.ts` webServer.env).
 

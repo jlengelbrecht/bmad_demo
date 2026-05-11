@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import Database from "better-sqlite3";
 import { test, expect } from "@playwright/test";
 
 const TARGET_DIR = "/tmp/e2e-chat-pty-target";
@@ -12,7 +12,7 @@ function cleanFs() {
 }
 
 function seedSession(sessionId: string, tool: string) {
-  const db = new DatabaseSync(DB_PATH);
+  const db = new Database(DB_PATH);
   // Apply schema if not already (idempotent — the dev server's first
   // request applies it too, but the e2e seed runs before any HTTP).
   const schemaPath = path.resolve("src", "db", "schema.sql");
@@ -28,7 +28,7 @@ function seedSession(sessionId: string, tool: string) {
 }
 
 function clearSession(sessionId: string) {
-  const db = new DatabaseSync(DB_PATH);
+  const db = new Database(DB_PATH);
   db.prepare(
     "DELETE FROM progress WHERE id = ? AND kind IN ('capstone-session', 'capstone-target', 'capstone-tool')",
   ).run(sessionId);

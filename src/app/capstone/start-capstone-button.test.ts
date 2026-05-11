@@ -20,7 +20,7 @@ describe("<StartCapstoneButton> source-string smoke (Story 10.2)", () => {
     expect(SOURCE).not.toMatch(/from ["']@\/lib\/db\//);
     expect(SOURCE).not.toMatch(/from ["']@\/lib\/capstone\//);
     expect(SOURCE).not.toMatch(/from ["']server-only["']/);
-    expect(SOURCE).not.toMatch(/from ["']node:sqlite["']/);
+    expect(SOURCE).not.toMatch(/from ["']better-sqlite3["']/);
     expect(SOURCE).not.toMatch(/from ["']node:[a-z]+["']/);
   });
 

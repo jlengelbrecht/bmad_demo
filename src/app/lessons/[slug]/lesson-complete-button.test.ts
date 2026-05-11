@@ -22,7 +22,7 @@ describe("LessonCompleteButton — source-string contract", () => {
 
   it("does not import server-only code that shouldn't ship to the client", () => {
     expect(source).not.toContain('"server-only"');
-    expect(source).not.toContain("node:sqlite");
+    expect(source).not.toContain("better-sqlite3");
     expect(source).not.toMatch(/from\s+["']node:/);
   });
 
