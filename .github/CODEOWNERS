@@ -63,7 +63,6 @@
 # Top-level config that shapes the whole app — leads-only.
 /next.config.ts                 @JoshuaEngelbrecht @IAM/lead-engineers
 /tsconfig.json                  @JoshuaEngelbrecht @IAM/lead-engineers
-/tailwind.config.ts             @JoshuaEngelbrecht @IAM/lead-engineers
 /postcss.config.mjs             @JoshuaEngelbrecht @IAM/lead-engineers
 /eslint.config.mjs              @JoshuaEngelbrecht @IAM/lead-engineers
 /playwright.config.ts           @JoshuaEngelbrecht @IAM/lead-engineers

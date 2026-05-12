@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
-@config "../../tailwind.config.ts";
 
 /*
  * Tailwind v4 dark-variant strategy: switch on a `data-theme="dark"`
