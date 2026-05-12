@@ -105,7 +105,7 @@ export default function HomePage() {
           </Link>
           <span aria-hidden>·</span>
           <a
-            href="https://bmadcode.com/"
+            href="https://docs.bmad-method.org/"
             target="_blank"
             rel="noopener noreferrer"
             className="font-medium text-sky-700 hover:underline dark:text-sky-300"

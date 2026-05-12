@@ -22,9 +22,9 @@ This lesson is the conceptual foundation for everything that follows. It's delib
 
 ## What BMAD is
 
-**BMAD** stands for **Build More, Architect Dreams** on its public landing page, and **Breakthrough Method for Agile AI Driven Development** on its GitHub README. The two expansions describe the same project. In this curriculum we use "BMAD" as the name and "the BMAD framework" when we mean the codebase.
+**BMAD** stands for **Breakthrough Method for Agile AI Driven Development**. In this curriculum we use "BMAD" as the name and "the BMAD framework" when we mean the codebase.
 
-It is maintained by the [bmad-code-org](https://github.com/bmad-code-org/BMAD-METHOD) GitHub organization and is open-source under the MIT license. The canonical documentation lives at [bmadcode.com](https://bmadcode.com/) and the source at [github.com/bmad-code-org/BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD).
+It is maintained by the [bmad-code-org](https://github.com/bmad-code-org/BMAD-METHOD) GitHub organization and is open-source under the MIT license. The canonical documentation lives at [docs.bmad-method.org](https://docs.bmad-method.org/) and the source at [github.com/bmad-code-org/BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD).
 
 This portal targets the latest released BMAD; you can see the version your install picked up at `_bmad/_config/manifest.yaml`. The capstone bootstraps your repo against `npx bmad-method@latest`, so a trainee running the capstone today gets the same BMAD their team will run tomorrow.
 
@@ -45,7 +45,7 @@ You can see BMAD's structure for yourself by looking around this repo. The frame
 **1. The methodology source under `_bmad/`.** This is BMAD's directory tree of conventions, scripts, and config. Notable:
 
 - `_bmad/_config/manifest.yaml` records which modules are installed and which BMAD version your install pulled in.
-- `_bmad/bmm/` is the **BMM** (BMad Method) module — the four-phase pipeline `1-analysis` → `2-planning` → `3-solutioning` → `4-implementation`. Each phase produces specific artifacts (Lesson 2 has the full chain).
+- `_bmad/bmm/` is the **BMM** (BMad Method) module — the four-phase pipeline `1-analysis` → `2-plan-workflows` → `3-solutioning` → `4-implementation`. Each phase produces specific artifacts (Lesson 2 has the full chain).
 - `_bmad/scripts/resolve_customization.py` merges per-skill defaults with team and personal overrides. You'll see this script invoked at the start of every BMAD skill.
 - `_bmad/bmm/config.yaml` carries the project-level settings — your name, the project name, the artifact output folder.
 
@@ -104,7 +104,7 @@ When you finish the capstone you'll get a `HANDOFF.md` in your bootstrapped repo
 
 ## A note on attribution
 
-The framework — agents, skills, artifact chain, slash-commands — is the work of the bmad-code-org maintainers, used here under its open-source license. This portal teaches the team-rituals layer that sits on top. We've kept attribution explicit because (a) it's owed and (b) trainees should know where to go for framework-level questions: the official documentation at [bmadcode.com](https://bmadcode.com/) and the source repository at [github.com/bmad-code-org/BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD).
+The framework — agents, skills, artifact chain, slash-commands — is the work of the bmad-code-org maintainers, used here under its open-source license. This portal teaches the team-rituals layer that sits on top. We've kept attribution explicit because (a) it's owed and (b) trainees should know where to go for framework-level questions: the official documentation at [docs.bmad-method.org](https://docs.bmad-method.org/) and the source repository at [github.com/bmad-code-org/BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD).
 
 If a question is about how a skill works internally — what `bmad-create-prd` does step by step, why `bmad-dev-story` halts on red tests — go to BMAD's docs. If a question is about how a *team* uses BMAD without their leads going crazy at PR time — that's what this curriculum is for.
 

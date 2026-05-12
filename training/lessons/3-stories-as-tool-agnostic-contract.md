@@ -43,11 +43,11 @@ This is the unit of work. One story file = one PR. It contains everything the im
 
 `AGENTS.md` carries conventions that apply across the *whole* repo and would be silly to repeat in every story: build commands, testing rules, framework version pins, no-go zones. This file is read by Claude Code, Codex, and OpenCode. When any of those tools opens the repo, it reads `AGENTS.md` first and treats it as foundational context.
 
-`AGENTS.md` is converging as a cross-tool industry standard — in late 2025 it was donated to the Agentic AI Foundation under the Linux Foundation, with multiple CLI agents agreeing on the file format.
+`AGENTS.md` is converging as a cross-tool industry standard — as of 2026 it is stewarded by the Agentic AI Foundation under the Linux Foundation, with multiple CLI agents agreeing on the file format.
 
 ### 3. `.github/copilot-instructions.md` (Copilot's per-repo context)
 
-GitHub Copilot does not (at the time of this curriculum's authoring) read `AGENTS.md`. It reads its own dotfile, `.github/copilot-instructions.md`. This file plays the same role as `AGENTS.md` for Copilot specifically. To make the contract hold across all four tools, the two files must carry **the same load-bearing constraints** — drift between them is a defect.
+GitHub Copilot's IDE and CLI surfaces do not read `AGENTS.md` — they read `.github/copilot-instructions.md`. This file plays the same role as `AGENTS.md` for Copilot specifically. (The newer cloud-based Copilot Coding Agent does read `AGENTS.md` natively; if your team only ever uses that surface, the dual-file pattern is optional. Most teams use the IDE day-to-day.) To make the contract hold across all four tools, the two files must carry **the same load-bearing constraints** — drift between them is a defect.
 
 You can see both files at the root of this repo (after Story 12.8 lands): [`AGENTS.md`](/source/AGENTS.md), [`.github/copilot-instructions.md`](/source/.github/copilot-instructions.md). A common community pattern is making one a symlink to the other so they cannot diverge; the curriculum doesn't mandate this but it's defensible.
 

@@ -212,7 +212,7 @@ Loop #3's recovery procedure references two files at the repo root. This section
 
 [`AGENTS.md`](/source/AGENTS.md) is read by Claude Code, Codex, and OpenCode (sometimes via a `CLAUDE.md` symlink). [`.github/copilot-instructions.md`](/source/.github/copilot-instructions.md) is read by GitHub Copilot. Both files carry the same purpose: **per-repo conventions that should not be re-stated in every story** — build commands, framework version pins, testing rules, no-go zones.
 
-Two files exist because Copilot, at the time of this curriculum's authoring, doesn't read `AGENTS.md` — it reads its own dotfile. (`AGENTS.md` is converging as a cross-tool standard. In late 2025 it was donated to the Agentic AI Foundation. Copilot may eventually read it natively; the dual-file pattern is the v1 reality.)
+Two files exist because Copilot's IDE and CLI surfaces don't read `AGENTS.md` — they read their own dotfile. (`AGENTS.md` is stewarded by the Agentic AI Foundation under the Linux Foundation as of 2026 and is converging as a cross-tool standard. The newer cloud Copilot Coding Agent reads `AGENTS.md` natively; the IDE and CLI surfaces — which most teams use day-to-day — still rely on `.github/copilot-instructions.md`. The dual-file pattern is the v1 reality.)
 
 The dual-role pattern has one critical maintenance invariant: **drift between the two files is a defect.** If `AGENTS.md` says "use vitest, not jest" and `.github/copilot-instructions.md` says nothing, then a Copilot user will produce jest tests faithfully — and the team will have Loop #3 the next time they review.
 
